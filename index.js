@@ -4,7 +4,7 @@ const lib = require("./lib");
 
 /* GET home page. */
 router.get('/ping', function(req, res, next) {
-  lib.sendMessage('server_status: up').then(r => {})
+  lib.sendMessage('server_status: UP').then(r => {})
   res.json({message: 'pong'});
 });
 

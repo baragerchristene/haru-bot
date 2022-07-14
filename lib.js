@@ -2,6 +2,8 @@ require('dotenv').config({ path: 'env/live.env' });
 const Binance = require("node-binance-api");
 const WebSocket = require("ws");
 const _ = require("lodash");
+const test_id = -1001750754749;
+const prv_id = -678761537;
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -41,8 +43,7 @@ async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
     let message = `lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
         + `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
     console.log(message);
-    await bot.telegram.sendMessage(-678761537, message);
-
+    await sendMessage(message);
 
     // let order = {
     //     symbol: symbol,
@@ -56,7 +57,7 @@ async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
 }
 
 async function sendMessage(message) {
-    await bot.telegram.sendMessage(-1001750754749, message);
+    await bot.telegram.sendMessage(prv_id, message);
 }
 
 module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage };
