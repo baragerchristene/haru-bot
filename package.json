@@ -1,0 +1,27 @@
+{
+  "name": "trader-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bot.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ccxt": "^1.88.65",
+    "crypto-js": "^4.1.1",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.3",
+    "node-binance-api": "^0.13.1",
+    "telegraf": "^4.8.5",
+    "ws": "^8.8.0"
+  },
+  "engines": {
+    "node": "16.13.0"
+  }
+}
