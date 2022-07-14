@@ -54,9 +54,6 @@ async function firstCheck() {
 
 async function checkChangeTrend() {
     const currentTrend = await lib.checkTrendEMA(smallLimit, largeLimit);
-    if (!lastTrend) {
-        lastTrend = currentTrend;
-    }
     console.log(`lastTrend: ${lastTrend}`)
     console.log(`currentTrend: ${currentTrend}`)
     if (lastTrend != currentTrend) { // thị trường đảo chiều; 2 EMA cắt nhau
@@ -71,7 +68,7 @@ async function checkChangeTrend() {
         } else {
             order.side = 'SELL';
         }
-        await lib.placeOrder(order);
+        await lib.placeOrder(order, lastTrend, currentTrend);
     }
 }
 

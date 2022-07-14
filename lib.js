@@ -12,11 +12,7 @@ const binance = new Binance().options({
 const { Telegraf } = require('telegraf');
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
-// bot.start((ctx) => ctx.reply('Welcome'))
-// bot.help((ctx) => ctx.reply('Send me a sticker'))
-// bot.on('sticker', (ctx) => ctx.reply('👍'))
-// bot.hears('hi', (ctx) => ctx.reply('Hey there'))
-// bot.launch()
+
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'))
@@ -41,8 +37,9 @@ async function ws_stream(handler) {
     ws.on('message', handler);
 }
 
-async function placeOrder({side, symbol, quantity}) {
-    let message = `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
+async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
+    let message = `lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
+        + `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
     console.log(message);
     await bot.telegram.sendMessage(-678761537,message);
 
