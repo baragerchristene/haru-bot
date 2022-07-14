@@ -41,7 +41,7 @@ async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
     let message = `lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
         + `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
     console.log(message);
-    await bot.telegram.sendMessage(-678761537,message);
+    await bot.telegram.sendMessage(-678761537, message);
 
 
     // let order = {
@@ -56,7 +56,7 @@ async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
 }
 
 async function sendMessage(message) {
-    await bot.telegram.sendMessage(-699111572, message);
+    await bot.telegram.sendMessage(-1001750754749, message);
 }
 
 module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage };
