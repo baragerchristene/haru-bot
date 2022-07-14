@@ -60,4 +60,8 @@ async function sendMessage(message) {
     await bot.telegram.sendMessage(prv_id, message);
 }
 
-module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage };
+async function sendServerStatus() {
+    await bot.telegram.sendMessage(test_id, 'server_status: UP');
+}
+
+module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage, sendServerStatus };
