@@ -38,7 +38,7 @@ async function messageHandler(message) {
     let isCandleClosed = _.get(result, 'k.x');
     if (isCandleClosed) {
         console.log(`Highest: ${result.k.h}; Lowest: ${result.k.l}; OpenTime: ${moment(result.k.t).format('DD/MM/yyyy HH:mm')}`);
-        await lib.sendMessage(`Highest: ${result.k.h}; Lowest: ${result.k.l}; OpenTime: ${moment(result.k.t).format('DD/MM/yyyy HH:mm')}`)
+        await lib.sendMessage(`H: ${result.k.h}; L: ${result.k.l}; OpenTime: ${moment(result.k.t).format('DD/MM/yyyy HH:mm')}`)
         await checkChangeTrend();
     }
 }
