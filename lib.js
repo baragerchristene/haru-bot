@@ -35,12 +35,12 @@ async function checkTrendEMA(smallLimit, largeLimit) {
 }
 
 async function ws_stream(handler) {
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
+    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1h');
     ws.on('message', handler);
 }
 
 async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
-    let message = `lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
+    let message = `🟢 lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
         + `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
     console.log(message);
     await sendMessage(message);
@@ -57,7 +57,7 @@ async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
 }
 
 async function sendMessage(message) {
-    await bot.telegram.sendMessage(test_id, message);
+    await bot.telegram.sendMessage(prv_id, message);
 }
 
 module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage };
