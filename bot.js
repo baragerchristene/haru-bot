@@ -57,7 +57,6 @@ async function checkChangeTrend() {
     console.log(`lastTrend: ${lastTrend}`)
     console.log(`currentTrend: ${currentTrend}`)
     if (lastTrend != currentTrend) { // thị trường đảo chiều; 2 EMA cắt nhau
-        lastTrend = currentTrend;
         // check have existent position, if yes then close it;
         // todo close position
         // place a market order
@@ -69,6 +68,7 @@ async function checkChangeTrend() {
             order.side = 'SELL';
         }
         await lib.placeOrder(order, lastTrend, currentTrend);
+        lastTrend = currentTrend;
     }
 }
 
