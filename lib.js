@@ -22,7 +22,7 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
 async function checkTrendEMA(smallLimit, largeLimit) {
     const latestSRCandles = await binance.futuresCandles('BTCUSDT', '1h', {limit: largeLimit});
-    const latestTradeCandles = _.slice(latestSRCandles, 0, smallLimit)
+    const latestTradeCandles = _.slice(latestSRCandles, largeLimit - smallLimit, largeLimit)
 
     const emaTrade = _.reduce(latestTradeCandles, (result, value) => {
         result += _.toNumber(_.nth(value, 4)); return result;
