@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@d3fc/d3fc-technical-indicator": "^8.1.0",
+    "@paris0120/talib.js": "^0.0.11",
     "ccxt": "^1.88.65",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.0.1",
@@ -18,7 +20,10 @@
     "lodash": "^4.17.21",
     "moment": "^2.29.3",
     "node-binance-api": "^0.13.1",
+    "node-fetch": "^2.6.7",
+    "technicalindicators": "^3.1.0",
     "telegraf": "^4.8.5",
+    "trading-indicator": "^1.0.8",
     "ws": "^8.8.0"
   },
   "engines": {
