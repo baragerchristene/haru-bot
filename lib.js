@@ -73,7 +73,7 @@ async function sendServerStatus() {
 function keepAliveServer() {
     setInterval(function () {
         fetch("https://haru-vip-vn.herokuapp.com/ping").then(r => {});
-    }, 60000);
+    }, 1680000);
 }
 
 module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage, sendServerStatus, keepAliveServer };
