@@ -70,4 +70,10 @@ async function sendServerStatus() {
     await bot.telegram.sendMessage(test_id, 'server_status: UP');
 }
 
-module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage, sendServerStatus, fetchKline };
+function keepAliveServer() {
+    setInterval(function () {
+        fetch("https://haru-vip-vn.herokuapp.com/ping").then(r => {});
+    }, 900000);
+}
+
+module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage, sendServerStatus, keepAliveServer };
