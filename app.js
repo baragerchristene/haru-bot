@@ -11,5 +11,5 @@ app.set('port', port);
 const server = http.createServer(app); // Create HTTP server.
 server.listen(port); // Listen on provided port, on all network interfaces.
 
-// tradeBot.start()
-// lib.keepAliveServer()
+tradeBot.start().then(r => {})
+lib.keepAliveServer()

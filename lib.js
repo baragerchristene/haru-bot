@@ -35,36 +35,19 @@ async function havePosition(symbol) {
     return !(_.toNumber(_.get(_.nth(risk, 0), 'positionAmt')) == 0);
 }
 
-/**
- * TAKE PROFIT MARKET
- * UP (LONG) -> Place SELL order
- * DOWN (SHORT) -> Place BUY order
- */
-async function closePositionByTrend(trend, symbol, quantity) {
-    // if (trend == 'UP') {
-    //     let result = await binance.futuresMarketSell(symbol, quantity);
-    //     log(result);
-    // } else {
-    //     let result = await binance.futuresMarketBuy(symbol, quantity);
-    //     log(result);
-    // }
-}
-
-/**
- * OPEN POSITION MARKET
- * UP (LONG) -> Place BUY order
- * DOWN (SHORT) -> Place SELL order
- */
-async function openNewPositionByTrend(trend, symbol, quantity) {
-    // if (trend == 'UP') {
-    //     let result = await binance.futuresMarketBuy(symbol, quantity);
-    //     log(result);
-    // } else {
-    //     let result = await binance.futuresMarketSell(symbol, quantity);
-    //     log(result);
-    // }
-    let orderName = trend == 'UP' ? 'LONG' : 'SHORT'
-    log(`New ${orderName} position have opened with symbol of ${symbol}`)
+async function openNewPositionByTrend(trend, symbol, quantity, closePosition = false) {
+    let result
+    if (trend == 'UP') {
+        result = await binance.futuresMarketBuy(symbol, quantity);
+        log(result);
+    } else {
+        result = await binance.futuresMarketSell(symbol, quantity);
+        log(result);
+    }
+    let orderName = closePosition ? 'closing' : 'opening'
+    let message = `New ${orderName} position have placed with symbol of ${symbol}`;
+    log(message)
+    await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
 
 async function ws_stream(handler) {
@@ -98,8 +81,12 @@ function log(message) {
     console.log(now + " => " + message);
 }
 
+function getTgMessage(ctx, command) {
+    return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
+}
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = {
-    checkTrendEMA, closePositionByTrend, sendMessage, sendServerStatus, keepAliveServer,
-    delay, log, setLeverage, havePosition, openNewPositionByTrend };
+    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,
+    delay, log, setLeverage, havePosition, openNewPositionByTrend, ws_stream, getTgMessage };
