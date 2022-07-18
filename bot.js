@@ -16,8 +16,8 @@ let frame = '1h';
 
 async function start() {
     log('server started');
-    await init();
-    await lib.ws_stream(messageHandler)
+//     await init();
+//     await lib.ws_stream(messageHandler)
 }
 
 async function messageHandler(message) {
