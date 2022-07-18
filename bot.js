@@ -11,45 +11,46 @@ let quantity = 0.001;
 let symbol = 'BTCUSDT';
 let smallLimit = 34;
 let largeLimit = 89;
-let running = false;
+let running = true;
 let frame = '1h';
 
 async function start() {
     log('server started');
     await init();
-    await lib.ws_stream(messageHandler)
-}
+    // scan job
+    setInterval(async () => {
+        if (!running) return;
+        running = false;
+        newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
+        let trendName = newTrend == 'UP' ? 'Uptrend' : 'Downtrend';
 
-async function messageHandler(message) {
-    if (!running) return;
+        if (newTrend == oldTrend) {
+            log(`Nothing changes, current trend of ${symbol} is ${trendName}.`)
+            running = true;
+            return;
+        }
+        // when trend break out(the current trend is different from last trend)
 
-    newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-    let trendName = newTrend == 'UP' ? 'Uptrend' : 'Downtrend';
+        // set leverage
+        const futuresLeverage = await lib.setLeverage(symbol, leverage);
+        log(JSON.stringify(futuresLeverage));
 
-    if (newTrend == oldTrend) {
-        log(`Nothing changes, current trend of ${symbol} is ${trendName}.`)
-        await lib.delay(1000);
-        return;
-    }
-    // when trend break out(the current trend is different from last trend)
+        // check the open position; if existed, close the old position first(old trend)
+        let haveOpenPosition = await lib.havePosition(symbol);
+        if (haveOpenPosition) { // close the open position
+            await lib.openNewPositionByTrend(newTrend, symbol, quantity, true);
+        }
 
-    // set leverage
-    const futuresLeverage = await lib.setLeverage(symbol, leverage);
-    log(JSON.stringify(futuresLeverage));
+        // place new order for the new trend
+        await lib.openNewPositionByTrend(newTrend, symbol, quantity);
 
-    // check the open position; if existed, close the old position first(old trend)
-    let haveOpenPosition = await lib.havePosition(symbol);
-    if (haveOpenPosition) { // close the open position
-        await lib.openNewPositionByTrend(newTrend, symbol, quantity, true);
-    }
-
-    // place new order for the new trend
-    await lib.openNewPositionByTrend(newTrend, symbol, quantity);
-
-    // update the latest trend
-    oldTrend = newTrend;
-    // rest time 1
-    await lib.delay(1000);
+        // update the latest trend
+        oldTrend = newTrend;
+        // rest time 1
+        setTimeout(() => {
+            running = true;
+        }, 10000)
+    }, 1000)
 }
 
 async function init() { // init the trend
@@ -84,15 +85,15 @@ async function telegramInit() {
     });
     tele.command('small', async (ctx) => {
         smallLimit = _.toNumber(getTgMessage(ctx, 'small'));
-        await lib.sendMessage(`new small ema limit is ${smallLimit}`);
+        await sendMessage(`new small ema limit is ${smallLimit}`);
     });
     tele.command('large', async (ctx) => {
         largeLimit = _.toNumber(getTgMessage(ctx, 'large'));
-        await lib.sendMessage(`new small ema limit is ${smallLimit}`);
+        await sendMessage(`new small ema limit is ${smallLimit}`);
     });
     tele.command('ema', async (ctx) => {
         let trend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-        await lib.sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend}`);
+        await sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend}`);
     });
 
     tele.command('reset', async (ctx) => {
@@ -102,7 +103,7 @@ async function telegramInit() {
         smallLimit = 34;
         largeLimit = 89;
         running = false;
-        await lib.sendMessage(`All values was reset to default!`);
+        await sendMessage(`All values was reset to default!`);
     });
 }
 
@@ -110,4 +111,4 @@ async function showValues() {
     await sendMessage(`Current value| symbol: ${symbol}; quantity: ${quantity}; leverage: ${leverage}; running: ${running}; smallEMA: ${smallLimit}; largeEMA: ${largeLimit}`);
 }
 
-module.exports = { start };
+module.exports = { start, running };
