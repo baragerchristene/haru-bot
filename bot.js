@@ -50,7 +50,7 @@ async function start() {
         setTimeout(() => {
             running = true;
         }, 10000)
-    }, 1000)
+    }, 500)
 }
 
 async function init() { // init the trend
