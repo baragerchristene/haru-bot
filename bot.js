@@ -111,4 +111,4 @@ async function showValues() {
     await sendMessage(`Current value| symbol: ${symbol}; quantity: ${quantity}; leverage: ${leverage}; running: ${running}; smallEMA: ${smallLimit}; largeEMA: ${largeLimit}`);
 }
 
-module.exports = { start, running };
+module.exports = { start };
