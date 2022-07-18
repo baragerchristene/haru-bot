@@ -1,10 +1,10 @@
 require('dotenv').config({ path: 'env/live.env' });
-const fetch = require("node-fetch");
+const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
+const fetch = require("node-fetch");
 const WebSocket = require("ws");
 const _ = require("lodash");
-const test_id = -1001750754749;
-const prv_id = -678761537;
+const tg = require('./telegram');
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -12,19 +12,11 @@ const binance = new Binance().options({
     // test: true
 });
 
-const { Telegraf } = require('telegraf');
-const EMA = require('technicalindicators').EMA
+const moment = require("moment");
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
-
-
-// Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'))
-process.once('SIGTERM', () => bot.stop('SIGTERM'))
-
-async function checkTrendEMA(smallLimit, largeLimit) {
-    const latestTradeCandles = await binance.futuresCandles('BTCUSDT', '1h', {limit: 1500});
-    let values = _.reduce(latestTradeCandles, (result, value) => {
+async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
+    const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
+    let values = _.reduce(latestCandles, (result, value) => {
         result.push(_.toNumber(_.nth(value, 4))); return result;
         }, [])
     let emaTrades = EMA.calculate({period : smallLimit, values : values});
@@ -32,6 +24,47 @@ async function checkTrendEMA(smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
+}
+
+async function setLeverage(symbol, leverage) {
+    return await binance.futuresLeverage(symbol, leverage);
+}
+
+async function havePosition(symbol) {
+    const risk = await binance.futuresPositionRisk({ symbol });
+    return !(_.toNumber(_.get(_.nth(risk, 0), 'positionAmt')) == 0);
+}
+
+/**
+ * TAKE PROFIT MARKET
+ * UP (LONG) -> Place SELL order
+ * DOWN (SHORT) -> Place BUY order
+ */
+async function closePositionByTrend(trend, symbol, quantity) {
+    // if (trend == 'UP') {
+    //     let result = await binance.futuresMarketSell(symbol, quantity);
+    //     log(result);
+    // } else {
+    //     let result = await binance.futuresMarketBuy(symbol, quantity);
+    //     log(result);
+    // }
+}
+
+/**
+ * OPEN POSITION MARKET
+ * UP (LONG) -> Place BUY order
+ * DOWN (SHORT) -> Place SELL order
+ */
+async function openNewPositionByTrend(trend, symbol, quantity) {
+    // if (trend == 'UP') {
+    //     let result = await binance.futuresMarketBuy(symbol, quantity);
+    //     log(result);
+    // } else {
+    //     let result = await binance.futuresMarketSell(symbol, quantity);
+    //     log(result);
+    // }
+    let orderName = trend == 'UP' ? 'LONG' : 'SHORT'
+    log(`New ${orderName} position have opened with symbol of ${symbol}`)
 }
 
 async function ws_stream(handler) {
@@ -45,29 +78,13 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
     return await response.json();
 }
 
-async function placeOrder({side, symbol, quantity}, lastTrend, currentTrend) {
-    let message = `🟢 lastTrend: ${lastTrend} | ` + `currentTrend: ${currentTrend}` + '\n'
-        + `Place order ${side} with symbol: ${symbol} and quantity ${quantity}`;
-    console.log(message);
-    await sendMessage(message);
-
-    // let order = {
-    //     symbol: symbol,
-    //     quantity: quantity,
-    // }
-    // if (side == 'BUY') {
-    //     await binance.futuresMarketBuy(order);
-    // } else {
-    //     await binance.futuresMarketSell(order);
-    // }
-}
 
 async function sendMessage(message) {
-    await bot.telegram.sendMessage(prv_id, message);
+    await tg.sendMessage(message);
 }
 
 async function sendServerStatus() {
-    await bot.telegram.sendMessage(test_id, 'server_status: UP');
+    await tg.sendServerStatus();
 }
 
 function keepAliveServer() {
@@ -76,4 +93,13 @@ function keepAliveServer() {
     }, 1740000);
 }
 
-module.exports = { checkTrendEMA, ws_stream, placeOrder, sendMessage, sendServerStatus, keepAliveServer };
+function log(message) {
+    const now = moment().format("DD/MM/YYYY HH:mm:ss");
+    console.log(now + " => " + message);
+}
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+module.exports = {
+    checkTrendEMA, closePositionByTrend, sendMessage, sendServerStatus, keepAliveServer,
+    delay, log, setLeverage, havePosition, openNewPositionByTrend };
