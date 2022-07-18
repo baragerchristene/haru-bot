@@ -22,10 +22,8 @@ async function start() {
         if (!running) return;
         running = false;
         newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-        let trendName = newTrend == 'UP' ? 'Uptrend' : 'Downtrend';
 
         if (newTrend == oldTrend) {
-            log(`Nothing changes, current trend of ${symbol} is ${trendName}.`)
             running = true;
             return;
         }
@@ -93,7 +91,7 @@ async function telegramInit() {
     });
     tele.command('ema', async (ctx) => {
         let trend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-        await sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend}`);
+        await sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend == 'UP' ? 'Uptrend' : 'Downtrend'}`);
     });
 
     tele.command('reset', async (ctx) => {
