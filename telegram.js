@@ -17,7 +17,7 @@ async function sendMessage(message) {
 }
 
 async function sendServerStatus() {
-    await bot.telegram.sendMessage(prv_id, 'server_status: ✔️');
+    await bot.telegram.sendMessage(prv_id, 'server_status:🚀');
 }
 
 
