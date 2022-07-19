@@ -32,7 +32,7 @@ async function setLeverage(symbol, leverage) {
 
 async function havePosition(symbol) {
     const risk = await binance.futuresPositionRisk({ symbol });
-    return !(_.toNumber(_.get(_.nth(risk, 0), 'positionAmt')) == 0);
+    return Math.abs(_.get(_.nth(risk, 0), 'positionAmt'));
 }
 
 async function openNewPositionByTrend(trend, symbol, quantity, closePosition = false) {

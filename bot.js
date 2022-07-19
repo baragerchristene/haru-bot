@@ -34,9 +34,9 @@ async function start() {
         log(JSON.stringify(futuresLeverage));
 
         // check the open position; if existed, close the old position first(old trend)
-        let haveOpenPosition = await lib.havePosition(symbol);
-        if (haveOpenPosition) { // close the open position
-            await lib.openNewPositionByTrend(newTrend, symbol, quantity, true);
+        let positionAmt = await lib.havePosition(symbol);
+        if (positionAmt != 0) { // close the open position
+            await lib.openNewPositionByTrend(newTrend, symbol, positionAmt, true);
         }
 
         // place new order for the new trend
