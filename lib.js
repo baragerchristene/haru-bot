@@ -78,7 +78,7 @@ function keepAliveServer() {
 
 function log(message) {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
-    console.log(now + " => " + message);
+    console.log(now + " => " + JSON.stringify(message));
 }
 
 function getTgMessage(ctx, command) {
