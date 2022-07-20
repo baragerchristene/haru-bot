@@ -38,10 +38,10 @@ async function havePosition(symbol) {
 async function openNewPositionByTrend(trend, symbol, quantity, closePosition = false) {
     let result
     if (trend == 'UP') {
-        result = await binance.futuresMarketBuy(symbol, quantity);
+        result = await binance.futuresMarketBuy(symbol, quantity, {reduceOnly: closePosition});
         log(result);
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity);
+        result = await binance.futuresMarketSell(symbol, quantity, {reduceOnly: closePosition});
         log(result);
     }
     let orderName = closePosition ? 'closing' : 'opening'
