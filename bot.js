@@ -12,7 +12,7 @@ let symbol = 'BTCUSDT';
 let smallLimit = 34;
 let largeLimit = 89;
 let running = true;
-let frame = '1h';
+let frame = '1m';
 
 async function start() {
     log('server started');
@@ -30,8 +30,8 @@ async function start() {
         // when trend break out(the current trend is different from last trend)
 
         // set leverage
-        const futuresLeverage = await lib.setLeverage(symbol, leverage);
-        log(JSON.stringify(futuresLeverage));
+        // const futuresLeverage = await lib.setLeverage(symbol, leverage);
+        // log(JSON.stringify(futuresLeverage));
 
         // check the open position; if existed, close the old position first(old trend)
         let positionAmt = await lib.havePosition(symbol);
@@ -69,6 +69,12 @@ async function telegramInit() {
         quantity = _.toNumber(value);
         sendMessage(`New quantity is ${quantity}`);
     });
+    tele.command('f', async (ctx) => {
+        frame = getTgMessage(ctx, 'f');
+        newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
+        oldTrend = newTrend;
+        await sendMessage(`New frame is ${frame}`);
+    });
     tele.command('l', (ctx) => {
         let value = getTgMessage(ctx, 'l');
         leverage = _.toNumber(value);
@@ -98,6 +104,7 @@ async function telegramInit() {
         leverage = 20;
         quantity = 0.001;
         symbol = 'BTCUSDT';
+        frame = '1h';
         smallLimit = 34;
         largeLimit = 89;
         running = false;
@@ -106,7 +113,7 @@ async function telegramInit() {
 }
 
 async function showValues() {
-    await sendMessage(`Current value| symbol: ${symbol}; quantity: ${quantity}; leverage: ${leverage}; running: ${running}; smallEMA: ${smallLimit}; largeEMA: ${largeLimit}`);
+    await sendMessage(`Values: | symbol: ${symbol}; quantity: ${quantity}; leverage: ${leverage}; frame: ${frame}; smallEMA: ${smallLimit}; largeEMA: ${largeLimit}; running: ${running}`);
 }
 
 module.exports = { start };
