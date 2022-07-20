@@ -12,7 +12,7 @@ let symbol = 'BTCUSDT';
 let smallLimit = 34;
 let largeLimit = 89;
 let running = true;
-let frame = '1m';
+let frame = '1h';
 
 async function start() {
     log('server started');
