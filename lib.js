@@ -38,10 +38,10 @@ async function havePosition(symbol) {
 async function closePositionByTrend(trend, symbol, quantity) {
     let result
     if (trend == 'UP') {
-        result = await binance.futuresMarketBuy(symbol, quantity, {reduceOnly: true});
+        result = await binance.futuresMarketBuy(symbol, quantity);
         log(result);
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity, {reduceOnly: true});
+        result = await binance.futuresMarketSell(symbol, quantity);
         log(result);
     }
     let message = `New closing position have placed with symbol of ${symbol}`;
@@ -52,10 +52,10 @@ async function closePositionByTrend(trend, symbol, quantity) {
 async function openNewPositionByTrend(trend, symbol, quantity) {
     let result
     if (trend == 'UP') {
-        result = await binance.futuresMarketSell(symbol, quantity);
+        result = await binance.futuresMarketBuy(symbol, quantity);
         log(result);
     } else {
-        result = await binance.futuresMarketBuy(symbol, quantity);
+        result = await binance.futuresMarketSell(symbol, quantity);
         log(result);
     }
     let message = `New opening position have placed with symbol of ${symbol}`;
