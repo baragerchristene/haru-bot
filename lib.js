@@ -35,17 +35,30 @@ async function havePosition(symbol) {
     return Math.abs(_.get(_.nth(risk, 0), 'positionAmt'));
 }
 
-async function openNewPositionByTrend(trend, symbol, quantity, closePosition = false) {
+async function closePositionByTrend(trend, symbol, quantity) {
     let result
     if (trend == 'UP') {
-        result = await binance.futuresMarketBuy(symbol, quantity, {reduceOnly: closePosition});
+        result = await binance.futuresMarketBuy(symbol, quantity, {reduceOnly: true});
         log(result);
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity, {reduceOnly: closePosition});
+        result = await binance.futuresMarketSell(symbol, quantity, {reduceOnly: true});
         log(result);
     }
-    let orderName = closePosition ? 'closing' : 'opening'
-    let message = `New ${orderName} position have placed with symbol of ${symbol}`;
+    let message = `New closing position have placed with symbol of ${symbol}`;
+    log(message)
+    await sendMessage(`${message}: ${JSON.stringify(result)}`);
+}
+
+async function openNewPositionByTrend(trend, symbol, quantity) {
+    let result
+    if (trend == 'UP') {
+        result = await binance.futuresMarketSell(symbol, quantity);
+        log(result);
+    } else {
+        result = await binance.futuresMarketBuy(symbol, quantity);
+        log(result);
+    }
+    let message = `New opening position have placed with symbol of ${symbol}`;
     log(message)
     await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
@@ -88,5 +101,5 @@ function getTgMessage(ctx, command) {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = {
-    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,
+    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer, closePositionByTrend,
     delay, log, setLeverage, havePosition, openNewPositionByTrend, ws_stream, getTgMessage };

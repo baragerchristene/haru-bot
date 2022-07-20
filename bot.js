@@ -36,7 +36,7 @@ async function start() {
         // check the open position; if existed, close the old position first(old trend)
         let positionAmt = await lib.havePosition(symbol);
         if (positionAmt != 0) { // close the open position
-            await lib.openNewPositionByTrend(newTrend, symbol, positionAmt, true);
+            await lib.closePositionByTrend(newTrend, symbol, positionAmt);
         }
 
         // place new order for the new trend
