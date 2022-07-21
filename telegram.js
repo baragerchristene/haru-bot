@@ -1,7 +1,6 @@
 const {Telegraf} = require("telegraf");
 const bot = new Telegraf(process.env.BOT_TOKEN);
-const test_id = -1001750754749;
-const prv_id = -1001777192449;
+const group_id = process.env.GROUP_ID;
 
 bot.start((ctx) => ctx.reply('Welcome'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
@@ -13,11 +12,11 @@ process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
 async function sendMessage(message) {
-    await bot.telegram.sendMessage(prv_id, message);
+    await bot.telegram.sendMessage(group_id, message);
 }
 
 async function sendServerStatus() {
-    await bot.telegram.sendMessage(prv_id, 'server_status:🚀');
+    await bot.telegram.sendMessage(group_id, 'server_status:🚀');
 }
 
 
