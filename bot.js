@@ -84,7 +84,7 @@ async function telegramInit() {
         running = getTgMessage(ctx, 'run') == '1';
         sendMessage(`BOT: ${running == '1' ? 'ON': 'OFF'}`);
     });
-    tele.command('status', (ctx) => {
+    tele.command('status', (_ctx) => {
         showValues();
     });
     tele.command('small', async (ctx) => {
@@ -95,12 +95,12 @@ async function telegramInit() {
         largeLimit = _.toNumber(getTgMessage(ctx, 'large'));
         await sendMessage(`new small ema limit is ${smallLimit}`);
     });
-    tele.command('ema', async (ctx) => {
+    tele.command('ema', async (_ctx) => {
         let trend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
         await sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend == 'UP' ? 'Uptrend' : 'Downtrend'}`);
     });
 
-    tele.command('reset', async (ctx) => {
+    tele.command('reset', async (_ctx) => {
         leverage = 20;
         quantity = 0.001;
         symbol = 'BTCUSDT';

@@ -3,8 +3,8 @@ var router = express.Router();
 const lib = require("./lib");
 
 /* GET home page. */
-router.get('/ping', function(req, res, next) {
-  lib.sendServerStatus().then(r => {});
+router.get('/ping', function(_req, res, _next) {
+  lib.sendServerStatus().then(_r => {});
   res.json({message: 'pong'});
 });
 

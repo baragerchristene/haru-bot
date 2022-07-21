@@ -74,7 +74,6 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
     return await response.json();
 }
 
-
 async function sendMessage(message) {
     await tg.sendMessage(message);
 }
@@ -85,7 +84,7 @@ async function sendServerStatus() {
 
 function keepAliveServer() {
     setInterval(function () {
-        fetch("https://haru-vip-vn.herokuapp.com/ping").then(r => {});
+        fetch(process.env.PING_URL).then(_r => {});
     }, 1740000);
 }
 
