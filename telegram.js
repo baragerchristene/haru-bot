@@ -1,7 +1,7 @@
 const {Telegraf} = require("telegraf");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const test_id = -1001750754749;
-const prv_id = -678761537;
+const prv_id = -1001777192449;
 
 bot.start((ctx) => ctx.reply('Welcome'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
