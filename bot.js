@@ -7,7 +7,7 @@ const sendMessage = lib.sendMessage;
 
 let oldTrend; let newTrend;
 let leverage = 20;
-let quantity = 0.001;
+let quantity = 0.01;
 let symbol = 'BTCUSDT';
 let smallLimit = 34;
 let largeLimit = 89;
@@ -102,7 +102,7 @@ async function telegramInit() {
 
     tele.command('reset', async (_ctx) => {
         leverage = 20;
-        quantity = 0.001;
+        quantity = 0.01;
         symbol = 'BTCUSDT';
         frame = '1h';
         smallLimit = 34;
