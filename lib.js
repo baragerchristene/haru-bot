@@ -85,7 +85,7 @@ async function sendServerStatus() {
 function keepAliveServer() {
     setInterval(function () {
         fetch(process.env.PING_URL).then(_r => {});
-    }, 1740000);
+    }, 1680000);
 }
 
 function log(message) {
