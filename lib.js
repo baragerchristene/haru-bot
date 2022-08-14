@@ -5,6 +5,7 @@ const fetch = require("node-fetch");
 const WebSocket = require("ws");
 const _ = require("lodash");
 const tg = require('./telegram');
+const fs = require('fs');
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -30,23 +31,32 @@ async function setLeverage(symbol, leverage) {
     return await binance.futuresLeverage(symbol, leverage);
 }
 
-async function havePosition(symbol) {
+async function fetchPositions(symbol = '') {
     const risk = await binance.futuresPositionRisk({ symbol });
-    return Math.abs(_.get(_.nth(risk, 0), 'positionAmt'));
+    return _.filter(risk, (p) => { return p.positionAmt != 0})
 }
 
-async function closePositionByTrend(trend, symbol, quantity) {
+async function closePositionByType(type, symbol, quantity, close) {
     let result
-    if (trend == 'UP') {
+    if (type == 'LONG') {
+        result = await binance.futuresMarketSell(symbol, quantity);
+        log(result, `Đóng vị thế ${type}`);
+    } else {
         result = await binance.futuresMarketBuy(symbol, quantity);
-        log(result);
+        log(result, `Đóng vị thế ${type}`);
+    }
+    // await sendMessage(`${message}: ${JSON.stringify(result)}`);
+}
+
+async function dcaPositionByType(type, symbol, quantity) {
+    let result
+    if (type == 'LONG') {
+        result = await binance.futuresMarketBuy(symbol, quantity);
+        log(result, `DCA vị thế ${type}`);
     } else {
         result = await binance.futuresMarketSell(symbol, quantity);
-        log(result);
+        log(result, `DCA vị thế ${type}`);
     }
-    let message = `New closing position have placed with symbol of ${symbol}`;
-    log(message)
-    await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
 
 async function openNewPositionByTrend(trend, symbol, quantity) {
@@ -88,17 +98,94 @@ function keepAliveServer() {
     }, 1680000);
 }
 
-function log(message) {
-    const now = moment().format("DD/MM/YYYY HH:mm:ss");
-    console.log(now + " => " + JSON.stringify(message));
-}
 
 function getTgMessage(ctx, command) {
     return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
-
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
+async function fetchCopyPositions(leaderId) {
+    let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
+    const baseResponse = await fetch(url);
+    const response = await baseResponse.json();
+    if (response.success) {
+        const coinTrades = await read('coin');
+        const favPositions = _.filter(response.data, (position) => {
+            let sameCoin = _.some(coinTrades, (coin) => {return coin.symbol == position.symbol});
+            if (sameCoin) return position
+        })
+        return favPositions;
+    } else {
+        log('Fail to fetch lead position')
+        return [];
+    }
+}
+
+function read(file= 'db') {
+    try {
+        const data = fs.readFileSync(`./${file}.json`, 'utf8');
+        // parse JSON string to JSON object
+        return JSON.parse(data);
+    } catch (err) {
+        log(`Error reading file from disk: ${err}`);
+    }
+}
+
+function write(data, file = 'db') {
+    try {
+        // convert JSON object to a string
+        const raw = JSON.stringify(data, null, 4);
+        // write file to disk
+        fs.writeFileSync(`./${file}.json`, raw, 'utf8');
+        if (!_.isEmpty(data)) {
+            log(data, `File is written successfully!`);
+        }
+    } catch (err) {
+        log(`Error writing file: ${err}`);
+    }
+}
+
+function log(data, name) {
+    const now = moment().format("DD/MM/YYYY HH:mm:ss");
+    const message = `${now} => ${name} `+ JSON.stringify(data) + '\n';
+    var stream = fs.createWriteStream("log.txt", {flags:'a'});
+    stream.write(message);
+    stream.end();
+}
+
+async function detectPosition() {
+    // lấy all vị thế đang có của người dùng
+    const myRawPositions = await fetchPositions();
+    // lấy danh sách coin muốn trade
+    const coinTrades = await read('coin');
+    return _.filter(myRawPositions, (position) => {
+        let symbolValues = _.find(coinTrades, {symbol: position.symbol});
+        if (!_.isEmpty(symbolValues)) {
+            position.isCopy = symbolValues.isCopy;
+        }
+        return position;
+    })
+}
+
+async function setActiveSymbol(symbol, active) {
+    let coinTrades = await read('coin');
+    _.filter(coinTrades, (coin) => {
+        if (coin.symbol == symbol) {
+            coin.isCopy = active;
+        }
+        return coin
+    })
+    write(coinTrades, 'coin')
+}
+
+
 module.exports = {
-    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer, closePositionByTrend,
-    delay, log, setLeverage, havePosition, openNewPositionByTrend, ws_stream, getTgMessage };
+    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,setActiveSymbol,
+    fetchCopyPositions, read,write, detectPosition, closePositionByType,dcaPositionByType,
+    delay, log, setLeverage, fetchPositions, openNewPositionByTrend, ws_stream, getTgMessage };
+
+/**
+ * Các trạng thái của danh sách coin
+ * W: đang chờ mở vị thế
+ * I: đang chờ lệnh DCA, cắt lời, lỗ
+ */

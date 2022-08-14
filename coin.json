@@ -1,0 +1,22 @@
+[
+    {
+        "symbol": "BTCUSDT",
+        "minAmt": 0.001,
+        "isCopy": false
+    },
+    {
+        "symbol": "FLOWUSDT",
+        "minAmt": 2,
+        "isCopy": false
+    },
+    {
+        "symbol": "FLMUSDT",
+        "minAmt": 26,
+        "isCopy": false
+    },
+    {
+        "symbol": "AVAXUSDT",
+        "minAmt": 1,
+        "isCopy": false
+    }
+]
