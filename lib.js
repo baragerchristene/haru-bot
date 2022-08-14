@@ -4,7 +4,7 @@ const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
 const WebSocket = require("ws");
 const _ = require("lodash");
-const tg = require('./telegram');
+// const tg = require('./telegram');
 const fs = require('fs');
 
 const binance = new Binance().options({
@@ -84,12 +84,17 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
     return await response.json();
 }
 
+//
+
 async function sendMessage(message) {
-    await tg.sendMessage(message);
+    let encode = JSON.stringify(message)
+    let url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.GROUP_ID}&text=${encode}`;
+    const response = await fetch(url);
+    return await response.json();
 }
 
 async function sendServerStatus() {
-    await tg.sendServerStatus();
+    // await tg.sendServerStatus();
 }
 
 function keepAliveServer() {
@@ -137,9 +142,6 @@ function write(data, file = 'db') {
         const raw = JSON.stringify(data, null, 4);
         // write file to disk
         fs.writeFileSync(`./${file}.json`, raw, 'utf8');
-        if (!_.isEmpty(data)) {
-            log(data, `File is written successfully!`);
-        }
     } catch (err) {
         log(`Error writing file: ${err}`);
     }

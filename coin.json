@@ -5,6 +5,11 @@
         "isCopy": false
     },
     {
+        "symbol": "ETHUSDT",
+        "minAmt": 0.005,
+        "isCopy": false
+    },
+    {
         "symbol": "FLOWUSDT",
         "minAmt": 2,
         "isCopy": false
@@ -17,6 +22,11 @@
     {
         "symbol": "AVAXUSDT",
         "minAmt": 1,
+        "isCopy": false
+    },
+    {
+        "symbol": "SANDUSDT",
+        "minAmt": 4,
         "isCopy": false
     }
 ]

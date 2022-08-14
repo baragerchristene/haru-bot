@@ -8,4 +8,18 @@ router.get('/ping', function (_req, res, _next) {
   res.end();
 });
 
+router.get('/coin', async function (_req, res, _next) {
+  const coin = await lib.read('coin');
+  await lib.sendMessage(coin)
+  res.json({message: 'ok'});
+  res.end();
+});
+
+router.get('/db', async function (_req, res, _next) {
+  const coin = await lib.read('db');
+  await lib.sendMessage(coin)
+  res.json({message: 'ok'});
+  res.end();
+});
+
 module.exports = router;
