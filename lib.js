@@ -107,6 +107,7 @@ function keepAliveServer() {
 function getTgMessage(ctx, command) {
     return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function fetchCopyPosition(leaderId) {
