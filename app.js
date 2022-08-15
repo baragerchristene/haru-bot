@@ -10,7 +10,7 @@ app.use(express.static('log'))
 app.set('port', port);
 const server = http.createServer(app); // Create HTTP server.
 server.listen(port); // Listen on provided port, on all network interfaces.
-
+process.env.UV_THREADPOOL_SIZE = 128;
 
 // tradeBot.start().then(_r => {})
 lib.keepAliveServer()
