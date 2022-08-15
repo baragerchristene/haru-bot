@@ -36,14 +36,14 @@ async function fetchPositions(symbol = '') {
     return _.filter(risk, (p) => { return p.positionAmt != 0})
 }
 
-async function closePositionByType(type, symbol, quantity, close) {
+async function closePositionByType(type, symbol, quantity, close = false) {
     let result
     if (type == 'LONG') {
         result = await binance.futuresMarketSell(symbol, quantity);
-        log(result, `Đóng vị thế ${type}`);
+        log(result, `${close ? 'Đóng': 'Cắt 1 phần'}  vị thế ${type}`);
     } else {
         result = await binance.futuresMarketBuy(symbol, quantity);
-        log(result, `Đóng vị thế ${type}`);
+        log(result, `${close ? 'Đóng': 'Cắt 1 phần'}  vị thế ${type}`);
     }
     // await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
@@ -109,20 +109,16 @@ function getTgMessage(ctx, command) {
 }
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-async function fetchCopyPositions(leaderId) {
+async function fetchCopyPosition(leaderId) {
     let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
     const baseResponse = await fetch(url);
     const response = await baseResponse.json();
     if (response.success) {
-        const coinTrades = await read('coin');
-        const favPositions = _.filter(response.data, (position) => {
-            let sameCoin = _.some(coinTrades, (coin) => {return coin.symbol == position.symbol});
-            if (sameCoin) return position
-        })
-        return favPositions;
+        const coinTrade = await read('coin');
+        return _.find(response.data, {symbol: coinTrade.symbol});
     } else {
         log('Fail to fetch lead position')
-        return [];
+        return {};
     }
 }
 
@@ -136,7 +132,7 @@ function read(file= 'db') {
     }
 }
 
-function write(data, file = 'db') {
+function write(data = {}, file = 'db') {
     try {
         // convert JSON object to a string
         const raw = JSON.stringify(data, null, 4);
@@ -147,7 +143,7 @@ function write(data, file = 'db') {
     }
 }
 
-function log(data, name) {
+function log(data, name= '') {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
     const message = `${now} => ${name} `+ JSON.stringify(data) + '\n';
     var stream = fs.createWriteStream("log.txt", {flags:'a'});
@@ -156,34 +152,27 @@ function log(data, name) {
 }
 
 async function detectPosition() {
-    // lấy all vị thế đang có của người dùng
-    const myRawPositions = await fetchPositions();
-    // lấy danh sách coin muốn trade
-    const coinTrades = await read('coin');
-    return _.filter(myRawPositions, (position) => {
-        let symbolValues = _.find(coinTrades, {symbol: position.symbol});
-        if (!_.isEmpty(symbolValues)) {
-            position.isCopy = symbolValues.isCopy;
-        }
+    const coin = await read('coin');
+    // lấy vị thế đang có của người dùng
+    const myRawPositions = await fetchPositions(coin.symbol);
+    // lấy vị thế
+    let position = _.nth(myRawPositions, 0);
+    if (position && position.positionAmt != 0) {
+        position.isCopy = coin.isCopy
         return position;
-    })
+    }
 }
 
 async function setActiveSymbol(symbol, active) {
-    let coinTrades = await read('coin');
-    _.filter(coinTrades, (coin) => {
-        if (coin.symbol == symbol) {
-            coin.isCopy = active;
-        }
-        return coin
-    })
-    write(coinTrades, 'coin')
+    let coin = await read('coin');
+    coin.isCopy = active;
+    write(coin, 'coin')
 }
 
 
 module.exports = {
     checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,setActiveSymbol,
-    fetchCopyPositions, read,write, detectPosition, closePositionByType,dcaPositionByType,
+    fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
     delay, log, setLeverage, fetchPositions, openNewPositionByTrend, ws_stream, getTgMessage };
 
 /**

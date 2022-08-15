@@ -1,18 +1,1 @@
-[
-    {
-        "id": "487255373_SANDUSDT_BOTH",
-        "symbol": "SANDUSDT",
-        "collateral": "USDT",
-        "markPrice": "1.3373",
-        "positionAmount": "-2666",
-        "entryPrice": "1.361227044261",
-        "unrealizedProfit": "63.78948864",
-        "leverage": 20,
-        "isolated": false,
-        "isolatedWallet": "0",
-        "isolatedMargin": "0",
-        "initialMargin": "178.26209",
-        "positionSide": "BOTH",
-        "contractSize": 0
-    }
-]
+{}

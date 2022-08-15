@@ -14,87 +14,73 @@ process.env.UV_THREADPOOL_SIZE = 128;
 
 // tradeBot.start().then(_r => {})
 lib.keepAliveServer()
+function countDecimals(value) {
+    if(Math.floor(value) === value) return 0;
+    return value.toString().split(".")[1].length || 0;
+}
 async function main() {
     await lib.sendMessage('bot started');
+    let first = true;
     while(true) {
         // lấy lịch sử vị thế lưu trong db
-        let leadPositionOlds = await lib.read();
+
+        let leadPositionOld = await lib.read();
 
         // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade
-
-        let leadPositions = await lib.fetchCopyPositions(process.env.COPY_ID);
-
-        // lưu lịch sử vị thế
-        if (_.isEmpty(leadPositionOlds)) {
-            leadPositionOlds = _.cloneDeep(leadPositions);
-        }
+        let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
 
         // xác định xem vị thế nào là copy
-        const myPositions = await lib.detectPosition();
+        const myPosition = await lib.detectPosition();
 
-        // trường hợp lead và user đều có vị thế
-        _.filter(myPositions, (position) => {
-            if (position.isCopy == true) { // chỉ xử lý những lệnh tự động copy
-                let leadPosition = _.find(leadPositions, {symbol: position.symbol});
-                let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
-
-                if (!leadPosition) { // vị thế lead đã đóng => cần đóng vị thế ngay và luôn
-                    let type = position.positionAmount > 0 ? 'LONG' : 'SHORT';
-                    // lib.closePositionByType(type, position.symbol, Math.abs(position.positionAmount))
-                } else {
-                    let type = leadPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
-                    let oldAmount = Math.abs(leadPositionOld.positionAmount);
-                    let amount = Math.abs(leadPosition.positionAmount);
-                    if (amount != oldAmount) {
-                        if (leadPositionOld.entryPrice == leadPosition.entryPrice) {
-                            //todo cắt lãi, lỗ 1 phần isCopy = true
-                            let amountChange = Math.abs(Math.abs(leadPositionOld.positionAmount) - Math.abs(position.positionAmount))
-                            // lib.closePositionByType(type, position.symbol, amountChange);
-                        } else { // DCA
-                            //todo DCA isCopy = true
-                            let markPrice = _.toNumber(leadPosition.markPrice);
-                            let oldEntry = _.toNumber(leadPositionOld.entryPrice);
-                            let newEntry = _.toNumber(leadPosition.entryPrice);
-                            let newVol = (oldAmount*(oldEntry - newEntry ))/(newEntry - markPrice)
-                            let amountChange = Math.abs(newVol).toFixed(2);
-                            // lib.dcaPositionByType(type, position.symbol, amountChange);
-                        }
+        // trường hợp lead và user đều có vị thế, và user đã copy vị thế từ trước
+        if (myPosition && myPosition.isCopy) {
+            if (_.isEmpty(leadPosition)) {
+                let type = position.positionAmount > 0 ? 'LONG' : 'SHORT';
+                // await lib.closePositionByType(type, position.symbol, Math.abs(myPosition.positionAmount), true)
+            } else {
+                let oldAmount = Math.abs(leadPositionOld.positionAmount);
+                let amount = Math.abs(leadPosition.positionAmount);
+                if (amount != oldAmount) {
+                    if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // cắt lãi, lỗ 1 phần
+                        let oldAmt = Math.abs(leadPositionOld.positionAmount);
+                        let newAmt = Math.abs(position.positionAmount);
+                        let amountChange = Math.abs(oldAmt - newAmt).toFixed(4)
+                        // await lib.closePositionByType(type, position.symbol, amountChange);
+                    } else { // DCA
+                        let markPrice = _.toNumber(leadPosition.markPrice);
+                        let oldEntry = _.toNumber(leadPositionOld.entryPrice);
+                        let newEntry = _.toNumber(leadPosition.entryPrice);
+                        let newVol = (oldAmount*(oldEntry - newEntry ))/(newEntry - markPrice)
+                        let amountChange = Math.abs(newVol).toFixed(4);
+                        // await lib.dcaPositionByType(type, position.symbol, amountChange);
                     }
-
                 }
             }
-        })
-
-
-
-        _.filter(leadPositions, async (position) => {
-            let leadVsUser = _.some(myPositions, (myPosition) => {
-                return !myPosition.isCopy && position.symbol == myPosition.symbol
-            })
-            // empty: lead có vị thế nhưng user thì không
-            if (!leadVsUser) {
-                //check tồn tại lệnh mới so với lệnh cũ, lệnh mới có mà lệnh cũ ko thì new order với isCopy = true
-                let newOrder = !_.some(leadPositionOlds, {symbol: position.symbol})
-                if (newOrder) {
+        } else { // user chưa có vị thế
+            if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) {
+                if (!first) {
                     console.log('new order');
-                    console.log(position);
-                    lib.log(position, 'new order')
-                    await lib.setActiveSymbol(position.symbol, true)
-                    await lib.sendMessage('new order' + JSON.stringify(position));
+                    console.log(leadPosition);
+                    lib.log(leadPosition, 'new order')
+                    await lib.setActiveSymbol(leadPosition.symbol, true)
+                    await lib.sendMessage('new order' + JSON.stringify(leadPosition));
+                } else {
+                    first = false
+                }
+
+            }
+
+            if (_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition) || !_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) {
+                const coinTrade = await lib.read('coin');
+                if (!coinTrade.isCopy) {
+                    await lib.setActiveSymbol(coinTrade.symbol, true)
                 }
             }
-        })
-        _.filter(leadPositionOlds, (position) => { //lệnh cũ có mà lệnh mới k có, đã đóng vị thế, set isCopy = truê
-            let newOrder = !_.some(leadPositions, {symbol: position.symbol});
-            if (newOrder) {
-                let index = _.indexOf(leadPositionOlds);
-                let oldP = _.cloneDeep(leadPositionOlds);
-                oldP.splice(index, 1)
-                lib.write(oldP);
-                lib.setActiveSymbol(position.symbol, true);
-            }
-        })
-        lib.write(leadPositions);
+
+        }
+        lib.write(leadPosition);
     }
 }
 main()
+
+
