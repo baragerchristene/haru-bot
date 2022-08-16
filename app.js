@@ -20,8 +20,8 @@ function countDecimals(value) {
 }
 async function main() {
     setInterval(async () => {
-        await lib.sendMessage(new Date().toISOString());
-    }, 5000)
+        lib.sendMessage(new Date().toISOString()).then(r => {});
+    }, 10000)
 
     // await lib.sendMessage('bot started');
     // let leadPosition1 = await lib.fetchCopyPosition(process.env.COPY_ID);
