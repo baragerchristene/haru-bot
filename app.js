@@ -13,13 +13,15 @@ server.listen(port); // Listen on provided port, on all network interfaces.
 process.env.UV_THREADPOOL_SIZE = 128;
 
 // tradeBot.start().then(_r => {})
-lib.keepAliveServer()
+// lib.keepAliveServer()
 function countDecimals(value) {
     if(Math.floor(value) === value) return 0;
     return value.toString().split(".")[1].length || 0;
 }
 async function main() {
     await lib.sendMessage('bot started');
+    let leadPosition1 = await lib.fetchCopyPosition(process.env.COPY_ID);
+    console.log(leadPosition1);
     let first = true;
     while(true) {
         // lấy lịch sử vị thế lưu trong db
