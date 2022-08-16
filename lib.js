@@ -40,10 +40,10 @@ async function closePositionByType(type, symbol, quantity, close = false) {
     let result
     if (type == 'LONG') {
         result = await binance.futuresMarketSell(symbol, quantity);
-        log(result, `${close ? 'Đóng': 'Cắt 1 phần'}  vị thế ${type}`);
+        await log(result, `${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     } else {
         result = await binance.futuresMarketBuy(symbol, quantity);
-        log(result, `${close ? 'Đóng': 'Cắt 1 phần'}  vị thế ${type}`);
+        await log(result, `${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     }
     // await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
@@ -52,10 +52,21 @@ async function dcaPositionByType(type, symbol, quantity) {
     let result
     if (type == 'LONG') {
         result = await binance.futuresMarketBuy(symbol, quantity);
-        log(result, `DCA vị thế ${type}`);
+        await log(result, `DCA vị thế ${type}`);
     } else {
         result = await binance.futuresMarketSell(symbol, quantity);
-        log(result, `DCA vị thế ${type}`);
+        await log(result, `DCA vị thế ${type}`);
+    }
+}
+
+async function openPositionByType(type, symbol, quantity) {
+    let result
+    if (type == 'LONG') {
+        result = await binance.futuresMarketBuy(symbol, quantity);
+        await log(result, `Mở vị thế ${type}`);
+    } else {
+        result = await binance.futuresMarketSell(symbol, quantity);
+        await log(result, `Mở vị thế ${type}`);
     }
 }
 
@@ -144,12 +155,10 @@ function write(data = {}, file = 'db') {
     }
 }
 
-function log(data, name= '') {
+async function log(data, name= '') {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
     const message = `${now} => ${name} `+ JSON.stringify(data) + '\n';
-    var stream = fs.createWriteStream("log.txt", {flags:'a'});
-    stream.write(message);
-    stream.end();
+    await sendMessage(message);
 }
 
 async function detectPosition() {
@@ -172,7 +181,7 @@ async function setActiveSymbol(symbol, active) {
 
 
 module.exports = {
-    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,setActiveSymbol,
+    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,setActiveSymbol, openPositionByType,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
     delay, log, setLeverage, fetchPositions, openNewPositionByTrend, ws_stream, getTgMessage };
 
