@@ -37,51 +37,33 @@ async function fetchPositions(symbol = '') {
 }
 
 async function closePositionByType(type, symbol, quantity, close = false) {
-    let result
     if (type == 'LONG') {
-        result = await binance.futuresMarketSell(symbol, quantity);
-        await log(result, `${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
+        await binance.futuresMarketSell(symbol, quantity);
+        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     } else {
-        result = await binance.futuresMarketBuy(symbol, quantity);
-        await log(result, `${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
+        await binance.futuresMarketBuy(symbol, quantity);
+        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     }
-    // await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity) {
-    let result
     if (type == 'LONG') {
-        result = await binance.futuresMarketBuy(symbol, quantity);
-        await log(result, `DCA vị thế ${type}`);
+        await binance.futuresMarketBuy(symbol, quantity);
+        await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity}`);
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity);
-        await log(result, `DCA vị thế ${type}`);
+        await binance.futuresMarketSell(symbol, quantity);
+        await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity}`);
     }
 }
 
 async function openPositionByType(type, symbol, quantity) {
-    let result
     if (type == 'LONG') {
-        result = await binance.futuresMarketBuy(symbol, quantity);
-        await log(result, `Mở vị thế ${type}`);
+        await binance.futuresMarketBuy(symbol, quantity);
+        await log(`${symbol} Mở vị thế ${type}`);
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity);
-        await log(result, `Mở vị thế ${type}`);
+        await binance.futuresMarketSell(symbol, quantity);
+        await log(`${symbol} Mở vị thế ${type}`);
     }
-}
-
-async function openNewPositionByTrend(trend, symbol, quantity) {
-    let result
-    if (trend == 'UP') {
-        result = await binance.futuresMarketBuy(symbol, quantity);
-        log(result);
-    } else {
-        result = await binance.futuresMarketSell(symbol, quantity);
-        log(result);
-    }
-    let message = `New opening position have placed with symbol of ${symbol}`;
-    log(message)
-    await sendMessage(`${message}: ${JSON.stringify(result)}`);
 }
 
 async function ws_stream(handler) {
@@ -98,8 +80,7 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
 //
 
 async function sendMessage(message) {
-    let encode = JSON.stringify(message)
-    let url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.GROUP_ID}&text=${encode}`;
+    let url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.GROUP_ID}&text=${message}`;
     const response = await fetch(url);
     return await response.json();
 }
@@ -129,7 +110,7 @@ async function fetchCopyPosition(leaderId) {
         const coinTrade = await read('coin');
         return _.find(response.data, {symbol: coinTrade.symbol});
     } else {
-        log('Fail to fetch lead position')
+        await log('Fail to fetch lead position')
         return {};
     }
 }
@@ -155,10 +136,9 @@ function write(data = {}, file = 'db') {
     }
 }
 
-async function log(data, name= '') {
+async function log(message) {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
-    const message = `${now} => ${name} `+ JSON.stringify(data) + '\n';
-    await sendMessage(message);
+    await sendMessage(`${now} => ${message}`);
 }
 
 async function detectPosition() {
@@ -181,9 +161,9 @@ async function setActiveSymbol(symbol, active) {
 
 
 module.exports = {
-    checkTrendEMA, sendMessage, sendServerStatus, keepAliveServer,setActiveSymbol, openPositionByType,
+    sendMessage, setActiveSymbol, openPositionByType,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
-    delay, log, setLeverage, fetchPositions, openNewPositionByTrend, ws_stream, getTgMessage };
+    delay};
 
 /**
  * Các trạng thái của danh sách coin

@@ -17,10 +17,11 @@ function countDecimals(value) {
     return value.toString().split(".")[1].length || 0;
 }
 async function main() {
-    await lib.sendMessage('bot started');
     console.log(process.env.COPY_ID);
-    let leadPosition1 = await lib.fetchCopyPosition(process.env.COPY_ID);
-    console.log(leadPosition1);
+    let coinTrade = await lib.read('coin');
+    if (!coinTrade.isCopy) {
+        await lib.write({}); // nếu chưa copy lúc mở ban đầu phải xóa lịch sử
+    }
     let first = true;
     while(true) {
         // lấy lịch sử vị thế lưu trong db
@@ -73,7 +74,6 @@ async function main() {
                     let typeOpen = leadPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
                     await lib.openPositionByType(typeOpen, leadPosition.symbol, coinTrade.minAmt)
                     await lib.setActiveSymbol(leadPosition.symbol, true)
-                    await lib.sendMessage('new order' + JSON.stringify(leadPosition));
                 } else {
                     first = false
                 }
