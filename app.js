@@ -18,23 +18,19 @@ function countDecimals(value) {
 }
 async function main() {
     console.log(process.env.COPY_ID);
-    let coinTrade = await lib.read('coin');
-    if (!coinTrade.isCopy) {
+    let rawCoin = await lib.read('coin');
+    if (!rawCoin.isCopy) {
+        console.log('Đã xóa lịch sử')
         await lib.write({}); // nếu chưa copy lúc mở ban đầu phải xóa lịch sử
     }
-    let first = true;
-    while(true) {
+    for (let i = 0; true; i++) {
         // lấy lịch sử vị thế lưu trong db
-
         let leadPositionOld = await lib.read();
         let coinTrade = await lib.read('coin');
 
+
         // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade
         let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
-        if (leadPosition) {
-            console.log(leadPosition);
-        }
-
         // xác định xem vị thế nào là copy
         const myPosition = await lib.detectPosition();
 
@@ -70,16 +66,13 @@ async function main() {
                 }
             }
         } else { // user chưa có vị thế
-            if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) {
-                if (!first) {
-                    console.log('new order');
-                    console.log(leadPosition);
-                    let typeOpen = leadPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
-                    await lib.openPositionByType(typeOpen, leadPosition.symbol, coinTrade.minAmt)
-                    await lib.setActiveSymbol(leadPosition.symbol, true)
-                } else {
-                    first = false
-                }
+            if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition) && i > 0) {
+                console.log('new order');
+                console.log(leadPosition);
+                let typeOpen = leadPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
+                console.log(typeOpen);
+                await lib.openPositionByType(typeOpen, leadPosition.symbol, coinTrade.minAmt)
+                await lib.setActiveSymbol(leadPosition.symbol, true)
             }
             if (_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition) || !_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) {
                 if (!coinTrade.isCopy) {
