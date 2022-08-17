@@ -1,10 +1,10 @@
 require('dotenv').config({ path: 'env/live.env' });
+const {sendTeleMessage, bot} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
 const WebSocket = require("ws");
 const _ = require("lodash");
-// const tg = require('./telegram');
 const fs = require('fs');
 
 const binance = new Binance().options({
@@ -80,9 +80,8 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
 //
 
 async function sendMessage(message) {
-    let url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.GROUP_ID}&text=${message}`;
     try {
-        await fetch(url);
+        await sendTeleMessage(message);
     } catch (error) {
         console.log('send message error');
         console.log(error);
@@ -97,11 +96,6 @@ function keepAliveServer() {
     setInterval(function () {
         fetch(process.env.PING_URL).then(_r => {});
     }, 1680000);
-}
-
-
-function getTgMessage(ctx, command) {
-    return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -133,7 +127,7 @@ function read(file= 'db') {
         // parse JSON string to JSON object
         return JSON.parse(data);
     } catch (err) {
-        log(`Error reading file from disk: ${err}`);
+        log(`Error reading file from disk: ${err}`).then(r => {});
     }
 }
 
@@ -144,7 +138,7 @@ function write(data = {}, file = 'db') {
         // write file to disk
         fs.writeFileSync(`./${file}.json`, raw, 'utf8');
     } catch (err) {
-        log(`Error writing file: ${err}`);
+        log(`Error writing file: ${err}`).then(r => {});
     }
 }
 
@@ -170,6 +164,46 @@ async function setActiveSymbol(symbol, active) {
     coin.isCopy = active;
     write(coin, 'coin')
 }
+
+function getTgMessage(ctx, command) {
+    return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
+}
+
+bot.command('coin', async (ctx) => {
+    let coin = await read('coin');
+    console.log(coin);
+    await sendMessage(coin);
+});
+
+bot.command('db', async (ctx) => {
+    let db = await read('db');
+    await sendMessage(db);
+});
+
+bot.command('s', async (ctx) => {
+    let value = getTgMessage(ctx, 's');
+    let coin = await read('coin');
+    coin.symbol = value;
+    await write(coin, 'coin');
+    await sendMessage(`New symbol is ${value}`);
+});
+
+bot.command('min', async (ctx) => {
+    let value = getTgMessage(ctx, 'min');
+    let coin = await read('coin');
+    coin.minAmt = _.toNumber(value);
+    await write(coin, 'coin');
+    await sendMessage(`New min amount of ${coin.symbol} is ${value}`);
+});
+
+bot.command('isCopy', async (ctx) => {
+    let value = getTgMessage(ctx, 'isCopy');
+    let isCopy = value == '1';
+    let coin = await read('coin');
+    coin.isCopy = isCopy;
+    await write(coin, 'coin');
+    await sendMessage(`Copy status set to ${isCopy}`);
+});
 
 
 module.exports = {

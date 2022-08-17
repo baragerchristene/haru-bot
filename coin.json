@@ -1,5 +1,5 @@
 {
-    "symbol": "BTCUSDT",
-    "minAmt": 0.002,
-    "isCopy": false
+    "symbol": "ETHUSDT",
+    "minAmt": 0.005,
+    "isCopy": true
 }
