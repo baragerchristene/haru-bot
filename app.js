@@ -31,6 +31,9 @@ async function main() {
 
         // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade
         let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
+        if (leadPosition) {
+            console.log(leadPosition);
+        }
 
         // xác định xem vị thế nào là copy
         const myPosition = await lib.detectPosition();
@@ -85,7 +88,7 @@ async function main() {
             }
 
         }
-        lib.write(leadPosition);
+        await lib.write(leadPosition);
     }
 }
 main()

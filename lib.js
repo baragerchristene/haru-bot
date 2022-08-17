@@ -81,8 +81,12 @@ async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
 
 async function sendMessage(message) {
     let url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${process.env.GROUP_ID}&text=${message}`;
-    const response = await fetch(url);
-    return await response.json();
+    try {
+        await fetch(url);
+    } catch (error) {
+        console.log('send message error');
+        console.log(error);
+    }
 }
 
 async function sendServerStatus() {
@@ -104,8 +108,16 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function fetchCopyPosition(leaderId) {
     let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
-    const baseResponse = await fetch(url);
-    const response = await baseResponse.json();
+    let baseResponse = {};
+    try {
+        baseResponse = await fetch(url);
+    } catch (error) {
+        console.log(error);
+    }
+    let response = {}
+    if (baseResponse) {
+        response = await baseResponse.json();
+    }
     if (response.success) {
         const coinTrade = await read('coin');
         return _.find(response.data, {symbol: coinTrade.symbol});
