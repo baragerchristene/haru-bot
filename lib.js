@@ -31,8 +31,25 @@ async function setLeverage(symbol, leverage) {
     return await binance.futuresLeverage(symbol, leverage);
 }
 
-async function fetchPositions(symbol = '') {
-    const risk = await binance.futuresPositionRisk({ symbol });
+async function getSymbols() {
+    const exchangeInfo = await binance.futuresExchangeInfo();
+    const symbols =  _.get(exchangeInfo, 'symbols');
+    return _.map(symbols, (symbol) => {
+        let newSymbol = {};
+        newSymbol.symbol = symbol.symbol;
+        _.filter(_.get(symbol, 'filters'), (filter) => {
+            if (filter.filterType == 'LOT_SIZE') {
+                newSymbol.lotSize = filter.stepSize;
+            } else if (filter.filterType == 'MIN_NOTIONAL') {
+                newSymbol.notional = filter.notional
+            }
+        })
+        return newSymbol;
+    })
+}
+
+async function fetchPositions() {
+    const risk = await binance.futuresPositionRisk();
     return _.filter(risk, (p) => { return p.positionAmt != 0})
 }
 
@@ -56,13 +73,24 @@ async function dcaPositionByType(type, symbol, quantity) {
     }
 }
 
-async function openPositionByType(type, symbol, quantity) {
+async function openPositionByType(type, symbol, quantity, leverage) {
+    await binance.futuresLeverage(symbol, leverage);
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
         await log(`${symbol} Mở vị thế ${type}`);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
         await log(`${symbol} Mở vị thế ${type}`);
+    }
+}
+
+function getMinQty(coin, exchanges) {
+    let assert = _.find(exchanges, {symbol: coin.symbol});
+    let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
+    if (minQtyMinusFee < 1) {
+        return (minQtyMinusFee*(1 + 0.05)).toFixed(3);
+    } else {
+        return (minQtyMinusFee*(1 + 0.05)).toFixed(0);
     }
 }
 
@@ -112,12 +140,11 @@ async function fetchCopyPosition(leaderId) {
     if (baseResponse) {
         response = await baseResponse.json();
     }
-    if (response.success) {
-        const coinTrade = await read('coin');
-        return _.find(response.data, {symbol: coinTrade.symbol});
+    if (response.success && response.data.length > 0) {
+        return response.data;
     } else {
         await log('Fail to fetch lead position')
-        return {};
+        return [];
     }
 }
 
@@ -207,7 +234,7 @@ bot.command('isCopy', async (ctx) => {
 
 
 module.exports = {
-    sendMessage, setActiveSymbol, openPositionByType,
+    sendMessage, setActiveSymbol, openPositionByType, getSymbols, getMinQty, fetchPositions,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
     delay};
 
