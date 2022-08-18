@@ -88,9 +88,9 @@ function getMinQty(coin, exchanges) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     if (minQtyMinusFee < 1) {
-        return (minQtyMinusFee*(1 + 0.05)).toFixed(3);
+        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(3);
     } else {
-        return (minQtyMinusFee*(1 + 0.05)).toFixed(0);
+        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(0);
     }
 }
 
