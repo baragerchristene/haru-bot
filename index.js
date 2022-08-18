@@ -8,6 +8,11 @@ router.get('/ping', function (_req, res, _next) {
   res.end();
 });
 
+router.get('/', function (_req, res, _next) {
+  res.json({message: 'Welcome to the home page'});
+  res.end();
+});
+
 router.get('/coin', async function (_req, res, _next) {
   const coin = await lib.read('coin');
   await lib.sendMessage(coin)
