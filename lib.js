@@ -140,8 +140,12 @@ async function fetchCopyPosition(leaderId) {
     if (baseResponse) {
         response = await baseResponse.json();
     }
-    if (response.success && response.data.length > 0) {
-        return response.data;
+    if (response.success) {
+        if (response.data.length > 0) {
+            return response.data;
+        } else {
+            return []
+        }
     } else {
         await log('Fail to fetch lead position')
         return [];
