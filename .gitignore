@@ -11,7 +11,7 @@
 /node_modules
 
 #env
-/env
+/env/live.env
 
 #ignore file ci cd
 .gitlab-ci.yml
