@@ -23,8 +23,6 @@ async function main() {
             let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
             await lib.write(leadPosition);
         } else {
-            const bot = await lib.read('coin');
-            if (!bot.running) { continue; }
             // lấy lịch sử vị thế lưu trong db
             const leadPositionOlds = await lib.read();
 
