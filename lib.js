@@ -243,8 +243,8 @@ function isMe(ctx) {
 
 bot.command('status', async (ctx) => {
     if (!isMe(ctx)) return;
-    let coin = await read('coin');
-    await sendMessage(coin);
+    let positions = await fetchPositions();
+    await sendMessage(positions);
 });
 
 bot.command('db', async (ctx) => {
