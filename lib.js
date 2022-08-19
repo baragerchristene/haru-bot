@@ -237,8 +237,9 @@ bot.command('pnl', async (ctx) => {
         }, 0)
     }
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
-    let a = JSON.parse(ctx);
-    console.log(a);
+    console.log(ctx);
+    console.log(ctx.from);
+    console.log(ctx.chat);
 });
 
 
