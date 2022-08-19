@@ -204,7 +204,6 @@ function isMe(ctx) {
 }
 
 bot.command('status', async (ctx) => {
-    if (process.env.BOT_STATUS == '0') { return }
     if (!isMe(ctx)) return;
     let coin = await read('coin');
     await sendMessage(coin);
@@ -226,6 +225,7 @@ bot.command('db', async (ctx) => {
 });
 
 bot.command('bot', async (ctx) => {
+    if (!isMe(ctx)) return;
     let value = getTgMessage(ctx, 'bot');
     let coin = await read('coin');
     coin.running = value == '1';
@@ -234,6 +234,7 @@ bot.command('bot', async (ctx) => {
 });
 
 bot.command('pnl', async (ctx) => {
+    if (!isMe(ctx)) return;
     let positions = await fetchPositions();
     let pnl = 0;
     if (!_.isEmpty(positions)) {
