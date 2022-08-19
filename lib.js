@@ -221,11 +221,10 @@ bot.command('db', async (ctx) => {
 
 bot.command('bot', async (ctx) => {
     let value = getTgMessage(ctx, 'bot');
-    let running = value == '1';
     let coin = await read('coin');
-    coin.running = running;
+    coin.running = value == '1';
     await write(coin, 'coin');
-    await sendMessage(`Bot running status set to ${running}`);
+    await sendMessage(`Bot running status set to ${coin.running}`);
 });
 
 bot.command('pnl', async (ctx) => {
