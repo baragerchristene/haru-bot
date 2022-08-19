@@ -23,6 +23,8 @@ async function main() {
             let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
             await lib.write(leadPosition);
         } else {
+            const bot = await lib.read('coin');
+            if (!bot.running) { continue; }
             // lấy lịch sử vị thế lưu trong db
             const leadPositionOlds = await lib.read();
 
@@ -85,7 +87,7 @@ async function main() {
 
                     } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
                         // xác định vị thế người dùng
-        
+
                         if (!_.isEmpty(myPosition)) {
 let side = myPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
                             await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmount), true)

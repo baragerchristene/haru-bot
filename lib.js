@@ -3,6 +3,7 @@ const {sendTeleMessage, bot} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
+const moment = require("moment");
 const WebSocket = require("ws");
 const _ = require("lodash");
 const fs = require('fs');
@@ -12,8 +13,6 @@ const binance = new Binance().options({
     APISECRET: process.env.APISECRET,
     // test: true
 });
-
-const moment = require("moment");
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
@@ -200,40 +199,31 @@ function getTgMessage(ctx, command) {
     return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
 
-bot.command('coin', async (ctx) => {
+bot.command('status', async (ctx) => {
     let coin = await read('coin');
     console.log(coin);
     await sendMessage(coin);
 });
 
 bot.command('db', async (ctx) => {
-    let db = await read('db');
-    await sendMessage(db);
+    let coins = await read('db');
+    if (!_.isEmpty(coins)) {
+        let message = _.reduce(coins, (msg, coin) => {
+            let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
+            message+= `Mã ${coin.symbol}, chiều: ${side} \n`
+        })
+    } else {
+        await sendMessage('Không có dữ liệu lịch sử');
+    }
 });
 
-bot.command('s', async (ctx) => {
-    let value = getTgMessage(ctx, 's');
+bot.command('bot', async (ctx) => {
+    let value = getTgMessage(ctx, 'bot');
+    let running = value == '1';
     let coin = await read('coin');
-    coin.symbol = value;
+    coin.running = running;
     await write(coin, 'coin');
-    await sendMessage(`New symbol is ${value}`);
-});
-
-bot.command('min', async (ctx) => {
-    let value = getTgMessage(ctx, 'min');
-    let coin = await read('coin');
-    coin.minAmt = _.toNumber(value);
-    await write(coin, 'coin');
-    await sendMessage(`New min amount of ${coin.symbol} is ${value}`);
-});
-
-bot.command('isCopy', async (ctx) => {
-    let value = getTgMessage(ctx, 'isCopy');
-    let isCopy = value == '1';
-    let coin = await read('coin');
-    coin.isCopy = isCopy;
-    await write(coin, 'coin');
-    await sendMessage(`Copy status set to ${isCopy}`);
+    await sendMessage(`Bot running status set to ${isCopy}`);
 });
 
 bot.command('pnl', async (ctx) => {
@@ -245,7 +235,9 @@ bot.command('pnl', async (ctx) => {
             return result;
         }, 0)
     }
-    await sendMessage(ctx);
+
+    let a = JSON.parse(ctx);
+    await sendMessage(a);
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
 });
 

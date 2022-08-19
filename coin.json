@@ -1,5 +1,4 @@
 {
-    "symbol": "BTCUSDT",
-    "minAmt": 0.001,
-    "isCopy": false
+    "running": true,
+    "exceptions": []
 }
