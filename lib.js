@@ -236,6 +236,19 @@ bot.command('isCopy', async (ctx) => {
     await sendMessage(`Copy status set to ${isCopy}`);
 });
 
+bot.command('pnl', async (ctx) => {
+    console.log(ctx);
+    let positions = await fetchPositions();
+    let pnl = 0;
+    if (!_.isEmpty(positions)) {
+        pnl = _.reduce(positions, (result, coin) => {
+            result += _.toNumber(coin.unRealizedProfit);
+            return result;
+        }, 0)
+    }
+    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
+});
+
 
 module.exports = {
     sendMessage, setActiveSymbol, openPositionByType, getSymbols, getMinQty, fetchPositions,
