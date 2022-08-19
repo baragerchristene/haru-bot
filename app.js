@@ -57,12 +57,12 @@ async function main() {
                             if (oldAmt != newAmt) { //
                                 if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                     if (!_.isEmpty(myPosition)) {
-                                        let amountChange = Math.abs(myPosition.positionAmount * amountChangeRate).toFixed(3);
+                                        let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
                                         await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
                                     }
                                 } else { // DCA
                                     if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                                        let amountChange = Math.abs(myPosition.positionAmount * amountChangeRate).toFixed(3);
+                                        let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
                                         await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange);
                                     } else { // chưa có thì tạo mới
                                         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
@@ -74,7 +74,7 @@ async function main() {
                             // đóng vị thế hiện tại và mở vị thế mới
                             //đóng theo vị thế của user
                             if (!_.isEmpty(myPosition)) {
-                                await lib.closePositionByType(oldSide, myPosition.symbol, Math.abs(myPosition.positionAmount), true)
+                                await lib.closePositionByType(oldSide, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
                                 let minAmount = lib.getMinQty(leadPosition, filterSymbols);
                                 await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, leadPosition.leverage)
                             } else {
@@ -87,8 +87,8 @@ async function main() {
                         // xác định vị thế người dùng
 
                         if (!_.isEmpty(myPosition)) {
-let side = myPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
-                            await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmount), true)
+                            let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
+                            await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
                         }
                     }
                 })
