@@ -131,14 +131,14 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function fetchCopyPosition(leaderId) {
     let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
     let baseResponse = {};
+    let response = {}
     try {
         baseResponse = await fetch(url);
+        if (baseResponse) {
+            response = await baseResponse.json();
+        }
     } catch (error) {
         console.log(error);
-    }
-    let response = {}
-    if (baseResponse) {
-        response = await baseResponse.json();
     }
     if (response.success) {
         if (response.data.length > 0) {
@@ -237,7 +237,8 @@ bot.command('isCopy', async (ctx) => {
 });
 
 bot.command('pnl', async (ctx) => {
-    console.log(ctx);
+    console.log(ctx.from);
+    console.log(ctx.chat);
     let positions = await fetchPositions();
     let pnl = 0;
     if (!_.isEmpty(positions)) {
