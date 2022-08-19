@@ -200,8 +200,8 @@ function getTgMessage(ctx, command) {
 }
 
 bot.command('status', async (ctx) => {
+    console.log(ctx);
     let coin = await read('coin');
-    console.log(coin);
     await sendMessage(coin);
 });
 
