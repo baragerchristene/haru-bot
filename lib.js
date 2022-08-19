@@ -225,7 +225,7 @@ bot.command('bot', async (ctx) => {
     let coin = await read('coin');
     coin.running = running;
     await write(coin, 'coin');
-    await sendMessage(`Bot running status set to ${isCopy}`);
+    await sendMessage(`Bot running status set to ${running}`);
 });
 
 bot.command('pnl', async (ctx) => {
