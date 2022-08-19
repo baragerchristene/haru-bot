@@ -212,6 +212,7 @@ bot.command('db', async (ctx) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
             message+= `Mã ${coin.symbol}, chiều: ${side} \n`
         })
+        await sendMessage(message);
     } else {
         await sendMessage('Không có dữ liệu lịch sử');
     }
@@ -235,10 +236,9 @@ bot.command('pnl', async (ctx) => {
             return result;
         }, 0)
     }
-
-    let a = JSON.parse(ctx);
-    await sendMessage(a);
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
+    let a = JSON.parse(ctx);
+    console.log(a);
 });
 
 
