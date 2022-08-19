@@ -210,7 +210,8 @@ bot.command('db', async (ctx) => {
     if (!_.isEmpty(coins)) {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
-            message+= `Mã ${coin.symbol}, chiều: ${side} \n`
+            msg+= `Mã ${coin.symbol}, chiều: ${side} \n`;
+            return msg;
         }, '')
         await sendMessage(message);
     } else {
@@ -237,9 +238,6 @@ bot.command('pnl', async (ctx) => {
         }, 0)
     }
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
-    console.log(ctx);
-    console.log(ctx.from);
-    console.log(ctx.chat);
 });
 
 
