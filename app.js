@@ -27,8 +27,13 @@ async function main() {
             const leadPositionOlds = await lib.read();
 
             // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
-            const leadPositions = await lib.fetchCopyPosition(process.env.COPY_ID);
-
+            const copyPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
+            let leadPositions = [];
+            if (copyPosition.error) {
+                continue;
+            } else {
+                leadPositions = copyPosition.data;
+            }
             let totalPosition = _.uniqBy(_.concat(leadPositionOlds, leadPositions), 'symbol');
             const myPositions = await lib.fetchPositions();
             if (!_.isEmpty(totalPosition)) {

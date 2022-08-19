@@ -141,13 +141,13 @@ async function fetchCopyPosition(leaderId) {
     }
     if (response.success) {
         if (response.data.length > 0) {
-            return response.data;
+            return {data: response.data, error: false};
         } else {
-            return []
+            return {data: [], error: false};
         }
     } else {
-        await log('Fail to fetch lead position')
-        return [];
+        await log('Fail to fetch lead position');
+        return {data: [], error: true};
     }
 }
 
