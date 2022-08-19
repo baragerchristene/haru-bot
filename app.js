@@ -20,8 +20,15 @@ async function main() {
     for (let i = 0; true; i++) {
         if (i == 0) { // khởi chạy vòng đầu, xóa lịch sử cũ
             // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
-            let leadPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
-            await lib.write(leadPosition);
+            const copyPosition = await lib.fetchCopyPosition(process.env.COPY_ID);
+            let leadPositions = [];
+            if (copyPosition.error) {
+                i = -1;
+                continue;
+            } else {
+                leadPositions = copyPosition.data;
+            }
+            await lib.write(leadPositions);
         } else {
             // lấy lịch sử vị thế lưu trong db
             const leadPositionOlds = await lib.read();
