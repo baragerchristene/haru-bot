@@ -211,7 +211,7 @@ bot.command('db', async (ctx) => {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
             message+= `Mã ${coin.symbol}, chiều: ${side} \n`
-        })
+        }, '')
         await sendMessage(message);
     } else {
         await sendMessage('Không có dữ liệu lịch sử');
