@@ -237,8 +237,6 @@ bot.command('isCopy', async (ctx) => {
 });
 
 bot.command('pnl', async (ctx) => {
-    console.log(ctx.from);
-    console.log(ctx.chat);
     let positions = await fetchPositions();
     let pnl = 0;
     if (!_.isEmpty(positions)) {
@@ -247,6 +245,7 @@ bot.command('pnl', async (ctx) => {
             return result;
         }, 0)
     }
+    await sendMessage(ctx);
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
 });
 
