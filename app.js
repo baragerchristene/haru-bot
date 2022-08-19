@@ -85,8 +85,9 @@ async function main() {
 
                     } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
                         // xác định vị thế người dùng
-                        let side = myPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
+        
                         if (!_.isEmpty(myPosition)) {
+let side = myPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
                             await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmount), true)
                         }
                     }
