@@ -199,13 +199,19 @@ function getTgMessage(ctx, command) {
     return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
 
+function isMe(ctx) {
+    return _.get(ctx, 'update.message.from.id') == process.env.MY_TELE
+}
+
 bot.command('status', async (ctx) => {
-    console.log(ctx);
+    if (process.env.BOT_STATUS == '0') { return }
+    if (!isMe(ctx)) return;
     let coin = await read('coin');
     await sendMessage(coin);
 });
 
 bot.command('db', async (ctx) => {
+    if (!isMe(ctx)) return;
     let coins = await read('db');
     if (!_.isEmpty(coins)) {
         let message = _.reduce(coins, (msg, coin) => {

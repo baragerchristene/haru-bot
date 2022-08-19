@@ -15,7 +15,7 @@ process.env.UV_THREADPOOL_SIZE = 128;
 async function main() {
     console.log(`Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
     const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
-
+    if (process.env.BOT_STATUS == '0') { return }
     // scan step
     for (let i = 0; true; i++) {
         if (i == 0) { // khởi chạy vòng đầu, xóa lịch sử cũ
