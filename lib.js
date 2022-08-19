@@ -151,6 +151,44 @@ async function fetchCopyPosition(leaderId) {
     }
 }
 
+async function fetchLeaderBoardPositions() {
+    let url = `https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition`;
+    let baseResponse = {};
+    let response = {}
+    let bodyPayload = {
+        encryptedUid: "1B323B4A4B47C303AA8FDEBBCC31BE50",
+        tradeType: "PERPETUAL"
+    }
+
+    let payload = {
+        method: 'post',
+        body: JSON.stringify(bodyPayload),
+        headers: {'Content-Type': 'application/json'}
+    }
+    try {
+        baseResponse = await fetch(url, payload);
+        if (baseResponse) {
+            response = await baseResponse.json();
+        }
+    } catch (error) {
+        console.log(error);
+    }
+    if (response.success) {
+        if (response.data.otherPositionRetList.length > 0) {
+            return response.data.otherPositionRetList;
+        } else {
+            return []
+        }
+    } else {
+        await log('Fail to fetch lead position')
+        return [];
+    }
+}
+
+function getLeverageLB(coin) {
+    return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
+}
+
 function read(file= 'db') {
     try {
         const data = fs.readFileSync(`./${file}.json`, 'utf8');
@@ -250,7 +288,7 @@ bot.command('pnl', async (ctx) => {
 module.exports = {
     sendMessage, setActiveSymbol, openPositionByType, getSymbols, getMinQty, fetchPositions,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
-    delay};
+    delay, fetchLeaderBoardPositions, getLeverageLB};
 
 /**
  * Các trạng thái của danh sách coin
