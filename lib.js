@@ -241,7 +241,7 @@ function isMe(ctx) {
     return _.get(ctx, 'update.message.from.id') == process.env.MY_TELE
 }
 
-bot.command('p', async (ctx) => {
+bot.command('ps', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
     if (!_.isEmpty(positions)) {
@@ -272,15 +272,6 @@ bot.command('db', async (ctx) => {
         await sendMessage('Không có dữ liệu lịch sử');
     }
 });
-
-// bot.command('bot', async (ctx) => {
-//     if (!isMe(ctx)) return;
-//     let value = getTgMessage(ctx, 'bot');
-//     let coin = await read('coin');
-//     coin.running = value == '1';
-//     await write(coin, 'coin');
-//     await sendMessage(`Bot running status set to ${coin.running}`);
-// });
 
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
