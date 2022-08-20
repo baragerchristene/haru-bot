@@ -147,6 +147,7 @@ async function fetchCopyPosition(leaderId) {
         }
     } else {
         await log('Hệ thống đang bận: không lấy được vị thế của leader');
+        await delay(5000);
         return {data: [], error: true};
     }
 }
