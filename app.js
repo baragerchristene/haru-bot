@@ -70,6 +70,7 @@ async function main() {
                                 if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                     if (!_.isEmpty(myPosition)) {
                                         let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
+                                        if (amountChange == 0) amountChange = Math.abs(myPosition.positionAmt);
                                         await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
                                     }
                                 } else { // DCA
