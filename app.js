@@ -69,15 +69,14 @@ async function main() {
                             if (oldAmt != newAmt) { //
                                 if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                     if (!_.isEmpty(myPosition)) {
-                                        let myAmt = Math.abs(myPosition.positionAmt);
-                                        let amountChange = Math.abs(myAmt + myAmt * amountChangeRate).toFixed(3);
-                                        if (amountChange == 0) amountChange = myAmt;
+                                        let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
+                                        if (amountChange == 0) amountChange = Math.abs(myPosition.positionAmt);
                                         await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
                                     }
                                 } else { // DCA
                                     if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                                        let amountChange = Math.abs(myAmt + myAmt * amountChangeRate).toFixed(3);
-                                        if (amountChange == 0) amountChange = myAmt;
+                                        let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
+                                        if (amountChange == 0) amountChange = lib.getMinQty(myPosition, filterSymbols); // amount bằng 0 thì lấy min
                                         await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange);
                                     } else { // chưa có thì tạo mới
                                         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
