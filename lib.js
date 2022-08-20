@@ -62,14 +62,13 @@ async function closePositionByType(type, symbol, quantity, close = false) {
     }
 }
 
-async function dcaPositionByType(type, symbol, quantity) {
+async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
-        await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity}`);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
-        await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity}`);
     }
+    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; oldEntry: ${oldEntryPrice}; newEntry: ${newEntryPrice}`);
 }
 
 async function openPositionByType(type, symbol, quantity, leverage) {
