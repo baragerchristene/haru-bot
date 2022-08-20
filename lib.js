@@ -273,14 +273,14 @@ bot.command('db', async (ctx) => {
     }
 });
 
-bot.command('bot', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let value = getTgMessage(ctx, 'bot');
-    let coin = await read('coin');
-    coin.running = value == '1';
-    await write(coin, 'coin');
-    await sendMessage(`Bot running status set to ${coin.running}`);
-});
+// bot.command('bot', async (ctx) => {
+//     if (!isMe(ctx)) return;
+//     let value = getTgMessage(ctx, 'bot');
+//     let coin = await read('coin');
+//     coin.running = value == '1';
+//     await write(coin, 'coin');
+//     await sendMessage(`Bot running status set to ${coin.running}`);
+// });
 
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
