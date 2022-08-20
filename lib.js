@@ -241,10 +241,20 @@ function isMe(ctx) {
     return _.get(ctx, 'update.message.from.id') == process.env.MY_TELE
 }
 
-bot.command('status', async (ctx) => {
+bot.command('p', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
-    await sendMessage(positions);
+    if (!_.isEmpty(positions)) {
+        let message = _.reduce(positions, (msg, coin) => {
+            let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
+            let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
+            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
+            return msg;
+        }, '')
+        await sendMessage(message);
+    } else {
+        await sendMessage('Không có vị thế nào!');
+    }
 });
 
 bot.command('db', async (ctx) => {
@@ -253,7 +263,8 @@ bot.command('db', async (ctx) => {
     if (!_.isEmpty(coins)) {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
-            msg+= `Mã ${coin.symbol}, chiều: ${side} \n`;
+            let amt = (coin.markPrice*coin.positionAmount).toFixed(3)
+            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
@@ -262,14 +273,14 @@ bot.command('db', async (ctx) => {
     }
 });
 
-bot.command('bot', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let value = getTgMessage(ctx, 'bot');
-    let coin = await read('coin');
-    coin.running = value == '1';
-    await write(coin, 'coin');
-    await sendMessage(`Bot running status set to ${coin.running}`);
-});
+// bot.command('bot', async (ctx) => {
+//     if (!isMe(ctx)) return;
+//     let value = getTgMessage(ctx, 'bot');
+//     let coin = await read('coin');
+//     coin.running = value == '1';
+//     await write(coin, 'coin');
+//     await sendMessage(`Bot running status set to ${coin.running}`);
+// });
 
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
