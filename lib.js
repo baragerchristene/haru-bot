@@ -147,7 +147,6 @@ async function fetchCopyPosition(leaderId) {
         }
     } else {
         await log('Fail to fetch lead position');
-        await delay(30000);
         return {data: [], error: true};
     }
 }
