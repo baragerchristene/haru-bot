@@ -3,7 +3,8 @@ const {sendTeleMessage, bot} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
-const moment = require("moment");
+const moment = require('moment-timezone');;
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const _ = require("lodash");
 const fs = require('fs');
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
