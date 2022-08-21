@@ -4,9 +4,12 @@ const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
 const moment = require("moment");
-const WebSocket = require("ws");
 const _ = require("lodash");
 const fs = require('fs');
+const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
+const twApi = new TraderWagonApi();
+const BinanceApi = require("./resources/binance/binance-api");
+const bnApi = new BinanceApi();
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -55,11 +58,10 @@ async function fetchPositions() {
 async function closePositionByType(type, symbol, quantity, close = false) {
     if (type == 'LONG') {
         await binance.futuresMarketSell(symbol, quantity);
-        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
-        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     }
+    await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -75,11 +77,10 @@ async function openPositionByType(type, symbol, quantity, leverage) {
     await binance.futuresLeverage(symbol, leverage);
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
-        await log(`${symbol} Mở vị thế ${type}`);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
-        await log(`${symbol} Mở vị thế ${type}`);
     }
+    await log(`${symbol} Mở vị thế ${type}`);
 }
 
 function getMinQty(coin, exchanges) {
@@ -92,19 +93,6 @@ function getMinQty(coin, exchanges) {
     }
 }
 
-async function ws_stream(handler) {
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1h');
-    ws.on('message', handler);
-}
-
-async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
-    let url = `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const response = await fetch(url);
-    return await response.json();
-}
-
-//
-
 async function sendMessage(message) {
     try {
         await sendTeleMessage(message);
@@ -112,10 +100,6 @@ async function sendMessage(message) {
         console.log('send message error');
         console.log(error);
     }
-}
-
-async function sendServerStatus() {
-    // await tg.sendServerStatus();
 }
 
 function keepAliveServer() {
@@ -127,62 +111,24 @@ function keepAliveServer() {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function fetchCopyPosition(leaderId) {
-    let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
-    let baseResponse = {};
-    let response = {}
-    try {
-        baseResponse = await fetch(url);
-        if (baseResponse) {
-            response = await baseResponse.json();
-        }
-    } catch (error) {
-        console.log(error);
-    }
-    if (response.success) {
-        if (response.data.length > 0) {
-            return {data: response.data, error: false};
-        } else {
-            return {data: [], error: false};
-        }
-    } else {
-        await log('Hệ thống đang bận: không lấy được vị thế của leader');
+    let response = await twApi.fetchCopyPosition(leaderId);
+    if (response.error) {
+        // await log('Hệ thống đang bận: không lấy được vị thế của leader');
+        let detail = _.get(response, 'detail');
+        await log(detail);
         await delay(5000);
-        return {data: [], error: true};
     }
+    return response
 }
 
 async function fetchLeaderBoardPositions() {
-    let url = `https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition`;
-    let baseResponse = {};
-    let response = {}
-    let bodyPayload = {
-        encryptedUid: "1B323B4A4B47C303AA8FDEBBCC31BE50",
-        tradeType: "PERPETUAL"
+    let response = await bnApi.fetchFutureLeaderBoardPositionsById('1B323B4A4B47C303AA8FDEBBCC31BE50');
+    if (response.error) {
+        let detail = _.get(response, 'detail');
+        await log(detail);
+        await delay(5000);
     }
-
-    let payload = {
-        method: 'post',
-        body: JSON.stringify(bodyPayload),
-        headers: {'Content-Type': 'application/json'}
-    }
-    try {
-        baseResponse = await fetch(url, payload);
-        if (baseResponse) {
-            response = await baseResponse.json();
-        }
-    } catch (error) {
-        console.log(error);
-    }
-    if (response.success) {
-        if (response.data.otherPositionRetList.length > 0) {
-            return response.data.otherPositionRetList;
-        } else {
-            return []
-        }
-    } else {
-        await log('Fail to fetch lead position')
-        return [];
-    }
+    return response
 }
 
 function getLeverageLB(coin) {
@@ -225,12 +171,6 @@ async function detectPosition() {
         position.isCopy = coin.isCopy
         return position;
     }
-}
-
-async function setActiveSymbol(symbol, active) {
-    let coin = await read('coin');
-    coin.isCopy = active;
-    write(coin, 'coin')
 }
 
 function getTgMessage(ctx, command) {
@@ -288,12 +228,6 @@ bot.command('pnl', async (ctx) => {
 
 
 module.exports = {
-    sendMessage, setActiveSymbol, openPositionByType, getSymbols, getMinQty, fetchPositions,
+    sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
     delay, fetchLeaderBoardPositions, getLeverageLB};
-
-/**
- * Các trạng thái của danh sách coin
- * W: đang chờ mở vị thế
- * I: đang chờ lệnh DCA, cắt lời, lỗ
- */
