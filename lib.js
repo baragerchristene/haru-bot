@@ -71,7 +71,7 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
     } else {
         await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; oldEntry: ${oldEntryPrice}; newEntry: ${newEntryPrice}`);
+    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; OE: ${oldEntryPrice}; NE: ${newEntryPrice}`);
 }
 
 async function openPositionByType(type, symbol, quantity, leverage) {
@@ -189,7 +189,7 @@ bot.command('ps', async (ctx) => {
         let message = _.reduce(positions, (msg, coin) => {
             let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
+            msg+= `${side} ${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
@@ -205,7 +205,7 @@ bot.command('db', async (ctx) => {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.positionAmount).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
+            msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
