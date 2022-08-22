@@ -114,9 +114,9 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function fetchCopyPosition(leaderId) {
     let response = await twApi.fetchCopyPosition(leaderId);
     if (response.error) {
-        // await log('Hệ thống đang bận: không lấy được vị thế của leader');
         let detail = _.get(response, 'detail');
-        await log(detail);
+        console.log('Hệ thống đang bận: không lấy được vị thế của leader');
+        console.log(detail);
         await delay(5000);
     }
     return response
