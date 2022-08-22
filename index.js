@@ -14,8 +14,7 @@ router.get('/', function (_req, res, _next) {
 });
 
 router.get('/coin', async function (_req, res, _next) {
-  const coin = await lib.read('coin');
-  await lib.sendMessage(coin)
+  await lib.sendMessage({coin: 'abc'})
   res.json({message: 'ok'});
   res.end();
 });

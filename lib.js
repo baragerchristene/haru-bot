@@ -3,10 +3,14 @@ const {sendTeleMessage, bot} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
-const moment = require("moment");
-const WebSocket = require("ws");
+const moment = require('moment-timezone');;
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const _ = require("lodash");
 const fs = require('fs');
+const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
+const twApi = new TraderWagonApi();
+const BinanceApi = require("./resources/binance/binance-api");
+const bnApi = new BinanceApi();
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -55,11 +59,10 @@ async function fetchPositions() {
 async function closePositionByType(type, symbol, quantity, close = false) {
     if (type == 'LONG') {
         await binance.futuresMarketSell(symbol, quantity);
-        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
-        await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
     }
+    await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -68,18 +71,17 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
     } else {
         await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; oldEntry: ${oldEntryPrice}; newEntry: ${newEntryPrice}`);
+    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; OE: ${oldEntryPrice}; NE: ${newEntryPrice}`);
 }
 
 async function openPositionByType(type, symbol, quantity, leverage) {
     await binance.futuresLeverage(symbol, leverage);
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
-        await log(`${symbol} Mở vị thế ${type}`);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
-        await log(`${symbol} Mở vị thế ${type}`);
     }
+    await log(`${symbol} Mở vị thế ${type}`);
 }
 
 function getMinQty(coin, exchanges) {
@@ -92,19 +94,6 @@ function getMinQty(coin, exchanges) {
     }
 }
 
-async function ws_stream(handler) {
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1h');
-    ws.on('message', handler);
-}
-
-async function fetchKline(symbol = 'BTCUSDT', interval = '1h', limit = 1500) {
-    let url = `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const response = await fetch(url);
-    return await response.json();
-}
-
-//
-
 async function sendMessage(message) {
     try {
         await sendTeleMessage(message);
@@ -112,10 +101,6 @@ async function sendMessage(message) {
         console.log('send message error');
         console.log(error);
     }
-}
-
-async function sendServerStatus() {
-    // await tg.sendServerStatus();
 }
 
 function keepAliveServer() {
@@ -127,62 +112,24 @@ function keepAliveServer() {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function fetchCopyPosition(leaderId) {
-    let url = `https://www.traderwagon.com/v1/public/social-trading/lead-portfolio/get-position-info/${leaderId}`;
-    let baseResponse = {};
-    let response = {}
-    try {
-        baseResponse = await fetch(url);
-        if (baseResponse) {
-            response = await baseResponse.json();
-        }
-    } catch (error) {
-        console.log(error);
-    }
-    if (response.success) {
-        if (response.data.length > 0) {
-            return {data: response.data, error: false};
-        } else {
-            return {data: [], error: false};
-        }
-    } else {
-        await log('Hệ thống đang bận: không lấy được vị thế của leader');
+    let response = await twApi.fetchCopyPosition(leaderId);
+    if (response.error) {
+        let detail = _.get(response, 'detail');
+        console.log('Hệ thống đang bận: không lấy được vị thế của leader');
+        console.log(detail);
         await delay(5000);
-        return {data: [], error: true};
     }
+    return response
 }
 
 async function fetchLeaderBoardPositions() {
-    let url = `https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition`;
-    let baseResponse = {};
-    let response = {}
-    let bodyPayload = {
-        encryptedUid: "1B323B4A4B47C303AA8FDEBBCC31BE50",
-        tradeType: "PERPETUAL"
+    let response = await bnApi.fetchFutureLeaderBoardPositionsById('1B323B4A4B47C303AA8FDEBBCC31BE50');
+    if (response.error) {
+        let detail = _.get(response, 'detail');
+        await log(detail);
+        await delay(5000);
     }
-
-    let payload = {
-        method: 'post',
-        body: JSON.stringify(bodyPayload),
-        headers: {'Content-Type': 'application/json'}
-    }
-    try {
-        baseResponse = await fetch(url, payload);
-        if (baseResponse) {
-            response = await baseResponse.json();
-        }
-    } catch (error) {
-        console.log(error);
-    }
-    if (response.success) {
-        if (response.data.otherPositionRetList.length > 0) {
-            return response.data.otherPositionRetList;
-        } else {
-            return []
-        }
-    } else {
-        await log('Fail to fetch lead position')
-        return [];
-    }
+    return response
 }
 
 function getLeverageLB(coin) {
@@ -227,12 +174,6 @@ async function detectPosition() {
     }
 }
 
-async function setActiveSymbol(symbol, active) {
-    let coin = await read('coin');
-    coin.isCopy = active;
-    write(coin, 'coin')
-}
-
 function getTgMessage(ctx, command) {
     return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
 }
@@ -241,14 +182,14 @@ function isMe(ctx) {
     return _.get(ctx, 'update.message.from.id') == process.env.MY_TELE
 }
 
-bot.command('p', async (ctx) => {
+bot.command('ps', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
     if (!_.isEmpty(positions)) {
         let message = _.reduce(positions, (msg, coin) => {
             let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
+            msg+= `${side} ${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
@@ -264,7 +205,7 @@ bot.command('db', async (ctx) => {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.positionAmount).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; Entry: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
+            msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
@@ -272,15 +213,6 @@ bot.command('db', async (ctx) => {
         await sendMessage('Không có dữ liệu lịch sử');
     }
 });
-
-// bot.command('bot', async (ctx) => {
-//     if (!isMe(ctx)) return;
-//     let value = getTgMessage(ctx, 'bot');
-//     let coin = await read('coin');
-//     coin.running = value == '1';
-//     await write(coin, 'coin');
-//     await sendMessage(`Bot running status set to ${coin.running}`);
-// });
 
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
@@ -297,12 +229,6 @@ bot.command('pnl', async (ctx) => {
 
 
 module.exports = {
-    sendMessage, setActiveSymbol, openPositionByType, getSymbols, getMinQty, fetchPositions,
+    sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions,
     fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
     delay, fetchLeaderBoardPositions, getLeverageLB};
-
-/**
- * Các trạng thái của danh sách coin
- * W: đang chờ mở vị thế
- * I: đang chờ lệnh DCA, cắt lời, lỗ
- */
