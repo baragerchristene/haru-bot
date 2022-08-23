@@ -54,8 +54,8 @@ async function main() {
                         await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, lib.getLeverageLB(leadPosition))
                     } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
                         // lấy chiều vị thế tại 2 thời điểm
-                        let oldSide = leadPositionOld.positionAmount > 0 ? 'LONG' : 'SHORT';
-                        let newSide = leadPosition.positionAmount > 0 ? 'LONG' : 'SHORT';
+                        let oldSide = leadPositionOld.amount > 0 ? 'LONG' : 'SHORT';
+                        let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
 
                         // so sánh chiều vị thế
                         if ((leadPositionOld.amount > 0 && leadPosition.amount > 0) ||
