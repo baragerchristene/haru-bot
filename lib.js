@@ -88,9 +88,9 @@ function getMinQty(coin, exchanges) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     if (minQtyMinusFee < 1) {
-        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(3);
+        return (minQtyMinusFee*(1 + 0.05)).toFixed(3);
     } else {
-        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(0);
+        return (minQtyMinusFee*(1 + 0.05)).toFixed(0);
     }
 }
 
@@ -122,8 +122,8 @@ async function fetchCopyPosition(leaderId) {
     return response
 }
 
-async function fetchLeaderBoardPositions() {
-    let response = await bnApi.fetchFutureLeaderBoardPositionsById('1B323B4A4B47C303AA8FDEBBCC31BE50');
+async function fetchLeaderBoardPositions(encryptedUid) {
+    let response = await bnApi.fetchFutureLeaderBoardPositionsById(encryptedUid);
     if (response.error) {
         let detail = _.get(response, 'detail');
         await log(detail);
