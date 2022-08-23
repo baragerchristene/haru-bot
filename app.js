@@ -13,7 +13,6 @@ server.listen(port); // Listen on provided port, on all network interfaces.
 
 async function main() {
     console.log(`Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
-    const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
     if (process.env.BOT_STATUS == '0') { return }
     // scan step
     for (let i = 0; true; i++) {
@@ -40,6 +39,7 @@ async function main() {
             } else {
                 leadPositions = copyPosition.data;
             }
+            const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
             let totalPosition = _.uniqBy(_.concat(leadPositionOlds, leadPositions), 'symbol');
             const myPositions = await lib.fetchPositions();
             if (!_.isEmpty(totalPosition)) {
@@ -51,7 +51,7 @@ async function main() {
                     if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
                         let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
                         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                        await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, lib.getLeverageLB(leadPosition))
+                        await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                     } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
                         // lấy chiều vị thế tại 2 thời điểm
                         let oldSide = leadPositionOld.amount > 0 ? 'LONG' : 'SHORT';
@@ -79,7 +79,7 @@ async function main() {
                                         await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
                                     } else { // chưa có thì tạo mới
                                         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                                        await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, lib.getLeverageLB(leadPosition))
+                                        await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                                     }
                                 }
                             }
@@ -89,10 +89,10 @@ async function main() {
                             if (!_.isEmpty(myPosition)) {
                                 await lib.closePositionByType(oldSide, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
                                 let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                                await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, lib.getLeverageLB(leadPosition))
+                                await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                             } else {
                                 let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                                await lib.openPositionByType(newSide, leadPosition.symbol, minAmount, lib.getLeverageLB(leadPosition))
+                                await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                             }
                         }
 

@@ -62,7 +62,7 @@ async function closePositionByType(type, symbol, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -71,17 +71,18 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
     } else {
         await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`${symbol} DCA vị thế ${type}, số lượng ${quantity} | Leader{ old amount: ${oldAmt}; new amount${newAmt}; OE: ${oldEntryPrice}; NE: ${newEntryPrice}`);
+    await log(`#${symbol} DCA vị thế ${type}, số lượng ${quantity} | Source: amount: ${oldAmt} -> ${newAmt}; E: ${oldEntryPrice} -> ${newEntryPrice}`);
 }
 
-async function openPositionByType(type, symbol, quantity, leverage) {
+async function openPositionByType(type, position, quantity, leverage) {
+    const symbol = position.symbol;
     await binance.futuresLeverage(symbol, leverage);
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`${symbol} Mở vị thế ${type}`);
+    await log(`#${symbol}, opening ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
 }
 
 function getMinQty(coin, exchanges) {
