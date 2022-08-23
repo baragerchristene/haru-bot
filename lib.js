@@ -214,6 +214,22 @@ bot.command('db', async (ctx) => {
     }
 });
 
+bot.command('db2', async (ctx) => {
+    if (!isMe(ctx)) return;
+    let coins = await read('db');
+    if (!_.isEmpty(coins)) {
+        let message = _.reduce(coins, (msg, coin) => {
+            let side = coin.amount > 0 ? 'LONG' : 'SHORT';
+            let amt = (coin.markPrice*coin.amount).toFixed(3)
+            msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
+            return msg;
+        }, '')
+        await sendMessage(message);
+    } else {
+        await sendMessage('Không có dữ liệu lịch sử');
+    }
+});
+
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
