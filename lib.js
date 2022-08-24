@@ -235,7 +235,7 @@ bot.command('db2', async (ctx) => {
         let message = _.reduce(coins, (msg, coin) => {
             let side = coin.amount > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.amount).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
+            msg+= `${side} #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
             return msg;
         }, '')
         await sendMessage(message);
