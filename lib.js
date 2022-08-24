@@ -138,25 +138,13 @@ function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
 }
 
-async function read(file = 'db') {
+function read(file= 'db') {
     try {
-        var readStream = fs.createReadStream(path.join(__dirname, `./${file}.json`), 'utf8');
-        let raw = ''
-        var end = new Promise(function(resolve, reject) {
-            readStream.on('data', function (chunk) {
-                raw += chunk;
-            }).on('end', function () {
-                resolve(JSON.parse(raw))
-            });
-            readStream.on('error', function(err) {
-                reject(err)
-            });
-        });
-        const data = await end;
-        return data;
+        const data = fs.readFileSync(`./${file}.json`, 'utf8');
+        // parse JSON string to JSON object
+        return JSON.parse(data);
     } catch (err) {
-        log(`Error reading file from disk: ${err}`).then(r => {
-        });
+        log(`Error reading file from disk: ${err}`).then(r => {});
     }
 }
 
