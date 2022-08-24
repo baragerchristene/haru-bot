@@ -10,6 +10,7 @@ const fs = require('fs');
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
+const path = require("path");
 const bnApi = new BinanceApi();
 
 const binance = new Binance().options({
@@ -137,13 +138,25 @@ function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
 }
 
-function read(file= 'db') {
+async function read(file = 'db') {
     try {
-        const data = fs.readFileSync(`./${file}.json`, 'utf8');
-        // parse JSON string to JSON object
-        return JSON.parse(data);
+        var readStream = fs.createReadStream(path.join(__dirname, `./${file}.json`), 'utf8');
+        let raw = ''
+        var end = new Promise(function(resolve, reject) {
+            readStream.on('data', function (chunk) {
+                raw += chunk;
+            }).on('end', function () {
+                resolve(JSON.parse(raw))
+            });
+            readStream.on('error', function(err) {
+                reject(err)
+            });
+        });
+        const data = await end;
+        return data;
     } catch (err) {
-        log(`Error reading file from disk: ${err}`).then(r => {});
+        log(`Error reading file from disk: ${err}`).then(r => {
+        });
     }
 }
 
