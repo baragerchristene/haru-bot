@@ -1,17 +1,16 @@
 require('dotenv').config({ path: 'env/live.env' });
-const {sendTeleMessage, bot} = require("./telegram");
+const {sendTeleMessage} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
 const moment = require('moment-timezone');;
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const _ = require("lodash");
-const fs = require('fs');
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
-const path = require("path");
 const bnApi = new BinanceApi();
+var ctx = require('./context');
 
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
@@ -138,34 +137,13 @@ function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
 }
 
-function read(file= 'db') {
-    try {
-        const data = fs.readFileSync(`./${file}.json`, 'utf8');
-        // parse JSON string to JSON object
-        return JSON.parse(data);
-    } catch (err) {
-        log(`Error reading file from disk: ${err}`).then(r => {});
-    }
-}
-
-function write(data = {}, file = 'db') {
-    try {
-        // convert JSON object to a string
-        const raw = JSON.stringify(data, null, 4);
-        // write file to disk
-        fs.writeFileSync(`./${file}.json`, raw, 'utf8');
-    } catch (err) {
-        log(`Error writing file: ${err}`).then(r => {});
-    }
-}
-
 async function log(message) {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
     await sendMessage(`${now} => ${message}`);
 }
 
 async function detectPosition() {
-    const coin = await read('coin');
+    const coin = ctx.positions;
     // lấy vị thế đang có của người dùng
     const myRawPositions = await fetchPositions(coin.symbol);
     // lấy vị thế
@@ -176,77 +154,6 @@ async function detectPosition() {
     }
 }
 
-function getTgMessage(ctx, command) {
-    return _.replace(_.get(ctx, 'update.message.text'), `/${command}`, '').trim();
-}
-
-function isMe(ctx) {
-    return _.get(ctx, 'update.message.from.id') == process.env.MY_TELE
-}
-
-bot.command('ps', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let positions = await fetchPositions();
-    if (!_.isEmpty(positions)) {
-        let message = _.reduce(positions, (msg, coin) => {
-            let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
-            let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
-            return msg;
-        }, '')
-        await sendMessage(message);
-    } else {
-        await sendMessage('Không có vị thế nào!');
-    }
-});
-
-bot.command('db', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let coins = await read('db');
-    if (!_.isEmpty(coins)) {
-        let message = _.reduce(coins, (msg, coin) => {
-            let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
-            let amt = (coin.markPrice*coin.positionAmount).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
-            return msg;
-        }, '')
-        await sendMessage(message);
-    } else {
-        await sendMessage('Không có dữ liệu lịch sử');
-    }
-});
-
-bot.command('db2', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let coins = await read('db');
-    if (!_.isEmpty(coins)) {
-        let message = _.reduce(coins, (msg, coin) => {
-            let side = coin.amount > 0 ? 'LONG' : 'SHORT';
-            let amt = (coin.markPrice*coin.amount).toFixed(3)
-            msg+= `${side} #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
-            return msg;
-        }, '')
-        await sendMessage(message);
-    } else {
-        await sendMessage('Không có dữ liệu lịch sử');
-    }
-});
-
-bot.command('pnl', async (ctx) => {
-    if (!isMe(ctx)) return;
-    let positions = await fetchPositions();
-    let pnl = 0;
-    if (!_.isEmpty(positions)) {
-        pnl = _.reduce(positions, (result, coin) => {
-            result += _.toNumber(coin.unRealizedProfit);
-            return result;
-        }, 0)
-    }
-    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
-});
-
-
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions,
-    fetchCopyPosition, read,write, detectPosition, closePositionByType,dcaPositionByType,
-    delay, fetchLeaderBoardPositions, getLeverageLB};
+    closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB};
