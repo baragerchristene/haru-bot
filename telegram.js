@@ -87,7 +87,7 @@ bot.command('ps', async (ctx) => {
         let message = _.reduce(positions, (msg, coin) => {
             let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
             let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
-            msg+= `${side} ${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
+            msg+= `${side} #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
             return msg;
         }, '')
         await sendMessage(message);
