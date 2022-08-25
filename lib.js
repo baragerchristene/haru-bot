@@ -1,22 +1,14 @@
 require('dotenv').config({ path: 'env/live.env' });
-const {sendTeleMessage} = require("./telegram");
+const {sendMessage, log} = require("./telegram");
 const EMA = require('technicalindicators').EMA
-const Binance = require("node-binance-api");
 const fetch = require("node-fetch");
-const moment = require('moment-timezone');;
-moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const _ = require("lodash");
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
+const {binance, fetchPositions} = require('./resources/binance/utils');
 var ctx = require('./context');
-
-const binance = new Binance().options({
-    APIKEY: process.env.APIKEY,
-    APISECRET: process.env.APISECRET,
-    // test: true
-});
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
@@ -28,10 +20,6 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
-}
-
-async function setLeverage(symbol, leverage) {
-    return await binance.futuresLeverage(symbol, leverage);
 }
 
 async function getSymbols() {
@@ -49,11 +37,6 @@ async function getSymbols() {
         })
         return newSymbol;
     })
-}
-
-async function fetchPositions() {
-    const risk = await binance.futuresPositionRisk();
-    return _.filter(risk, (p) => { return p.positionAmt != 0})
 }
 
 async function closePositionByType(type, symbol, quantity, close = false) {
@@ -95,15 +78,6 @@ function getMinQty(coin, exchanges) {
     }
 }
 
-async function sendMessage(message) {
-    try {
-        await sendTeleMessage(message);
-    } catch (error) {
-        console.log('send message error');
-        console.log(error);
-    }
-}
-
 function keepAliveServer() {
     setInterval(function () {
         fetch(process.env.PING_URL).then(_r => {});
@@ -135,11 +109,6 @@ async function fetchLeaderBoardPositions(encryptedUid) {
 
 function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
-}
-
-async function log(message) {
-    const now = moment().format("DD/MM/YYYY HH:mm:ss");
-    await sendMessage(`${now} => ${message}`);
 }
 
 async function detectPosition() {

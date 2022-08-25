@@ -1,7 +1,11 @@
 const {Telegraf} = require("telegraf");
 const ctx = require("./context");
-const lib = require("./lib");
 const _ = require("lodash");
+const moment = require("moment-timezone");
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
+
+const {fetchPositions} = require('./resources/binance/utils');
+
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
 bot.launch()
@@ -9,8 +13,18 @@ bot.launch()
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
-async function sendTeleMessage(message) {
-    await bot.telegram.sendMessage(group_id, message);
+async function sendMessage(message) {
+    try {
+        await bot.telegram.sendMessage(group_id, message);
+    } catch (error) {
+        console.log('send message error');
+        console.log(error);
+    }
+}
+
+async function log(message) {
+    const now = moment().format("DD/MM/YYYY HH:mm:ss");
+    await sendMessage(`${now} => ${message}`);
 }
 
 function getTgMessage(ctxTg, command) {
@@ -31,9 +45,9 @@ bot.command('db2', async (ctx0) => {
             msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
             return msg;
         }, '')
-        await sendTeleMessage(message);
+        await sendMessage(message);
     } else {
-        await sendTeleMessage('Không có dữ liệu lịch sử');
+        await sendMessage('Không có dữ liệu lịch sử');
     }
 });
 
@@ -47,15 +61,15 @@ bot.command('db', async (ctx0) => {
             msg+= `${side} #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
             return msg;
         }, '')
-        await sendTeleMessage(message);
+        await sendMessage(message);
     } else {
-        await sendTeleMessage('Không có dữ liệu lịch sử');
+        await sendMessage('Không có dữ liệu lịch sử');
     }
 });
 
 bot.command('pnl', async (ctx) => {
     if (!isMe(ctx)) return;
-    let positions = await lib.fetchPositions();
+    let positions = await fetchPositions();
     let pnl = 0;
     if (!_.isEmpty(positions)) {
         pnl = _.reduce(positions, (result, coin) => {
@@ -63,12 +77,12 @@ bot.command('pnl', async (ctx) => {
             return result;
         }, 0)
     }
-    await sendTeleMessage(`Current uPNL total ${pnl.toFixed(3)}`);
+    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
 });
 
 bot.command('ps', async (ctx) => {
     if (!isMe(ctx)) return;
-    let positions = await lib.fetchPositions();
+    let positions = await fetchPositions();
     if (!_.isEmpty(positions)) {
         let message = _.reduce(positions, (msg, coin) => {
             let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
@@ -76,20 +90,20 @@ bot.command('ps', async (ctx) => {
             msg+= `${side} ${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
             return msg;
         }, '')
-        await sendTeleMessage(message);
+        await sendMessage(message);
     } else {
-        await sendTeleMessage('Không có vị thế nào!');
+        await sendMessage('Không có vị thế nào!');
     }
 });
 
 bot.command('bot', async (ctx0) => {
     let running = getTgMessage(ctx0, 'bot') == '1';
     ctx.trigger = running;
-    await sendTeleMessage(`Trạng thái bot mới: ${running ? 'đang chạy' : 'đã tắt'}`);
+    await sendMessage(`Trạng thái bot mới: ${running ? 'đang chạy' : 'đã tắt'}`);
 });
 
 bot.command('stt', async () => {
-    await sendTeleMessage(`Trạng thái bot hiện tại: ${ctx.trigger ? 'đang chạy' : 'đã tắt'}`);
+    await sendMessage(`Trạng thái bot hiện tại: ${ctx.trigger ? 'đang chạy' : 'đã tắt'}`);
 });
 
-module.exports = {sendTeleMessage}
+module.exports = {sendMessage, log}
