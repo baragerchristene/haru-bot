@@ -44,6 +44,7 @@ async function main() {
                 const myPositions = await lib.fetchPositions();
                 if (!_.isEmpty(totalPosition)) {
                     _.filter(totalPosition, async (position) => {
+                        if (position.symbol == 'BTCUSDT') return;
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
                         let leadPosition = _.find(leadPositions, {symbol: position.symbol});
                         let myPosition = _.find(myPositions, {symbol: position.symbol});
