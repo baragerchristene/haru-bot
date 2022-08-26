@@ -97,6 +97,7 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('bot', async (ctx0) => {
+    if (!isMe(ctx)) return;
     let running = getTgMessage(ctx0, 'bot') == '1';
     ctx.trigger = running;
     await sendMessage(`Trạng thái bot mới: ${running ? 'đang chạy' : 'đã tắt'}`);
