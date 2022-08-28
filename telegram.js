@@ -71,7 +71,7 @@ bot.command('db', async (ctx0) => {
 bot.command('dbc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let coins = ctx.positions;
-    let symbol = getTgMessage(ctx0, 'xa');
+    let symbol = getTgMessage(ctx0, 'dbc');
     symbol = _.toString(symbol).toUpperCase().trim();
     let coin = _.find(coins, {symbol});
     if (!_.isEmpty(coin)) {
