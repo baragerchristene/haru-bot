@@ -7,7 +7,7 @@ const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
-const {binance, fetchPositions} = require('./resources/binance/utils');
+const {binance, fetchPositions, getSymbols} = require('./resources/binance/utils');
 var ctx = require('./context');
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
@@ -20,23 +20,6 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
-}
-
-async function getSymbols() {
-    const exchangeInfo = await binance.futuresExchangeInfo();
-    const symbols =  _.get(exchangeInfo, 'symbols');
-    return _.map(symbols, (symbol) => {
-        let newSymbol = {};
-        newSymbol.symbol = symbol.symbol;
-        _.filter(_.get(symbol, 'filters'), (filter) => {
-            if (filter.filterType == 'LOT_SIZE') {
-                newSymbol.lotSize = filter.stepSize;
-            } else if (filter.filterType == 'MIN_NOTIONAL') {
-                newSymbol.notional = filter.notional
-            }
-        })
-        return newSymbol;
-    })
 }
 
 async function closePositionByType(type, symbol, quantity, close = false) {
