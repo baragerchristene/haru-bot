@@ -12,6 +12,10 @@ const server = http.createServer(app); // Create HTTP server.
 server.listen(port); // Listen on provided port, on all network interfaces.
 
 async function main() {
+    if (process.env.BOT_STATUS == '0') {
+        console.log(`Bot đang tạm dừng`);
+        return;
+    }
     console.log(`Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
     // scan step
     for (let i = 0; true; i++) {
@@ -44,7 +48,6 @@ async function main() {
                 const myPositions = await lib.fetchPositions();
 
                 if (!_.isEmpty(totalPosition)) {
-                    // console.time('main')
                     let queue = [];
                     for(const element of totalPosition) {
                         queue.push(ComparePosition(element, leadPositions, leadPositionOlds, myPositions, filterSymbols));
@@ -54,73 +57,7 @@ async function main() {
                     } catch (error) {
                         console.log(error);
                     }
-                    // _.filter(totalPosition, async (position) => {
-                    //     if (position.symbol == 'BTCUSDT') return;
-                    //     let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
-                    //     let leadPosition = _.find(leadPositions, {symbol: position.symbol});
-                    //     let myPosition = _.find(myPositions, {symbol: position.symbol});
-                    //
-                    //     if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
-                    //         let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                    //         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                    //         await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
-                    //     } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
-                    //         // lấy chiều vị thế tại 2 thời điểm
-                    //         let oldSide = leadPositionOld.amount > 0 ? 'LONG' : 'SHORT';
-                    //         let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                    //
-                    //         // so sánh chiều vị thế
-                    //         if ((leadPositionOld.amount > 0 && leadPosition.amount > 0) ||
-                    //             (leadPositionOld.amount < 0 && leadPosition.amount < 0)) {
-                    //             // cùng chiều vị thế
-                    //             let oldAmt = Math.abs(leadPositionOld.amount);
-                    //             let newAmt = Math.abs(leadPosition.amount);
-                    //             let amountChangeRate = Math.abs((oldAmt - newAmt) / oldAmt);
-                    //
-                    //             if (oldAmt != newAmt) { //
-                    //                 if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
-                    //                     if (!_.isEmpty(myPosition)) {
-                    //                         let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
-                    //                         if (amountChange == 0) amountChange = Math.abs(myPosition.positionAmt);
-                    //                         await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
-                    //                     }
-                    //                 } else { // DCA
-                    //                     if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                    //                         let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
-                    //                         if (amountChange == 0) amountChange = lib.getMinQty(myPosition, filterSymbols); // amount bằng 0 thì lấy min
-                    //                         await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
-                    //                     } else { // chưa có thì tạo mới
-                    //                         let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                    //                         await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
-                    //                     }
-                    //                 }
-                    //             }
-                    //         } else { // khác chiều vị thế
-                    //             // đóng vị thế hiện tại và mở vị thế mới
-                    //             //đóng theo vị thế của user
-                    //             if (!_.isEmpty(myPosition)) {
-                    //                 await lib.closePositionByType(oldSide, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
-                    //                 let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                    //                 await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
-                    //             } else {
-                    //                 let minAmount = lib.getMinQty(leadPosition, filterSymbols);
-                    //                 await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
-                    //             }
-                    //         }
-                    //
-                    //     } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
-                    //         // xác định vị thế người dùng
-                    //
-                    //         if (!_.isEmpty(myPosition)) {
-                    //             let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    //             await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
-                    //         }
-                    //     }
-                    // })
                 }
-                // console.timeEnd('main')
-                // console.log('end')
-
                 ctx.positions = leadPositions; // ghi lịch sử vị thế
             }
         }

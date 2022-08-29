@@ -128,15 +128,8 @@ bot.command('ps', async (ctx) => {
     }
 });
 
-// bot.command('bot', async (ctx0) => {
-//     if (!isMe(ctx)) return;
-//     let running = getTgMessage(ctx0, 'bot') == '1';
-//     ctx.trigger = running;
-//     await sendMessage(`Trạng thái bot mới: ${running ? 'đang chạy' : 'đã tắt'}`);
-// });
-
 bot.command('ss', async () => {
-    await sendMessage(`Trạng thái bot hiện tại: ${ctx.trigger ? 'đang chạy' : 'đã tắt'}`);
+    await sendMessage(`Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '0' ? 'tạm dừng scan' : 'đang chạy'}`);
 });
 
 bot.command('xa', async (ctx0) => {
@@ -172,7 +165,9 @@ bot.command('h', async (ctx0) => {
     '/ps Xem vị thế của bạn \n' +
     '/pnl Xem tổng lỗ lãi của bạn \n' +
     '/lpnl Xem tổng lỗ lãi của Leader \n' +
-    '/xa {tên coin} đóng vị thế của coin theo lệnh thị trường \n/dbc {tên coin} xem vị thế từng coin riêng của leader';
+    '/xa {tên coin} đóng vị thế của coin theo lệnh thị trường \n' +
+    '/dbc {tên coin} xem vị thế từng coin riêng của leader \n' +
+    '/xtp {tên coin} {số lượng} {giá stop}, đặt TP cho coin';
     await sendMessage(helpMessage);
 });
 
