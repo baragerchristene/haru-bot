@@ -1,3 +1,5 @@
+const moment = require("moment-timezone");
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const indexRouter = require('./index');
 const lib = require("./lib");
 const _ = require("lodash");
@@ -16,7 +18,7 @@ async function main() {
         console.log(`Bot đang tạm dừng`);
         return;
     }
-    console.log(`Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
+    console.log(`${moment().format("DD/MM/YYYY HH:mm:ss")} Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
     // scan step
     for (let i = 0; true; i++) {
         if (ctx.trigger) {
