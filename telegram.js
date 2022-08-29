@@ -114,7 +114,6 @@ bot.command('lpnl', async (ctx0) => {
 bot.command('ps', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
-    console.log(positions);
     if (!_.isEmpty(positions)) {
         let message = _.reduce(positions, (msg, coin) => {
             let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
