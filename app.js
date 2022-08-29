@@ -14,11 +14,12 @@ const server = http.createServer(app); // Create HTTP server.
 server.listen(port); // Listen on provided port, on all network interfaces.
 
 async function main() {
+    let now = moment().format("DD/MM/YYYY HH:mm:ss");
     if (process.env.BOT_STATUS == '0') {
-        console.log(`Bot đang tạm dừng`);
+        console.log(`${now} Bot đang tạm dừng`);
         return;
     }
-    console.log(`${moment().format("DD/MM/YYYY HH:mm:ss")} Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
+    console.log(`${now} Bắt đầu copy từ ID: ${process.env.COPY_ID}`);
     // scan step
     for (let i = 0; true; i++) {
         if (ctx.trigger) {
