@@ -54,11 +54,13 @@ async function openPositionByType(type, position, quantity, leverage) {
 function getMinQty(coin, exchanges) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
-    if (minQtyMinusFee < 1) {
-        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(3);
-    } else {
-        return (minQtyMinusFee*(1 + 0.05)*2).toFixed(0);
-    }
+    let countNumber = numDigitsAfterDecimal(assert.lotSize);
+    return (minQtyMinusFee*(1 + 0.05)*(Number(process.env.MIN_X))).toFixed(countNumber);
+}
+
+function numDigitsAfterDecimal(x) {
+	var afterDecimalStr = x.toString().split('.')[1] || '';
+	return afterDecimalStr.length;
 }
 
 function keepAliveServer() {
