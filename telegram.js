@@ -3,6 +3,8 @@ const ctx = require("./context");
 const _ = require("lodash");
 const moment = require("moment-timezone");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
+const BinanceApi = require("./resources/binance/binance-api");
+const bnApi = new BinanceApi();
 
 const {fetchPositions, binance, fetchPositionBySymbol} = require('./resources/binance/utils');
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -35,36 +37,39 @@ function isMe(ctxTg) {
     return _.get(ctxTg, 'update.message.from.id') == process.env.MY_TELE
 }
 
-// bot.command('db2', async (ctx0) => {
-//     if (!isMe(ctx0)) return;
-//     let coins = ctx.positions;
-//     if (!_.isEmpty(coins)) {
-//         let message = _.reduce(coins, (msg, coin) => {
-//             let side = coin.positionAmount > 0 ? 'LONG' : 'SHORT';
-//             let amt = (coin.markPrice*coin.positionAmount).toFixed(3)
-//             msg+= `${side} ${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.unrealizedProfit}\n`;
-//             return msg;
-//         }, '')
-//         await sendMessage(message);
-//     } else {
-//         await sendMessage('Không có dữ liệu lịch sử');
-//     }
-// });
+function getPositionsStr(coins) {
+    const message = _.reduce(coins, (msg, coin) => {
+        let side = coin.amount > 0 ? 'LONG' : 'SHORT';
+        let leverage = getLeverageLB(coin);
+        let amt = (coin.markPrice*coin.amount).toFixed(3)
+        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
+        return msg;
+    }, '');
+    return message;
+}
 
 bot.command('db', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    let coins = ctx.positions;
-    if (!_.isEmpty(coins)) {
-        let message = _.reduce(coins, (msg, coin) => {
-            let side = coin.amount > 0 ? 'LONG' : 'SHORT';
-            let leverage = getLeverageLB(coin);
-            let amt = (coin.markPrice*coin.amount).toFixed(3)
-            msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
-            return msg;
-        }, '')
-        await sendMessage(message);
+    let positions = ctx.positions;
+    if (!_.isEmpty(positions)) {
+        await sendMessage(getPositionsStr(positions));
     } else {
         await sendMessage('Không có dữ liệu lịch sử');
+    }
+});
+
+bot.command('dbi', async (ctx0) => {
+    let leaderId = getTgMessage(ctx0, 'dbi');
+    let response = await bnApi.fetchFutureLeaderBoardPositionsById(leaderId);
+    if (response.error) {
+        await sendMessage('Không lấy được dữ liệu');
+    } else {
+        if (!_.isEmpty(response.data)) {
+            let message = getPositionsStr(response.data);
+            await sendMessage(message);
+        } else {
+            await sendMessage('Không có dữ liệu vị thế');
+        }
     }
 });
 

@@ -8,9 +8,9 @@ class BinanceApi {
             encryptedUid: encryptedUid,
             tradeType: "PERPETUAL"
         }
-        let response = await api.post(path, payload)
+        let response = await api.post(path, payload);
         if (response.success) {
-            if (response.data.otherPositionRetList.length > 0) {
+            if (response.data.otherPositionRetList && response.data.otherPositionRetList.length > 0) {
                 return {data: response.data.otherPositionRetList, error: false};
             } else {
                 return {data: [], error: false};
