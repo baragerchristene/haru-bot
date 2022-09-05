@@ -109,5 +109,5 @@ async function detectPosition() {
 }
 
 module.exports = {
-    sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions,
+    sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions, numDigitsAfterDecimal,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB};

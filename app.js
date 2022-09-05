@@ -75,13 +75,16 @@ async function main() {
                                 if (oldAmt != newAmt) { //
                                     if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                         if (!_.isEmpty(myPosition)) {
-                                            let myAmt = Math.abs(myPosition.positionAmt);
-                                            let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(3);
-                                            if (amountChange == 0) amountChange = myAmt;
+                                            let myAmt = Math.abs(myPosition.positionAmt); // khối lượng của tôi
+                                            let fraction = lib.numDigitsAfterDecimal(myAmt);
+                                            let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
                                             let minAmt = lib.getMinQty(myPosition, filterSymbols)/process.env.MIN_X;
-                                            let diff1 = Number((myAmt/minAmt).toFixed(0));
-                                            let diff2 = Number((amountChange/minAmt).toFixed(0));
-                                            if (diff1 - diff2 < 0) amountChange = myAmt;
+                                            let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
+                                            if (multiplier >= 1) {
+                                                amountChange = Number((minAmt*multiplier).toFixed(fraction));
+                                            } else {
+                                                amountChange = myAmt;
+                                            }
                                             await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
                                         }
                                     } else { // DCA
