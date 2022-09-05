@@ -133,7 +133,8 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    await sendMessage(`Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '0' ? 'tạm dừng scan' : 'đang chạy'}`);
+    let msg = `Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \n COPY_ID: ${process.env.COPY_ID}`;
+    await sendMessage(msg);
 });
 
 bot.command('xa', async (ctx0) => {

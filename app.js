@@ -80,12 +80,17 @@ async function main() {
                                             let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
                                             let minAmt = lib.getMinQty(myPosition, filterSymbols)/process.env.MIN_X;
                                             let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
+                                            let multiplierOrigin = Math.round(myAmt/minAmt); // lấy bội số vs min
                                             if (multiplier >= 1) {
                                                 amountChange = Number((minAmt*multiplier).toFixed(fraction));
                                             } else {
-                                                amountChange = myAmt;
+                                                if (multiplierOrigin > 1) {
+                                                    amountChange = minAmt;
+                                                } else {
+                                                    amountChange = myAmt;
+                                                }
                                             }
-                                            await lib.closePositionByType(newSide, leadPosition.symbol, amountChange);
+                                            await lib.closePositionByType(newSide, myPosition, amountChange);
                                         }
                                     } else { // DCA
                                         if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
@@ -102,7 +107,7 @@ async function main() {
                                 // đóng vị thế hiện tại và mở vị thế mới
                                 //đóng theo vị thế của user
                                 if (!_.isEmpty(myPosition)) {
-                                    await lib.closePositionByType(oldSide, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
+                                    await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true)
                                     let minAmount = lib.getMinQty(leadPosition, filterSymbols);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                                 } else {
@@ -116,7 +121,7 @@ async function main() {
 
                             if (!_.isEmpty(myPosition)) {
                                 let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
-                                await lib.closePositionByType(side, myPosition.symbol, Math.abs(myPosition.positionAmt), true)
+                                await lib.closePositionByType(side, myPosition, Math.abs(myPosition.positionAmt), true)
                             }
                         }
                     })

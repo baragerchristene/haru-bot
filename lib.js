@@ -22,13 +22,14 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
 }
 
-async function closePositionByType(type, symbol, quantity, close = false) {
+async function closePositionByType(type, position, quantity, close = false) {
+    let symbol = position.symbol;
     if (type == 'LONG') {
         await binance.futuresMarketSell(symbol, quantity);
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'}  vị thế ${type}; Last uPnl: ${position.unRealizedProfit}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
