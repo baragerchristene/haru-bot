@@ -56,7 +56,13 @@ function getMinQty(coin, exchanges) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
-    return (minQtyMinusFee*(1 + 0.05)*(Number(process.env.MIN_X))).toFixed(countNumber);
+    return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
+}
+
+function getMinQtyU(coin, exchanges) {
+    let assert = _.find(exchanges, {symbol: coin.symbol});
+    let countNumber = numDigitsAfterDecimal(assert.lotSize);
+    return (Number(process.env.MIN_X)/coin.markPrice).toFixed(countNumber);
 }
 
 function numDigitsAfterDecimal(x) {
@@ -93,6 +99,25 @@ async function fetchLeaderBoardPositions(encryptedUid) {
     return response
 }
 
+function getAmountChange(position, filterSymbols, amountChangeRate) {
+    let myAmt = Math.abs(position.positionAmt); // khối lượng của tôi
+    let fraction = numDigitsAfterDecimal(myAmt);
+    let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
+    let minAmt = getMinQty(position, filterSymbols);
+    let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
+    let multiplierOrigin = Math.round(myAmt/minAmt); // lấy bội số vs min
+    if (multiplier >= 1) {
+        amountChange = Number((minAmt*multiplier).toFixed(fraction));
+    } else {
+        if (multiplierOrigin > 1) {
+            amountChange = minAmt;
+        } else {
+            amountChange = myAmt;
+        }
+    }
+    return amountChange;
+}
+
 function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
 }
@@ -110,5 +135,5 @@ async function detectPosition() {
 }
 
 module.exports = {
-    sendMessage, openPositionByType, getSymbols, getMinQty, fetchPositions, numDigitsAfterDecimal,
-    closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB};
+    sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
+    closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};

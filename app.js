@@ -57,7 +57,7 @@ async function main() {
 
                         if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
                             let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                            let minAmount = lib.getMinQty(leadPosition, filterSymbols);
+                            let minAmount = lib.getMinQtyU(leadPosition, filterSymbols);
                             await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                         } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
                             // lấy chiều vị thế tại 2 thời điểm
@@ -75,27 +75,12 @@ async function main() {
                                 if (oldAmt != newAmt) { //
                                     if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                         if (!_.isEmpty(myPosition)) {
-                                            let myAmt = Math.abs(myPosition.positionAmt); // khối lượng của tôi
-                                            let fraction = lib.numDigitsAfterDecimal(myAmt);
-                                            let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
-                                            let minAmt = lib.getMinQty(myPosition, filterSymbols)/process.env.MIN_X;
-                                            let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
-                                            let multiplierOrigin = Math.round(myAmt/minAmt); // lấy bội số vs min
-                                            if (multiplier >= 1) {
-                                                amountChange = Number((minAmt*multiplier).toFixed(fraction));
-                                            } else {
-                                                if (multiplierOrigin > 1) {
-                                                    amountChange = minAmt;
-                                                } else {
-                                                    amountChange = myAmt;
-                                                }
-                                            }
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
                                             await lib.closePositionByType(newSide, myPosition, amountChange);
                                         }
                                     } else { // DCA
                                         if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                                            let amountChange = Math.abs(myPosition.positionAmt * amountChangeRate).toFixed(3);
-                                            if (amountChange == 0) amountChange = lib.getMinQty(myPosition, filterSymbols); // amount bằng 0 thì lấy min
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
                                             await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
                                         } else { // chưa có thì gửi message
                                             let message = `DCA ${newSide} ${leadPosition.symbol} ${lib.getLeverageLB(leadPosition)}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
@@ -108,10 +93,10 @@ async function main() {
                                 //đóng theo vị thế của user
                                 if (!_.isEmpty(myPosition)) {
                                     await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true)
-                                    let minAmount = lib.getMinQty(leadPosition, filterSymbols);
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                                 } else {
-                                    let minAmount = lib.getMinQty(leadPosition, filterSymbols);
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, lib.getLeverageLB(leadPosition))
                                 }
                             }
