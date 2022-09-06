@@ -121,9 +121,18 @@ bot.command('ps', async (ctx) => {
     let positions = await fetchPositions();
     if (!_.isEmpty(positions)) {
         let message = _.reduce(positions, (msg, coin) => {
-            let side = coin.positionAmt > 0 ? 'LONG' : 'SHORT';
-            let amt = (coin.markPrice*coin.positionAmt).toFixed(3)
-            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}\n`;
+            let side = '';
+            let direction;
+            if (coin.positionAmt > 0) {
+                side = 'LONG';
+                direction = 1;
+            } else {
+                side = 'SHORT';
+                direction = -1;
+            }
+            let amt = (coin.markPrice*coin.positionAmt).toFixed(3);
+            let roe = ((coin.unRealizedProfit/coin.positionAmt)*100*direction).toFixed(2);
+            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}; roe: ${roe}%\n`;
             return msg;
         }, '')
         await sendMessage(message);
