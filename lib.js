@@ -59,10 +59,10 @@ function getMinQty(coin, exchanges) {
     return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
 }
 
-function getMinQtyU(coin, exchanges) {
+function getMinQtyU(coin, exchanges, leverage) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
-    return (Number(process.env.MIN_X)/coin.markPrice).toFixed(countNumber);
+    return ((Number(process.env.MIN_X)/coin.markPrice)*leverage).toFixed(countNumber);
 }
 
 function numDigitsAfterDecimal(x) {
