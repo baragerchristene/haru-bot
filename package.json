@@ -19,7 +19,7 @@
     "express": "^4.18.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.3",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.35",
     "node-binance-api": "^0.13.1",
     "node-fetch": "^2.6.7",
     "technicalindicators": "^3.1.0",
