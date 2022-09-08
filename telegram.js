@@ -142,8 +142,14 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \n COPY_ID: ${process.env.COPY_ID}`;
+    let msg = `Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \nCOPY_ID: ${process.env.COPY_ID}\nLiquid Trade: ${ctx.liquidTrade}`;
     await sendMessage(msg);
+});
+
+bot.command('ltrade', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let running = getTgMessage(ctx0, 'ltrade');
+    ctx.liquidTrade = running == '1';
 });
 
 bot.command('xa', async (ctx0) => {

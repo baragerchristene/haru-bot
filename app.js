@@ -1,3 +1,4 @@
+const WebSocket = require("ws");
 const moment = require("moment-timezone");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const indexRouter = require('./index');
@@ -120,4 +121,56 @@ async function main() {
         }
     }
 }
-main()
+
+function liquidStream() {
+    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    ws.on('message', async (event) => {
+        let result = JSON.parse(event);
+        let originalQuantity = result.o.q;
+        let averagePrice = result.o.ap;
+        let totalValue = originalQuantity * averagePrice;
+        let symbol = result.o.s;
+        // let side = result.o.S == 'BUY' ? 'LONG' : 'SHORT';
+        // let liquid = `Liquidated ${side} #${symbol}: $${kFormatter(totalValue)} at ${averagePrice}`;
+        // console.log(liquid);
+        // console.log(ctx.liquidTrade);
+        if (totalValue > 100000 && symbol == 'BTCUSDT' && ctx.liquidTrade == true) {
+            let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
+            // let liquid = `Liquidated ${side} #${symbol}: $${kFormatter(totalValue)} at ${averagePrice}`;
+            // console.log(liquid);
+            const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
+            if (_.isEmpty(myPosition)) {
+                let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${kFormatter(totalValue)}`};
+                await lib.openPositionByType(side, obj, 0.005, 20);
+            }
+        }
+    });
+}
+
+function kFormatter(num) {
+    return Math.abs(num) > 999 ? Math.sign(num) * ((Math.abs(num) / 1000).toFixed(1)) + 'K' : Math.sign(num) * Math.abs(num)
+}
+
+async function autoTP() {
+    for (let i = 0; true; i++) {
+        const positions = await lib.fetchPositionBySymbol('BTCUSDT');
+        if (!_.isEmpty(positions)) {
+            const position = positions[0];
+            const amt = Math.abs(position.positionAmt);
+            if (position.positionAmt > 0) {
+                // đang long
+                if ((position.markPrice - position.entryPrice) >= 100) {
+                    await lib.closePositionByType('LONG', {symbol: 'BTC', unRealizedProfit: position.unRealizedProfit}, amt, true)
+                }
+            } else {
+                // đang short
+                if ((position.entryPrice - position.markPrice) >= 100) {
+                    await lib.closePositionByType('SHORT', {symbol: 'BTC', unRealizedProfit: position.unRealizedProfit}, amt, true)
+                }
+            }
+        }
+    }
+}
+main().then()
+liquidStream()
+autoTP().then()

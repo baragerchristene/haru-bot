@@ -7,7 +7,7 @@ const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
-const {binance, fetchPositions, getSymbols} = require('./resources/binance/utils');
+const {binance, fetchPositions, getSymbols, fetchPositionBySymbol} = require('./resources/binance/utils');
 var ctx = require('./context');
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
@@ -136,4 +136,5 @@ async function detectPosition() {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
+    fetchPositionBySymbol,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
