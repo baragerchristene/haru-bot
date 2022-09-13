@@ -164,36 +164,40 @@ function kFormatter(num) {
 async function autoTP() {
     await lib.delay(10000);
     for (let i = 0; true; i++) {
-        if (ctx.autoTP) {
-            let positions = await lib.fetchPositions();
-            ctx.myPositions = positions;
-            if (!_.isEmpty(positions)) {
-                const position = _.find(positions, {symbol: 'BTCUSDT'});
-                if (_.isEmpty(position)) {
-                    continue; // tìm k có vị thế BTC thì bỏ
-                }
-                const amt = Math.abs(position.positionAmt);
-                if (position.positionAmt > 0) {
-                    // đang long
-                    if ((position.markPrice - position.entryPrice) >= 100) {
-                        await lib.closePositionByType('LONG', {
-                            symbol: 'BTCUSDT',
-                            unRealizedProfit: position.unRealizedProfit
-                        }, amt, true)
+        let autoTP = ctx.autoTP;
+        return new Promise(async (resolve) => {
+            if (autoTP) {
+                let positions = await lib.fetchPositions();
+                ctx.myPositions = positions;
+                if (!_.isEmpty(positions)) {
+                    const position = _.find(positions, {symbol: 'BTCUSDT'});
+                    if (_.isEmpty(position)) {
+                        resolve(false) // tìm k có vị thế BTC thì bỏ
                     }
-                } else {
-                    // đang short
-                    if ((position.entryPrice - position.markPrice) >= 100) {
-                        await lib.closePositionByType('SHORT', {
-                            symbol: 'BTCUSDT',
-                            unRealizedProfit: position.unRealizedProfit
-                        }, amt, true)
+                    const amt = Math.abs(position.positionAmt);
+                    if (position.positionAmt > 0) {
+                        // đang long
+                        if ((position.markPrice - position.entryPrice) >= 100) {
+                            await lib.closePositionByType('LONG', {
+                                symbol: 'BTCUSDT',
+                                unRealizedProfit: position.unRealizedProfit
+                            }, amt, true)
+                        }
+                    } else {
+                        // đang short
+                        if ((position.entryPrice - position.markPrice) >= 100) {
+                            await lib.closePositionByType('SHORT', {
+                                symbol: 'BTCUSDT',
+                                unRealizedProfit: position.unRealizedProfit
+                            }, amt, true)
+                        }
                     }
-                }
+                } else resolve(false)
             }
-        }
+        })
+
     }
 }
-main().then()
+// main().then()
 liquidStream().then()
 autoTP().then()
