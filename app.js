@@ -139,7 +139,15 @@ async function liquidStream() {
                 const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
                 if (_.isEmpty(myPosition)) {
                     let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${kFormatter(totalValue)}`};
-                    await lib.openPositionByType(side, obj, 0.005, 20);
+                    let quantity = 0.001;
+                    if (totalValue > 200000 && totalValue < 500000) {
+                        quantity = 0.002;
+                    } else if (totalValue > 500000 && totalValue < 800000) {
+                        quantity = 0.005;
+                    } else if (totalValue > 1000000) {
+                        quantity = 0.01;
+                    }
+                    await lib.openPositionByType(side, obj, quantity, 125);
                 }
             } else {
                 let liquidTradeMsg = `${side} #${symbol} at ${averagePrice}`;
@@ -157,16 +165,19 @@ async function autoTP() {
     await lib.delay(10000);
     for (let i = 0; true; i++) {
         if (ctx.autoTP) {
-            let positions = ctx.myPositions;
+            let positions = await lib.fetchPositions();
+            ctx.myPositions = positions;
             if (!_.isEmpty(positions)) {
                 const position = _.find(positions, {symbol: 'BTCUSDT'});
-                if (_.isEmpty(position)) continue;
+                if (_.isEmpty(position)) {
+                    continue; // tìm k có vị thế BTC thì bỏ
+                }
                 const amt = Math.abs(position.positionAmt);
                 if (position.positionAmt > 0) {
                     // đang long
                     if ((position.markPrice - position.entryPrice) >= 100) {
                         await lib.closePositionByType('LONG', {
-                            symbol: 'BTC',
+                            symbol: 'BTCUSDT',
                             unRealizedProfit: position.unRealizedProfit
                         }, amt, true)
                     }
@@ -174,7 +185,7 @@ async function autoTP() {
                     // đang short
                     if ((position.entryPrice - position.markPrice) >= 100) {
                         await lib.closePositionByType('SHORT', {
-                            symbol: 'BTC',
+                            symbol: 'BTCUSDT',
                             unRealizedProfit: position.unRealizedProfit
                         }, amt, true)
                     }
@@ -184,5 +195,5 @@ async function autoTP() {
     }
 }
 main().then()
-// liquidStream().then()
-// autoTP().then()
+liquidStream().then()
+autoTP().then()

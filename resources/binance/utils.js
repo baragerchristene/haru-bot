@@ -9,7 +9,9 @@ const binance = new Binance().options({
 
 async function fetchPositions() {
     const risk = await binance.futuresPositionRisk();
-    return _.filter(risk, (p) => { return p.positionAmt != 0})
+    if (_.isArray(risk) && !_.isEmpty(risk)) {
+        return _.filter(risk, (p) => { return p.positionAmt != 0})
+    } else return [];
 }
 async function fetchPositionBySymbol(symbol) {
     const risk = await binance.futuresPositionRisk({symbol});
