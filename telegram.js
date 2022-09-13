@@ -131,7 +131,7 @@ bot.command('ps', async (ctx) => {
                 direction = -1;
             }
             let amt = (coin.markPrice*coin.positionAmt).toFixed(3);
-            let roe = ((coin.unRealizedProfit/coin.positionAmt.coin.markPrice)*100*direction).toFixed(2);
+            let roe = ((coin.unRealizedProfit/(coin.positionAmt*coin.markPrice))*100*direction).toFixed(2);
             msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; uPnl: ${coin.unRealizedProfit}; roe: ${roe}%\n`;
             return msg;
         }, '')
