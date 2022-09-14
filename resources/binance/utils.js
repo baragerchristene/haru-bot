@@ -35,4 +35,12 @@ async function getSymbols() {
     })
 }
 
-module.exports = {binance, fetchPositions, getSymbols, fetchPositionBySymbol}
+async function getMarkPrice(symbol) {
+    const coin = await binance.futuresPositionRisk({symbol});
+    if (!_.isEmpty(coin) && _.isArray(coin)) {
+        return _.nth(coin, 0);
+    }
+    return {}
+}
+
+module.exports = {binance, fetchPositions, getSymbols, fetchPositionBySymbol, getMarkPrice}

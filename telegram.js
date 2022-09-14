@@ -6,7 +6,7 @@ moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
 
-const {fetchPositions, binance, fetchPositionBySymbol} = require('./resources/binance/utils');
+const {fetchPositions, binance, fetchPositionBySymbol, getMarkPrice} = require('./resources/binance/utils');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
 
@@ -151,16 +151,25 @@ bot.command('ss', async () => {
 
 bot.command('ltrade', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    let running = getTgMessage(ctx0, 'ltrade');
-    ctx.liquidTrade = running == '1';
-    await sendMessage(`Tự động trade theo liquid: ${running ? 'bật' : 'tắt'}`);
+    ctx.liquidTrade = getTgMessage(ctx0, 'ltrade') == '1';
+    await sendMessage(`Tự động trade theo liquid: ${ctx.liquidTrade ? 'bật' : 'tắt'}`);
 });
 
-bot.command('autotp', async (ctx0) => {
+bot.command('atp', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    let running = getTgMessage(ctx0, 'autotp');
-    ctx.autoTP = running == '1';
-    await sendMessage(`Tự động chốt lãi: ${running ? 'bật' : 'tắt'}`);
+    ctx.autoTP = getTgMessage(ctx0, 'atp') == '1';
+    await sendMessage(`Tự động chốt lãi: ${ctx.autoTP ? 'bật' : 'tắt'}`);
+});
+
+bot.command('p', async (ctx0) => {
+    let symbol = (`${getTgMessage(ctx0, 'p')}USDT`).toUpperCase();
+    const coin = await getMarkPrice(symbol);
+    if (_.isEmpty(coin)) {
+        await sendMessage('Không có kết quả');
+    } else {
+        let msg = `${coin.symbol}; Mark Price: ${coin.markPrice}; Leverage: ${coin.leverage}`
+        await sendMessage(msg);
+    }
 });
 
 bot.command('xa', async (ctx0) => {

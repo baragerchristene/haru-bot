@@ -125,8 +125,9 @@ async function main() {
 }
 
 async function liquidStream() {
-    await lib.delay(10000);
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    // await lib.delay(10000);
+    // const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
     ws.on('message', async (event) => {
         let result = JSON.parse(event);
         let originalQuantity = result.o.q;
@@ -161,43 +162,43 @@ function kFormatter(num) {
     return Math.abs(num) > 999 ? Math.sign(num) * ((Math.abs(num) / 1000).toFixed(1)) + 'K' : Math.sign(num) * Math.abs(num)
 }
 
-async function autoTP() {
-    await lib.delay(10000);
-    for (let i = 0; true; i++) {
-        let autoTP = ctx.autoTP;
-        return new Promise(async (resolve) => {
-            if (autoTP) {
-                let positions = await lib.fetchPositions();
-                ctx.myPositions = positions;
-                if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'BTCUSDT'});
-                    if (_.isEmpty(position)) {
-                        resolve(false) // tìm k có vị thế BTC thì bỏ
-                    }
-                    const amt = Math.abs(position.positionAmt);
-                    if (position.positionAmt > 0) {
-                        // đang long
-                        if ((position.markPrice - position.entryPrice) >= 100) {
-                            await lib.closePositionByType('LONG', {
-                                symbol: 'BTCUSDT',
-                                unRealizedProfit: position.unRealizedProfit
-                            }, amt, true)
-                        }
-                    } else {
-                        // đang short
-                        if ((position.entryPrice - position.markPrice) >= 100) {
-                            await lib.closePositionByType('SHORT', {
-                                symbol: 'BTCUSDT',
-                                unRealizedProfit: position.unRealizedProfit
-                            }, amt, true)
-                        }
-                    }
-                } else resolve(false)
+async function autoTakingProfit() {
+    if (ctx.autoTP) {
+        let positions = await lib.fetchPositions();
+        ctx.myPositions = positions;
+        if (!_.isEmpty(positions)) {
+            const position = _.find(positions, {symbol: 'BTCUSDT'});
+            if (_.isEmpty(position)) {
+                return // tìm k có vị thế BTC thì bỏ
             }
-        })
-
+            const amt = Math.abs(position.positionAmt);
+            if (position.positionAmt > 0) {
+                // đang long
+                if ((position.markPrice - position.entryPrice) >= 100) {
+                    await lib.closePositionByType('LONG', {
+                        symbol: 'BTCUSDT',
+                        unRealizedProfit: position.unRealizedProfit
+                    }, amt, true)
+                }
+            } else {
+                // đang short
+                if ((position.entryPrice - position.markPrice) >= 100) {
+                    await lib.closePositionByType('SHORT', {
+                        symbol: 'BTCUSDT',
+                        unRealizedProfit: position.unRealizedProfit
+                    }, amt, true)
+                }
+            }
+        }
     }
+}
+
+async function tpRunner() {
+    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+    ws.on('message', async (event) => {
+        await autoTakingProfit();
+    })
 }
 // main().then()
 liquidStream().then()
-autoTP().then()
+tpRunner().then()
