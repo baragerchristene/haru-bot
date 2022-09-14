@@ -165,13 +165,17 @@ bot.command('atp', async (ctx0) => {
 
 bot.command('ll', async (ctx0) => {
     let result = ctx.lastLiquid;
-    let originalQuantity = result.o.q;
-    let averagePrice = result.o.ap;
-    let totalValue = originalQuantity * averagePrice;
-    let symbol = result.o.s;
-    let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
-    let liquidTradeMsg = `Last: ${side} #${symbol} at ${averagePrice}; Liquidated: ${kFormatter(totalValue)}`;
-    await sendMessage(liquidTradeMsg);
+    if (_.isEmpty(result)) {
+        await sendMessage(`Không có dữ liệu!`);
+    } else {
+        let originalQuantity = result.o.q;
+        let averagePrice = result.o.ap;
+        let totalValue = originalQuantity * averagePrice;
+        let symbol = result.o.s;
+        let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
+        let liquidTradeMsg = `Last: ${side} #${symbol} at ${averagePrice}; Liquidated: $${kFormatter(totalValue)}`;
+        await sendMessage(liquidTradeMsg);
+    }
 });
 
 function kFormatter(num) {
