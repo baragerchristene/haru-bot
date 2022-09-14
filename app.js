@@ -126,8 +126,8 @@ async function main() {
 
 async function liquidStream() {
     // await lib.delay(10000);
-    // const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
-    const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
+    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    // const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
     ws.on('message', async (event) => {
         let result = JSON.parse(event);
         let originalQuantity = result.o.q;
@@ -136,6 +136,7 @@ async function liquidStream() {
         let symbol = result.o.s;
         let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
         if (totalValue > 100000 && symbol == 'BTCUSDT') {
+            console.log(result);
             if (ctx.liquidTrade) {
                 const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
                 if (_.isEmpty(myPosition)) {
