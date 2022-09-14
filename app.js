@@ -134,7 +134,7 @@ async function liquidStream() {
         let averagePrice = result.o.ap;
         let totalValue = originalQuantity * averagePrice;
         let symbol = result.o.s;
-        let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
+        let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
         ctx.lastLiquid = result;
         if (totalValue > 100000 && symbol == 'BTCUSDT') {
             console.log(result);

@@ -44,12 +44,15 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
 async function openPositionByType(type, position, quantity, leverage) {
     const symbol = position.symbol;
     await binance.futuresLeverage(symbol, leverage);
+    let result = {}
     if (type == 'LONG') {
-        await binance.futuresMarketBuy(symbol, quantity);
+        result = await binance.futuresMarketBuy(symbol, quantity);
     } else {
-        await binance.futuresMarketSell(symbol, quantity);
+        result = await binance.futuresMarketSell(symbol, quantity);
     }
     await log(`#${symbol}, opening ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
+    await delay(3000);
+    await sendMessage(result);
 }
 
 function getMinQty(coin, exchanges) {

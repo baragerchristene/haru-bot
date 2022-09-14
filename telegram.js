@@ -144,16 +144,16 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \n` +
+    let msg = `Trạng thái bot copy hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \n` +
         `COPY_ID: ${process.env.COPY_ID}\n` +
         `Liquid Trade: ${ctx.liquidTrade ? 'bật': 'tắt'}\n` +
         `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n`
     await sendMessage(msg);
 });
 
-bot.command('ltrade', async (ctx0) => {
+bot.command('ltr', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    ctx.liquidTrade = getTgMessage(ctx0, 'ltrade') == '1';
+    ctx.liquidTrade = getTgMessage(ctx0, 'ltr') == '1';
     await sendMessage(`Tự động trade theo liquid: ${ctx.liquidTrade ? 'bật' : 'tắt'}`);
 });
 
@@ -172,7 +172,7 @@ bot.command('ll', async (ctx0) => {
         let averagePrice = result.o.ap;
         let totalValue = originalQuantity * averagePrice;
         let symbol = result.o.s;
-        let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
+        let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
         let liquidTradeMsg = `Last: ${side} #${symbol} at ${averagePrice}; Liquidated: $${kFormatter(totalValue)}`;
         await sendMessage(liquidTradeMsg);
     }
