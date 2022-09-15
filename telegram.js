@@ -172,7 +172,7 @@ bot.command('ll', async (ctx0) => {
         let averagePrice = result.o.ap;
         let totalValue = originalQuantity * averagePrice;
         let symbol = result.o.s;
-        let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
+        let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
         let liquidTradeMsg = `Last: ${side} #${symbol} at ${averagePrice}; Liquidated: $${kFormatter(totalValue)}`;
         await sendMessage(liquidTradeMsg);
     }
