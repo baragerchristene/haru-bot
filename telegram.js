@@ -144,8 +144,9 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot copy hiện tại: ${process.env.BOT_STATUS == '1' ? 'đang chạy' : 'đã tắt'} \n` +
+    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} \n` +
         `COPY_ID: ${process.env.COPY_ID}\n` +
+        `Khoảng cách giá để TP: ${ctx.minTP}\n` +
         `Liquid Trade: ${ctx.liquidTrade ? 'bật': 'tắt'}\n` +
         `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n`
     await sendMessage(msg);
@@ -161,6 +162,23 @@ bot.command('atp', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoTP = getTgMessage(ctx0, 'atp') == '1';
     await sendMessage(`Tự động chốt lãi: ${ctx.autoTP ? 'bật' : 'tắt'}`);
+});
+
+bot.command('atc', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    ctx.autoCopy = getTgMessage(ctx0, 'atc') == '1';
+    await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
+});
+
+bot.command('mintp', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let min = _.toNumber(Number(getTgMessage(ctx0, 'mintp')).toFixed(0));
+    if (!min || min == 0) {
+        ctx.minTP = 50;
+    } else {
+        ctx.minTP = min;
+    }
+    await sendMessage(`Khoảng cách giá để TP: ${ctx.minTP}`);
 });
 
 bot.command('ll', async (ctx0) => {
