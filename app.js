@@ -13,7 +13,6 @@ app.use('/', indexRouter);
 app.set('port', port);
 const server = http.createServer(app); // Create HTTP server.
 server.listen(port); // Listen on provided port, on all network interfaces.
-const {SocketClient} = require('./cores/socketClient');
 
 async function main() {
     let now = moment().format("DD/MM/YYYY HH:mm:ss");
@@ -124,83 +123,83 @@ async function main() {
     }
 }
 
-async function liquidStream() {
-    // await lib.delay(10000);
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
-    // const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
-    ws.on('message', async (event) => {
-        let result = JSON.parse(event);
-        let originalQuantity = result.o.q;
-        let averagePrice = result.o.ap;
-        let totalValue = originalQuantity * averagePrice;
-        let symbol = result.o.s;
-        let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
-        ctx.lastLiquid = result;
-        if (totalValue > 100000 && symbol == 'BTCUSDT') {
-            console.log(result);
-            if (ctx.liquidTrade) {
-                const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
-                if (_.isEmpty(myPosition)) {
-                    let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${kFormatter(totalValue)}`};
-                    let quantity = 0.001;
-                    if (totalValue > 200000 && totalValue < 500000) {
-                        quantity = 0.002;
-                    } else if (totalValue > 500000 && totalValue < 800000) {
-                        quantity = 0.005;
-                    } else if (totalValue > 1000000) {
-                        quantity = 0.01;
-                    }
-                    await lib.openPositionByType(side, obj, quantity, 125);
-                }
-            } else {
-                let liquidTradeMsg = `${side} #${symbol} at ${averagePrice}`;
-                await lib.sendMessage(liquidTradeMsg)
-            }
-        }
-    });
-}
-
 function kFormatter(num) {
     return Math.abs(num) > 999 ? Math.sign(num) * ((Math.abs(num) / 1000).toFixed(1)) + 'K' : Math.sign(num) * Math.abs(num)
 }
 
-async function autoTakingProfit() {
-    if (ctx.autoTP) {
-        let positions = await lib.fetchPositions();
-        ctx.myPositions = positions;
-        if (!_.isEmpty(positions)) {
-            const position = _.find(positions, {symbol: 'BTCUSDT'});
-            if (_.isEmpty(position)) {
-                return // tìm k có vị thế BTC thì bỏ
-            }
-            const amt = Math.abs(position.positionAmt);
-            if (position.positionAmt > 0) {
-                // đang long
-                if ((position.markPrice - position.entryPrice) >= 100) {
-                    await lib.closePositionByType('LONG', {
-                        symbol: 'BTCUSDT',
-                        unRealizedProfit: position.unRealizedProfit
-                    }, amt, true)
-                }
-            } else {
-                // đang short
-                if ((position.entryPrice - position.markPrice) >= 100) {
-                    await lib.closePositionByType('SHORT', {
-                        symbol: 'BTCUSDT',
-                        unRealizedProfit: position.unRealizedProfit
-                    }, amt, true)
-                }
-            }
-        }
-    }
-}
-
-async function tpRunner() {
-    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+async function liquidStream() {
+    const ws = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    // const ws = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
     ws.on('message', async (event) => {
-        await autoTakingProfit();
+        try {
+            let result = JSON.parse(event);
+            let originalQuantity = result.o.q;
+            let averagePrice = result.o.ap;
+            let totalValue = originalQuantity * averagePrice;
+            let symbol = result.o.s;
+            let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
+            ctx.lastLiquid = result;
+            if (totalValue > 100000 && symbol == 'BTCUSDT') {
+                if (ctx.liquidTrade) {
+                    const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
+                    if (_.isEmpty(myPosition)) {
+                        let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${kFormatter(totalValue)}`};
+                        let quantity = 0.001;
+                        if (totalValue > 200000 && totalValue < 500000) {
+                            quantity = 0.002;
+                        } else if (totalValue > 500000 && totalValue < 800000) {
+                            quantity = 0.005;
+                        } else if (totalValue > 1000000) {
+                            quantity = 0.01;
+                        }
+                        await lib.openPositionByType(side, obj, quantity, 125);
+                    }
+                } else {
+                    let liquidTradeMsg = `${side} #${symbol} at ${averagePrice}`;
+                    await lib.sendMessage(liquidTradeMsg)
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    });
+
+    const ws2 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+    ws2.on('message', async (_event) => {
+        try {
+            if (ctx.autoTP) {
+                let positions = await lib.fetchPositions();
+                ctx.myPositions = positions;
+                if (!_.isEmpty(positions)) {
+                    const position = _.find(positions, {symbol: 'BTCUSDT'});
+                    if (_.isEmpty(position)) {
+                        return // tìm k có vị thế BTC thì bỏ
+                    }
+                    const amt = Math.abs(position.positionAmt);
+                    if (position.positionAmt > 0) {
+                        // đang long
+                        if ((position.markPrice - position.entryPrice) >= 100) {
+                            await lib.closePositionByType('LONG', {
+                                symbol: 'BTCUSDT',
+                                unRealizedProfit: position.unRealizedProfit
+                            }, amt, true)
+                        }
+                    } else {
+                        // đang short
+                        if ((position.entryPrice - position.markPrice) >= 100) {
+                            await lib.closePositionByType('SHORT', {
+                                symbol: 'BTCUSDT',
+                                unRealizedProfit: position.unRealizedProfit
+                            }, amt, true)
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
     })
 }
+
 // main().then()
 liquidStream().then()
-// tpRunner().then()
