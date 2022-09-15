@@ -144,7 +144,7 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ $${MIN_X})\n` +
+    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ $${process.env.MIN_X})\n` +
         `COPY_ID: ${process.env.COPY_ID}\n` +
         `Khoảng cách giá để TP: ${ctx.minTP}\n` +
         `Liquid Trade: ${ctx.liquidTrade ? 'bật': 'tắt'}\n` +
