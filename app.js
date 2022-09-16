@@ -147,7 +147,7 @@ async function liquidStream() {
                             quantity = 0.8;
                         } else if (totalValue > 200000 && totalValue < 600000) {
                             quantity = 1;
-                        } else if (totalValue > 1000000) {
+                        } else if (totalValue > 700000) {
                             quantity = 1.3;
                         }
                         await lib.openPositionByType(side, obj, quantity, 100);
