@@ -40,7 +40,7 @@ async function liquidStream() {
                 ctx.myPositions = myPositions;
                 if (!_.isEmpty(totalPosition)) {
                     _.filter(totalPosition, async (position) => {
-                        if (position.symbol == 'BTCUSDT') return;
+                        if (position.symbol == 'BTCUSDT' || position.symbol == 'ETHUSDT') return;
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
                         let leadPosition = _.find(leadPositions, {symbol: position.symbol});
                         let myPosition = _.find(myPositions, {symbol: position.symbol});
