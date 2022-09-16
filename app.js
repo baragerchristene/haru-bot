@@ -142,13 +142,13 @@ async function liquidStream() {
                     const myPosition = await lib.fetchPositionBySymbol('ETHUSDT');
                     if (_.isEmpty(myPosition)) {
                         let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${lib.kFormatter(totalValue)}`};
-                        let quantity = 0.01;
+                        let quantity = 0.5;
                         if (totalValue > 100000 && totalValue < 200000) {
-                            quantity = 0.02;
+                            quantity = 0.8;
                         } else if (totalValue > 200000 && totalValue < 600000) {
-                            quantity = 0.05;
+                            quantity = 1;
                         } else if (totalValue > 1000000) {
-                            quantity = 0.1;
+                            quantity = 1.3;
                         }
                         await lib.openPositionByType(side, obj, quantity, 100);
                     }
