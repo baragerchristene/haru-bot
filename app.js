@@ -127,7 +127,7 @@ async function liquidStream() {
     /**
      * BOT SCALP THEO LIQUID
      */
-    const ws1 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@forceOrder');
+    const ws1 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@forceOrder');
     ws1.on('message', async (event) => {
         try {
             let result = JSON.parse(event);
@@ -135,22 +135,22 @@ async function liquidStream() {
             let averagePrice = result.o.ap;
             let totalValue = originalQuantity * averagePrice;
             let symbol = result.o.s;
-            let side = result.o.S == 'BUY' ? 'LONG': 'SHORT';
+            let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
             ctx.lastLiquid = result;
-            if (totalValue > 100000 && symbol == 'BTCUSDT') {
+            if (totalValue > 50000 && symbol == 'ETHUSDT') {
                 if (ctx.liquidTrade) {
-                    const myPosition = await lib.fetchPositionBySymbol('BTCUSDT');
+                    const myPosition = await lib.fetchPositionBySymbol('ETHUSDT');
                     if (_.isEmpty(myPosition)) {
                         let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${lib.kFormatter(totalValue)}`};
-                        let quantity = 0.001;
-                        if (totalValue > 200000 && totalValue < 500000) {
-                            quantity = 0.002;
-                        } else if (totalValue > 500000 && totalValue < 800000) {
-                            quantity = 0.005;
+                        let quantity = 0.01;
+                        if (totalValue > 100000 && totalValue < 200000) {
+                            quantity = 0.02;
+                        } else if (totalValue > 200000 && totalValue < 600000) {
+                            quantity = 0.05;
                         } else if (totalValue > 1000000) {
-                            quantity = 0.01;
+                            quantity = 0.1;
                         }
-                        await lib.openPositionByType(side, obj, quantity, 125);
+                        await lib.openPositionByType(side, obj, quantity, 100);
                     }
                 } else {
                     let liquidTradeMsg = `${side} #${symbol} at ${averagePrice}`;
@@ -163,16 +163,16 @@ async function liquidStream() {
     });
 
     /**
-     * BOT TỰ ĐỘNG CHỐT LÃI BTC
+     * BOT TỰ ĐỘNG CHỐT LÃI
      */
-    const ws2 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+    const ws2 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@markPrice@1s');
     ws2.on('message', async (_event) => {
         try {
             if (ctx.autoTP) {
                 let positions = await lib.fetchPositions();
                 ctx.myPositions = positions;
                 if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'BTCUSDT'});
+                    const position = _.find(positions, {symbol: 'ETHUSDT'});
                     if (_.isEmpty(position)) {
                         return // tìm k có vị thế BTC thì bỏ
                     }
@@ -181,7 +181,7 @@ async function liquidStream() {
                         // đang long
                         if ((position.markPrice - position.entryPrice) >= ctx.minTP) {
                             await lib.closePositionByType('LONG', {
-                                symbol: 'BTCUSDT',
+                                symbol: position.symbol,
                                 unRealizedProfit: position.unRealizedProfit
                             }, amt, true)
                         }
@@ -189,7 +189,7 @@ async function liquidStream() {
                         // đang short
                         if ((position.entryPrice - position.markPrice) >= ctx.minTP) {
                             await lib.closePositionByType('SHORT', {
-                                symbol: 'BTCUSDT',
+                                symbol: position.symbol,
                                 unRealizedProfit: position.unRealizedProfit
                             }, amt, true)
                         }

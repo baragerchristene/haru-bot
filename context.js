@@ -5,7 +5,7 @@ var liquidTrade = false;
 var autoTP = false;
 var autoCopy = false;
 var lastLiquid = {};
-var minTP = 50;
+var minTP = 5;
 module.exports = {
     positions: positions,
     myPositions: myPositions,
