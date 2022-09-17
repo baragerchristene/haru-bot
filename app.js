@@ -180,7 +180,7 @@ async function liquidStream() {
                     if (position.positionAmt > 0) {
                         // đang long
                         let priceDiff = position.markPrice - position.entryPrice;
-                        if (priceDiff >= ctx.minTP || (priceDiff <= -ctx.minTP*2 && priceDiff < 0)) {
+                        if (priceDiff >= ctx.minTP || (priceDiff <= ctx.minTP*-2 && priceDiff < 0)) {
                             await lib.closePositionByType('LONG', {
                                 symbol: position.symbol,
                                 unRealizedProfit: position.unRealizedProfit
@@ -189,7 +189,7 @@ async function liquidStream() {
                     } else {
                         // đang short
                         let priceDiff = position.entryPrice - position.markPrice;
-                        if (priceDiff >= ctx.minTP || (priceDiff <= -ctx.minTP*2 && priceDiff < 0)) {
+                        if (priceDiff >= ctx.minTP || (priceDiff <= ctx.minTP*-2 && priceDiff < 0)) {
                             await lib.closePositionByType('SHORT', {
                                 symbol: position.symbol,
                                 unRealizedProfit: position.unRealizedProfit
