@@ -19,9 +19,12 @@ async function liquidStream() {
      * BOT COPY
      */
     const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+    let isCopying = false;
     ws0.on('message', async (_event) => {
+        if (isCopying) return; // chờ tiến trình copy cũ chạy xong
         try {
             if (ctx.autoCopy) {
+                isCopying = true;
                 // lấy lịch sử vị thế lưu trong db
                 const leadPositionOlds = ctx.positions;
 
@@ -29,18 +32,18 @@ async function liquidStream() {
                 const copyPosition = await lib.fetchLeaderBoardPositions(process.env.COPY_ID);
                 let leadPositions = [];
                 if (copyPosition.error) {
+                    isCopying = false;
                     return;
                 } else {
                     leadPositions = copyPosition.data;
                 }
-                console.log(leadPositions);
                 const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
                 let totalPosition = _.uniqBy(_.concat(leadPositionOlds, leadPositions), 'symbol');
                 const myPositions = await lib.fetchPositions();
                 ctx.myPositions = myPositions;
                 if (!_.isEmpty(totalPosition)) {
                     _.filter(totalPosition, async (position) => {
-                        if (position.symbol == 'BTCUSDT' || position.symbol == 'ETHUSDT') return;
+                        if (position.symbol == 'BTCUSDT' || position.symbol == 'ETHUSDT') return; // tự trade với 2 coin này
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
                         let leadPosition = _.find(leadPositions, {symbol: position.symbol});
                         let myPosition = _.find(myPositions, {symbol: position.symbol});
@@ -106,6 +109,7 @@ async function liquidStream() {
                 }
 
                 ctx.positions = leadPositions; // ghi lịch sử vị thế
+                isCopying = false;
             } else {
                 // khởi chạy vòng đầu, xóa lịch sử cũ
                 // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
@@ -127,7 +131,7 @@ async function liquidStream() {
     /**
      * BOT SCALP THEO LIQUID
      */
-    const ws1 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@forceOrder');
+    const ws1 = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
     ws1.on('message', async (event) => {
         try {
             let result = JSON.parse(event);
@@ -137,24 +141,31 @@ async function liquidStream() {
             let symbol = result.o.s;
             let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
             ctx.lastLiquid = result;
-            if (totalValue > 50000 && symbol == 'ETHUSDT') {
-                if (ctx.liquidTrade) {
-                    const myPosition = await lib.fetchPositionBySymbol('ETHUSDT');
-                    if (_.isEmpty(myPosition)) {
-                        let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${lib.kFormatter(totalValue)}`};
-                        let quantity = 0.5;
-                        if (totalValue > 100000 && totalValue < 200000) {
-                            quantity = 0.8;
-                        } else if (totalValue > 200000 && totalValue < 600000) {
-                            quantity = 1;
-                        } else if (totalValue > 700000) {
-                            quantity = 1.3;
+            if (totalValue > 50000 && ctx.liquidTrade) {
+                switch(symbol) {
+                    case 'ETHUSDT':
+                        const myPosition = await lib.fetchPositionBySymbol('ETHUSDT');
+                        if (_.isEmpty(myPosition)) {
+                            let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${lib.kFormatter(totalValue)}`};
+                            let quantity = 0.5;
+                            if (totalValue > 100000 && totalValue < 200000) {
+                                quantity = 0.8;
+                            } else if (totalValue > 200000 && totalValue < 600000) {
+                                quantity = 1;
+                            } else if (totalValue > 700000) {
+                                quantity = 1.3;
+                            }
+                            await lib.openPositionByType(side, obj, quantity, 100);
+                        } else {
+                            await lib.sendMessage(`${side} #${symbol} at ${averagePrice}`)
                         }
-                        await lib.openPositionByType(side, obj, quantity, 100);
-                    }
-                } else {
-                    let liquidTradeMsg = `${side} #${symbol} at ${averagePrice}`;
-                    await lib.sendMessage(liquidTradeMsg)
+                        break;
+                    case 'BTCUSDT':
+                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, total value: ${totalValue}`);
+                        break;
+                    default:
+                    // todo
+                        break;
                 }
             }
         } catch (e) {
