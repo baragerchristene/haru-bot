@@ -146,7 +146,7 @@ async function liquidStream() {
                     case 'ETHUSDT':
                         const myPosition = await lib.fetchPositionBySymbol('ETHUSDT');
                         if (_.isEmpty(myPosition)) {
-                            let obj = {symbol, entryPrice: 'Liquid Price', amount: `Liquid: ${lib.kFormatter(totalValue)}`};
+                            let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
                             let quantity = 0.5;
                             if (totalValue > 100000 && totalValue < 200000) {
                                 quantity = 0.8;
@@ -161,7 +161,7 @@ async function liquidStream() {
                         }
                         break;
                     case 'BTCUSDT':
-                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, total value: ${totalValue}`);
+                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
                         break;
                     default:
                     // todo
@@ -177,35 +177,56 @@ async function liquidStream() {
      * BOT TỰ ĐỘNG CHỐT LÃI
      */
     const ws2 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@markPrice@1s');
+    let gainingProfit = false;
+    let gainingAmt = 0;
+    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
         try {
             if (ctx.autoTP) {
                 let positions = await lib.fetchPositions();
-                ctx.myPositions = positions;
                 if (!_.isEmpty(positions)) {
                     const position = _.find(positions, {symbol: 'ETHUSDT'});
-                    if (_.isEmpty(position)) {
-                        return // tìm k có vị thế BTC thì bỏ
-                    }
+                    if (_.isEmpty(position)) return // tìm k có vị thế thì bỏ
+
                     const amt = Math.abs(position.positionAmt);
-                    if (position.positionAmt > 0) {
-                        // đang long
-                        let priceDiff = position.markPrice - position.entryPrice;
-                        if (priceDiff >= ctx.minTP || (priceDiff <= ctx.minTP*-2 && priceDiff < 0)) {
-                            await lib.closePositionByType('LONG', {
-                                symbol: position.symbol,
-                                unRealizedProfit: position.unRealizedProfit
-                            }, amt, true)
+                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+                    let roe = lib.roe(position);
+                    if (gainingProfit) {
+                        if (roe < gainingAmt) {
+                            // chốt lãi
+                            await lib.closePositionByType(side, position, amt, true);
+                            gainingProfit = false;
+                            gainingAmt = 0;
+                            return
                         }
-                    } else {
-                        // đang short
-                        let priceDiff = position.entryPrice - position.markPrice;
-                        if (priceDiff >= ctx.minTP || (priceDiff <= ctx.minTP*-2 && priceDiff < 0)) {
-                            await lib.closePositionByType('SHORT', {
-                                symbol: position.symbol,
-                                unRealizedProfit: position.unRealizedProfit
-                            }, amt, true)
+                        // các mốc level chốt lãi theo fibonacci
+                        if (roe > 0.382) gainingAmt = 0.382;
+                        if (roe > 0.5) gainingAmt = 0.5;
+                        if (roe > 0.618) gainingAmt = 0.618;
+                        if (roe > 0.786) gainingAmt = 0.786;
+                        if (roe > 1) gainingAmt = 1;
+                        if (roe > 1.618) gainingAmt = 1.618;
+
+                        if (roe > 2) {
+                            // chốt lãi thẳng nếu x2
+                            await lib.closePositionByType(side, position, amt, true);
+                            gainingProfit = false;
+                            gainingAmt = 0;
+                            return
                         }
+                        return
+                    }
+                    if (roe > 0.24) {
+                        gainingProfit = true;
+                        gainingAmt = 0.236
+                        return
+                    }
+                    if (roe <= -0.382) {
+                        // cắt lỗ fibo mốc 2
+                        await lib.closePositionByType(side, position, amt, true);
+                        gainingProfit = false;
+                        gainingAmt = 0;
+                        return
                     }
                 }
             }
@@ -215,5 +236,5 @@ async function liquidStream() {
     })
 }
 
-// khởi tạo bot
+// profit go here
 liquidStream().then()

@@ -29,7 +29,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}; Last uPnl: ${position.unRealizedProfit}`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}; Last uPnl: ${position.unRealizedProfit} | ${roe(position)}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -143,7 +143,18 @@ function kFormatter(num) {
     return Math.abs(num) > 999 ? Math.sign(num) * ((Math.abs(num) / 1000).toFixed(1)) + 'K' : Math.sign(num) * Math.abs(num)
 }
 
+function roe(position) {
+    let uPnlUSDT = 0;
+    if (position.positionAmt > 0) {
+        uPnlUSDT = position.positionAmt*(position.markPrice - position.entryPrice);
+    } else if (position.positionAmt < 0) {
+        uPnlUSDT = position.positionAmt*(-1)*(position.markPrice - position.entryPrice);
+    }
+    let entryMargin = position.positionAmt*position.markPrice*(1/position.leverage);
+    return uPnlUSDT/entryMargin;
+}
+
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter,
+    fetchPositionBySymbol, kFormatter, roe,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
