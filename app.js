@@ -161,7 +161,7 @@ async function liquidStream() {
                         }
                         break;
                     default:
-                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
+                        await lib.sendMessage(`#TEST ${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
                         break;
                 }
             }
