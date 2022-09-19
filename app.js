@@ -160,11 +160,8 @@ async function liquidStream() {
                             await lib.sendMessage(`${side} #${symbol} at ${averagePrice}`)
                         }
                         break;
-                    case 'BTCUSDT':
-                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
-                        break;
                     default:
-                    // todo
+                        await lib.sendMessage(`${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
                         break;
                 }
             }
