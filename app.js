@@ -193,6 +193,8 @@ async function liquidStream() {
                     let roe = lib.roe(position);
                     if (gainingProfit) {
                         if (roe < gainingAmt) {
+                            console.log(gainingAmt);
+                            console.log(position);
                             // chốt lãi
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
@@ -206,9 +208,11 @@ async function liquidStream() {
                         if (roe > 0.786) gainingAmt = 0.786;
                         if (roe > 1) gainingAmt = 1;
                         if (roe > 1.618) gainingAmt = 1.618;
+                        if (roe > 2.618) gainingAmt = 2.618;
+                        if (roe > 4.236) gainingAmt = 4.236;
 
-                        if (roe > 2) {
-                            // chốt lãi thẳng nếu x2
+                        if (roe > 4.5) {
+                            // chốt lãi thẳng nếu x4.5
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
                             gainingAmt = 0;
@@ -216,7 +220,8 @@ async function liquidStream() {
                         }
                         return
                     }
-                    if (roe > 0.24) {
+
+                    if (roe > 0.239) {
                         gainingProfit = true;
                         gainingAmt = 0.236
                         return

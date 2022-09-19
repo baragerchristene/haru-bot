@@ -29,7 +29,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}; Last uPnl: ${position.unRealizedProfit} | ${roe(position)}`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}%`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
