@@ -202,14 +202,14 @@ async function liquidStream() {
                             return
                         }
                         // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.382) gainingAmt = 0.382;
-                        if (roe > 0.5) gainingAmt = 0.5;
-                        if (roe > 0.618) gainingAmt = 0.618;
-                        if (roe > 0.786) gainingAmt = 0.786;
-                        if (roe > 1) gainingAmt = 1;
-                        if (roe > 1.618) gainingAmt = 1.618;
-                        if (roe > 2.618) gainingAmt = 2.618;
-                        if (roe > 4.236) gainingAmt = 4.236;
+                        if (roe > 0.383) gainingAmt = 0.382;
+                        if (roe > 0.501) gainingAmt = 0.5;
+                        if (roe > 0.619) gainingAmt = 0.618;
+                        if (roe > 0.787) gainingAmt = 0.786;
+                        if (roe > 1.001) gainingAmt = 1;
+                        if (roe > 1.619) gainingAmt = 1.618;
+                        if (roe > 2.619) gainingAmt = 2.618;
+                        if (roe > 4.237) gainingAmt = 4.236;
 
                         if (roe > 4.5) {
                             // chốt lãi thẳng nếu x4.5
