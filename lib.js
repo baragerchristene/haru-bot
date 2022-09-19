@@ -50,9 +50,11 @@ async function openPositionByType(type, position, quantity, leverage) {
     } else {
         result = await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`#${symbol}, opening ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
-    await delay(3000);
-    await sendMessage(result);
+    await log(`#${symbol}, Successfully opened ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
+    if (result.code) {
+        await delay(3000);
+        await sendMessage(result); // send error response
+    }
 }
 
 function getMinQty(coin, exchanges) {
