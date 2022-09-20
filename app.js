@@ -155,7 +155,8 @@ async function liquidStream() {
                             } else if (totalValue > 700000) {
                                 quantity = 1.3;
                             }
-                            await lib.openPositionByType(side, obj, quantity, 100);
+                            let newSide = await lib.getSide(symbol);
+                            await lib.openPositionByType(newSide, obj, quantity, 100);
                         }
                         break;
                     case 'ADAUSDT':

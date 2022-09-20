@@ -9,6 +9,8 @@ const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
 const {binance, fetchPositions, getSymbols, fetchPositionBySymbol} = require('./resources/binance/utils');
 var ctx = require('./context');
+const moment = require("moment-timezone");
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
@@ -20,6 +22,11 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
+}
+
+async function getSide(symbol) {
+    const latestCandles = await binance.futuresCandles(symbol, '1m', {limit: 2});
+    return Number(latestCandles[0][4]) > Number(latestCandles[0][1]) ? 'LONG' : 'SHORT';
 }
 
 async function closePositionByType(type, position, quantity, close = false) {
@@ -156,5 +163,5 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe,
+    fetchPositionBySymbol, kFormatter, roe, getSide,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
