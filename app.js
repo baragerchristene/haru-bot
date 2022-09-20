@@ -281,7 +281,7 @@ async function liquidStream() {
                     const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                     let roe = lib.roe(position);
                     if (gainingProfit2) {
-                        if (roe < gainingAmt) {
+                        if (roe < gainingAmt2) {
                             console.log(gainingAmt);
                             console.log(position);
                             // chốt lãi
@@ -344,7 +344,7 @@ async function liquidStream() {
                     const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                     let roe = lib.roe(position);
                     if (gainingProfit3) {
-                        if (roe < gainingAmt) {
+                        if (roe < gainingAmt3) {
                             console.log(gainingAmt);
                             console.log(position);
                             // chốt lãi
@@ -407,7 +407,7 @@ async function liquidStream() {
                     const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                     let roe = lib.roe(position);
                     if (gainingProfit4) {
-                        if (roe < gainingAmt) {
+                        if (roe < gainingAmt4) {
                             console.log(gainingAmt);
                             console.log(position);
                             // chốt lãi
