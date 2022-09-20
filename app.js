@@ -228,7 +228,7 @@ async function liquidStream() {
                             return
                         }
                         // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.3727) gainingAmt = 0.3726;
+                        if (roe > 0.45) gainingAmt = 0.43;
                         if (roe > 0.501) gainingAmt = 0.5;
                         if (roe > 0.619) gainingAmt = 0.618;
                         if (roe > 0.787) gainingAmt = 0.786;
@@ -247,9 +247,9 @@ async function liquidStream() {
                         return
                     }
 
-                    if (roe > 0.239) {
+                    if (roe > 0.384) {
                         gainingProfit = true;
-                        gainingAmt = 0.236
+                        gainingAmt = 0.382
                         return
                     }
                     if (roe <= -0.382) {
