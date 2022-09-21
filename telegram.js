@@ -204,10 +204,10 @@ bot.command('p', async (ctx0) => {
     let symbol = (`${getTgMessage(ctx0, 'p')}USDT`).toUpperCase();
     const coin = await getMarkPrice(symbol);
     if (_.isEmpty(coin)) {
-        await sendMessage('Không có kết quả');
+        const btc = await getMarkPrice('BTCUSDT');
+        await sendMessage(`${btc.symbol}; Mark Price: ${btc.markPrice}; Leverage: ${btc.leverage}`);
     } else {
-        let msg = `${coin.symbol}; Mark Price: ${coin.markPrice}; Leverage: ${coin.leverage}`
-        await sendMessage(msg);
+        await sendMessage(`${coin.symbol}; Mark Price: ${coin.markPrice}; Leverage: ${coin.leverage}`);
     }
 });
 
