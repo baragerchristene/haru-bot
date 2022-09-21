@@ -245,9 +245,9 @@ async function liquidStream() {
                         return
                     }
 
-                    if (roe > 0.2) {
+                    if (roe > 0.236) {
                         gainingProfit = true;
-                        gainingAmt = 0.15
+                        gainingAmt = 0.10
                         return
                     }
                     if (roe <= -0.382) {
