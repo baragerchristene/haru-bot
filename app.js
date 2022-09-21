@@ -147,14 +147,14 @@ async function liquidStream() {
                         myPosition = await lib.fetchPositionBySymbol(symbol);
                         if (_.isEmpty(myPosition)) {
                             let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                            let quantity = 0.5;
-                            if (totalValue > 100000 && totalValue < 200000) {
-                                quantity = 0.8;
-                            } else if (totalValue > 200000 && totalValue < 600000) {
-                                quantity = 1;
-                            } else if (totalValue > 700000) {
-                                quantity = 1.3;
-                            }
+                            let quantity = 0.1;
+                            // if (totalValue > 100000 && totalValue < 200000) {
+                            //     quantity = 0.8;
+                            // } else if (totalValue > 200000 && totalValue < 600000) {
+                            //     quantity = 1;
+                            // } else if (totalValue > 700000) {
+                            //     quantity = 1.3;
+                            // }
                             let newSide = await lib.getSide(symbol);
                             await lib.openPositionByType(newSide, obj, quantity, 100);
                         }
