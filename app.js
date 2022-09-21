@@ -155,8 +155,8 @@ async function liquidStream() {
                             // } else if (totalValue > 700000) {
                             //     quantity = 1.3;
                             // }
-                            let newSide = await lib.getSide(symbol);
-                            await lib.openPositionByType(newSide, obj, quantity, 100);
+                            // todo let newSide = await lib.getSide(symbol);
+                            await lib.openPositionByType(side, obj, quantity, 100);
                         }
                         break;
                     case 'ADAUSDT':
@@ -219,8 +219,6 @@ async function liquidStream() {
                     let roe = lib.roe(position);
                     if (gainingProfit) {
                         if (roe < gainingAmt) {
-                            console.log(gainingAmt);
-                            console.log(position);
                             // chốt lãi
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
@@ -228,14 +226,14 @@ async function liquidStream() {
                             return
                         }
                         // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.45) gainingAmt = 0.43;
-                        if (roe > 0.501) gainingAmt = 0.5;
-                        if (roe > 0.619) gainingAmt = 0.618;
-                        if (roe > 0.787) gainingAmt = 0.786;
-                        if (roe > 1.001) gainingAmt = 1;
-                        if (roe > 1.619) gainingAmt = 1.618;
-                        if (roe > 2.619) gainingAmt = 2.618;
-                        if (roe > 4.237) gainingAmt = 4.236;
+                        if (roe > 0.382) gainingAmt = 0.236;
+                        if (roe > 0.5)   gainingAmt = 0.382;
+                        if (roe > 0.618) gainingAmt = 0.5;
+                        if (roe > 0.786) gainingAmt = 0.618;
+                        if (roe > 1)     gainingAmt = 0.786;
+                        if (roe > 1.618) gainingAmt = 1;
+                        if (roe > 2.618) gainingAmt = 1.618;
+                        if (roe > 4.237) gainingAmt = 2.618;
 
                         if (roe > 4.5) {
                             // chốt lãi thẳng nếu x4.5
@@ -247,9 +245,9 @@ async function liquidStream() {
                         return
                     }
 
-                    if (roe > 0.384) {
+                    if (roe > 0.2) {
                         gainingProfit = true;
-                        gainingAmt = 0.382
+                        gainingAmt = 0.15
                         return
                     }
                     if (roe <= -0.382) {
