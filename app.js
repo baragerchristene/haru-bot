@@ -1,4 +1,4 @@
-const WebSocket = require("ws");
+const {WebSocket, WebSocketServer} = require("ws");
 const moment = require("moment-timezone");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const indexRouter = require('./index');
@@ -12,13 +12,15 @@ var ctx = require('./context');
 app.use('/', indexRouter);
 app.set('port', port);
 const server = http.createServer(app); // Create HTTP server.
+const wss = new WebSocketServer({ port: 13456 });
+wss.on('connection', ws => {setInterval(() => { ws.send('ok') }, 500)});
 server.listen(port); // Listen on provided port, on all network interfaces.
 
 async function liquidStream() {
     /**
      * BOT COPY
      */
-    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
+    const ws0 = new WebSocket('ws://localhost:13456');
     let isCopying = false;
     ws0.on('message', async (_event) => {
         if (isCopying) return; // chờ tiến trình copy cũ chạy xong
@@ -132,8 +134,11 @@ async function liquidStream() {
      * BOT SCALP THEO LIQUID
      */
     const ws1 = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
+    let isScalping = false;
     ws1.on('message', async (event) => {
+        if (isScalping) return; // chờ tiến trình copy cũ chạy xong
         try {
+            isScalping = true;
             let result = JSON.parse(event);
             let originalQuantity = result.o.q;
             let averagePrice = result.o.ap;
@@ -155,46 +160,53 @@ async function liquidStream() {
                             // } else if (totalValue > 700000) {
                             //     quantity = 1.3;
                             // }
-                            // todo let newSide = await lib.getSide(symbol);
-                            await lib.openPositionByType(side, obj, quantity, 100);
+                            let newSide = '';
+                            let rawSide = await lib.getRSI('BTCUSDT', '1m');
+                            if (rawSide <= 30) newSide = 'SHORT';
+                            if (rawSide >= 70) newSide = 'LONG';
+                            console.log(`RSI ${rawSide}`);
+                            if (newSide != '') await lib.openPositionByType(side, obj, quantity, 100);
+                            isScalping = false
                         }
                         break;
-                    case 'ADAUSDT':
-                        myPosition = await lib.fetchPositionBySymbol(symbol);
-                        if (_.isEmpty(myPosition)) {
-                            let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                            let quantity = 300;
-                            if (totalValue > 100000) {
-                                quantity = 400;
-                            }
-                            await lib.openPositionByType(side, obj, quantity, 75);
-                        }
-                        break;
-                    case 'AVAXUSDT':
-                        myPosition = await lib.fetchPositionBySymbol(symbol);
-                        if (_.isEmpty(myPosition)) {
-                            let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                            let quantity = 5;
-                            if (totalValue > 100000) {
-                                quantity = 7;
-                            }
-                            await lib.openPositionByType(side, obj, quantity, 50);
-                        }
-                        break;
-                    case 'RVNUSDT':
-                        myPosition = await lib.fetchPositionBySymbol(symbol);
-                        if (_.isEmpty(myPosition)) {
-                            let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                            let quantity = 150;
-                            await lib.openPositionByType(side, obj, quantity, 50);
-                        }
-                        break;
+                    // case 'ADAUSDT':
+                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
+                    //     if (_.isEmpty(myPosition)) {
+                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
+                    //         let quantity = 300;
+                    //         if (totalValue > 100000) {
+                    //             quantity = 400;
+                    //         }
+                    //         await lib.openPositionByType(side, obj, quantity, 75);
+                    //     }
+                    //     break;
+                    // case 'AVAXUSDT':
+                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
+                    //     if (_.isEmpty(myPosition)) {
+                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
+                    //         let quantity = 5;
+                    //         if (totalValue > 100000) {
+                    //             quantity = 7;
+                    //         }
+                    //         await lib.openPositionByType(side, obj, quantity, 50);
+                    //     }
+                    //     break;
+                    // case 'RVNUSDT':
+                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
+                    //     if (_.isEmpty(myPosition)) {
+                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
+                    //         let quantity = 150;
+                    //         await lib.openPositionByType(side, obj, quantity, 50);
+                    //     }
+                    //     break;
                     default:
+                        isScalping = false
                         await lib.sendMessage(`#TEST ${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
                         break;
                 }
             }
         } catch (e) {
+            isScalping = false
             console.log(e);
         }
     });
@@ -205,10 +217,13 @@ async function liquidStream() {
     const ws2 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@markPrice@1s');
     let gainingProfit = false;
     let gainingAmt = 0;
+    let isAutoTP = false;
     // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
+        if (isAutoTP) return;
         try {
             if (ctx.autoTP) {
+                isAutoTP = true;
                 let positions = await lib.fetchPositions();
                 if (!_.isEmpty(positions)) {
                     const position = _.find(positions, {symbol: 'ETHUSDT'});
@@ -223,6 +238,7 @@ async function liquidStream() {
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
                             gainingAmt = 0;
+                            isAutoTP = false;
                             return
                         }
                         // các mốc level chốt lãi theo fibonacci
@@ -240,6 +256,7 @@ async function liquidStream() {
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
                             gainingAmt = 0;
+                            isAutoTP = false;
                             return
                         }
                         return
@@ -248,207 +265,22 @@ async function liquidStream() {
                     if (roe > 0.236) {
                         gainingProfit = true;
                         gainingAmt = 0.10
+                        isAutoTP = false;
                         return
                     }
                     if (roe <= -0.382) {
                         // cắt lỗ fibo mốc 2
                         await lib.closePositionByType(side, position, amt, true);
+                        isAutoTP = false;
                         gainingProfit = false;
                         gainingAmt = 0;
                         return
                     }
                 }
+                isAutoTP = false;
             }
         } catch (e) {
-            console.log(e);
-        }
-    })
-
-    let gainingProfit2 = false;
-    let gainingAmt2 = 0;
-    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
-    ws2.on('message', async (_event) => {
-        try {
-            if (ctx.autoTP) {
-                let positions = await lib.fetchPositions();
-                if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'ADAUSDT'});
-                    if (_.isEmpty(position)) return // tìm k có vị thế thì bỏ
-
-                    const amt = Math.abs(position.positionAmt);
-                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    let roe = lib.roe(position);
-                    if (gainingProfit2) {
-                        if (roe < gainingAmt2) {
-                            console.log(gainingAmt);
-                            console.log(position);
-                            // chốt lãi
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit2 = false;
-                            gainingAmt2 = 0;
-                            return
-                        }
-                        // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.3727) gainingAmt2 = 0.3726;
-                        if (roe > 0.501) gainingAmt2 = 0.5;
-                        if (roe > 0.619) gainingAmt2 = 0.618;
-                        if (roe > 0.787) gainingAmt2 = 0.786;
-                        if (roe > 1.001) gainingAmt2 = 1;
-                        if (roe > 1.619) gainingAmt2 = 1.618;
-                        if (roe > 2.619) gainingAmt2 = 2.618;
-                        if (roe > 4.237) gainingAmt2 = 4.236;
-
-                        if (roe > 4.5) {
-                            // chốt lãi thẳng nếu x4.5
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit2 = false;
-                            gainingAmt2 = 0;
-                            return
-                        }
-                        return
-                    }
-
-                    if (roe > 0.239) {
-                        gainingProfit2 = true;
-                        gainingAmt2 = 0.236
-                        return
-                    }
-                    if (roe <= -0.382) {
-                        // cắt lỗ fibo mốc 2
-                        await lib.closePositionByType(side, position, amt, true);
-                        gainingProfit2 = false;
-                        gainingAmt2 = 0;
-                        return
-                    }
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    })
-
-    let gainingProfit3 = false;
-    let gainingAmt3 = 0;
-    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
-    ws2.on('message', async (_event) => {
-        try {
-            if (ctx.autoTP) {
-                let positions = await lib.fetchPositions();
-                if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'AVAXUSDT'});
-                    if (_.isEmpty(position)) return // tìm k có vị thế thì bỏ
-
-                    const amt = Math.abs(position.positionAmt);
-                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    let roe = lib.roe(position);
-                    if (gainingProfit3) {
-                        if (roe < gainingAmt3) {
-                            console.log(gainingAmt);
-                            console.log(position);
-                            // chốt lãi
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit3 = false;
-                            gainingAmt3 = 0;
-                            return
-                        }
-                        // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.3727) gainingAmt3 = 0.3726;
-                        if (roe > 0.501) gainingAmt3 = 0.5;
-                        if (roe > 0.619) gainingAmt3 = 0.618;
-                        if (roe > 0.787) gainingAmt3 = 0.786;
-                        if (roe > 1.001) gainingAmt3 = 1;
-                        if (roe > 1.619) gainingAmt3 = 1.618;
-                        if (roe > 2.619) gainingAmt3 = 2.618;
-                        if (roe > 4.237) gainingAmt3 = 4.236;
-
-                        if (roe > 4.5) {
-                            // chốt lãi thẳng nếu x4.5
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit3 = false;
-                            gainingAmt3 = 0;
-                            return
-                        }
-                        return
-                    }
-
-                    if (roe > 0.239) {
-                        gainingProfit3 = true;
-                        gainingAmt3 = 0.236
-                        return
-                    }
-                    if (roe <= -0.382) {
-                        // cắt lỗ fibo mốc 2
-                        await lib.closePositionByType(side, position, amt, true);
-                        gainingProfit3 = false;
-                        gainingAmt3 = 0;
-                        return
-                    }
-                }
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    })
-
-    let gainingProfit4 = false;
-    let gainingAmt4 = 0;
-    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
-    ws2.on('message', async (_event) => {
-        try {
-            if (ctx.autoTP) {
-                let positions = await lib.fetchPositions();
-                if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'RVNUSDT'});
-                    if (_.isEmpty(position)) return // tìm k có vị thế thì bỏ
-
-                    const amt = Math.abs(position.positionAmt);
-                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    let roe = lib.roe(position);
-                    if (gainingProfit4) {
-                        if (roe < gainingAmt4) {
-                            console.log(gainingAmt);
-                            console.log(position);
-                            // chốt lãi
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit4 = false;
-                            gainingAmt4 = 0;
-                            return
-                        }
-                        // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.3727) gainingAmt4 = 0.3726;
-                        if (roe > 0.501) gainingAmt4 = 0.5;
-                        if (roe > 0.619) gainingAmt4 = 0.618;
-                        if (roe > 0.787) gainingAmt4 = 0.786;
-                        if (roe > 1.001) gainingAmt4 = 1;
-                        if (roe > 1.619) gainingAmt4 = 1.618;
-                        if (roe > 2.619) gainingAmt4 = 2.618;
-                        if (roe > 4.237) gainingAmt4 = 4.236;
-
-                        if (roe > 4.5) {
-                            // chốt lãi thẳng nếu x4.5
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit4 = false;
-                            gainingAmt4 = 0;
-                            return
-                        }
-                        return
-                    }
-
-                    if (roe > 0.239) {
-                        gainingProfit4 = true;
-                        gainingAmt4 = 0.236
-                        return
-                    }
-                    if (roe <= -0.382) {
-                        // cắt lỗ fibo mốc 2
-                        await lib.closePositionByType(side, position, amt, true);
-                        gainingProfit4 = false;
-                        gainingAmt4 = 0;
-                        return
-                    }
-                }
-            }
-        } catch (e) {
+            isAutoTP = false;
             console.log(e);
         }
     })

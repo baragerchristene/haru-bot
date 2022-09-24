@@ -1,6 +1,7 @@
 require('dotenv').config({ path: 'env/live.env' });
 const {sendMessage, log} = require("./telegram");
 const EMA = require('technicalindicators').EMA
+const RSI = require('technicalindicators').RSI
 const fetch = require("node-fetch");
 const _ = require("lodash");
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
@@ -22,6 +23,19 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
+}
+
+async function getRSI(symbol, interval) {
+    const latestCandles = await binance.futuresCandles(symbol, interval, { limit: 1500 });
+    let values = _.reduce(latestCandles, (result, value) => {
+        result.push(_.toNumber(_.nth(value, 4))); return result;
+    }, [])
+    let rsiInput = {
+        values: values,
+        period: 14,
+    }
+    const rs = RSI.calculate(rsiInput)
+    return _.nth(rs, rs.length - 1);
 }
 
 async function getSide(symbol) {
@@ -163,5 +177,5 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe, getSide,
+    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
