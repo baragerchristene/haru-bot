@@ -4,8 +4,12 @@ var trigger = true;
 var liquidTrade = false;
 var autoTP = false;
 var autoCopy = false;
+var copyID = '';
 var lastLiquid = {};
 var minTP = 5;
+var minX = 1;
+var inverseCopy = false;
+var ignoreCoins = ['BTCUSDT', 'ETHUSDT'];
 module.exports = {
     positions: positions,
     myPositions: myPositions,
@@ -14,5 +18,9 @@ module.exports = {
     autoTP: autoTP,
     autoCopy: autoCopy,
     lastLiquid: lastLiquid,
-    minTP: minTP
+    minTP: minTP,
+    copyID: copyID,
+    minX: minX,
+    inverseCopy: inverseCopy,
+    ignoreCoins: ignoreCoins
 }

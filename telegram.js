@@ -144,11 +144,11 @@ bot.command('ps', async (ctx) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ $${process.env.MIN_X})\n` +
-        `COPY_ID: ${process.env.COPY_ID}\n` +
-        `Khoảng cách giá để TP: ${ctx.minTP}\n` +
-        `Liquid Trade: ${ctx.liquidTrade ? 'bật': 'tắt'}\n` +
-        `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n`
+    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ ${ctx.minX}USDT)\n` +
+        `COPY_ID: ${ctx.copyID}\n` +
+        `Copy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
+        `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n` +
+        `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n`
     await sendMessage(msg);
 });
 
@@ -170,6 +170,38 @@ bot.command('atc', async (ctx0) => {
     await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
 });
 
+bot.command('cmode', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    ctx.inverseCopy = getTgMessage(ctx0, 'cmode') == '1';
+    await sendMessage(`Chê độ copy: ${ctx.inverseCopy ? 'ngược' : 'thuận'}`);
+});
+
+bot.command('add', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let newSymbol = getTgMessage(ctx0, 'add').trim().toUpperCase();
+    if (newSymbol && newSymbol != '') {
+        if (_.includes(ctx.ignoreCoins, newSymbol)) {
+            ctx.ignoreCoins = _.filter(ctx.ignoreCoins, (coin) => { if (coin != newSymbol) return coin })
+            await sendMessage(`Coin ${newSymbol} đã xóa khỏi danh sách bỏ qua`);
+        } else {
+            await sendMessage(`Coin ${newSymbol} không nằm trong danh sách bỏ qua`);
+        }
+    } else await sendMessage(`Ký tự không hợp lệ`);
+});
+
+bot.command('ig', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let newSymbol = getTgMessage(ctx0, 'ig').trim().toUpperCase();
+    if (newSymbol && newSymbol != '') {
+        if (_.includes(ctx.ignoreCoins, newSymbol)) {
+            await sendMessage(`Coin ${newSymbol} đã có trong danh sách bỏ qua`);
+        } else {
+            ctx.ignoreCoins.push(newSymbol);
+            await sendMessage(`Coin ${newSymbol} đã được thêm vào danh sách bỏ qua`);
+        }
+    } else await sendMessage(`Ký tự không hợp lệ`);
+});
+
 bot.command('mintp', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let min = _.toNumber(Number(getTgMessage(ctx0, 'mintp')).toFixed(0));
@@ -179,6 +211,28 @@ bot.command('mintp', async (ctx0) => {
         ctx.minTP = min;
     }
     await sendMessage(`Khoảng cách giá để TP: ${ctx.minTP}`);
+});
+
+bot.command('cid', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let copyID = getTgMessage(ctx0, 'cid');
+    if (copyID && copyID != '') {
+        ctx.copyID = copyID;
+        await sendMessage(`Copy ID mới là ${ctx.copyID}`);
+    } else {
+        await sendMessage(`Copy ID không hợp lệ!`);
+    }
+});
+
+bot.command('vol', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let minX = _.toNumber(Number(getTgMessage(ctx0, 'vol')).toFixed(0));
+    if (minX > 0) {
+        ctx.minX = minX;
+        await sendMessage(`Min copy vol từng lệnh mới là ${ctx.minX}USDT`);
+    } else {
+        await sendMessage(`Min copy vol không hợp lệ!`);
+    }
 });
 
 bot.command('ll', async (ctx0) => {

@@ -16,10 +16,12 @@ const wss = new WebSocketServer({ port: 13456 });
 wss.on('connection', ws => {setInterval(() => { ws.send('ok') }, 500)});
 server.listen(port); // Listen on provided port, on all network interfaces.
 
-async function liquidStream() {
+async function CopyStream() {
     /**
      * BOT COPY
      */
+    ctx.copyID = process.env.COPY_ID;
+    ctx.minX = process.env.MIN_X;
     const ws0 = new WebSocket('ws://localhost:13456');
     let isCopying = false;
     ws0.on('message', async (_event) => {
@@ -31,7 +33,7 @@ async function liquidStream() {
                 const leadPositionOlds = ctx.positions;
 
                 // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
-                const copyPosition = await lib.fetchLeaderBoardPositions(process.env.COPY_ID);
+                const copyPosition = await lib.fetchLeaderBoardPositions(ctx.copyID);
                 let leadPositions = [];
                 if (copyPosition.error) {
                     isCopying = false;
@@ -45,7 +47,7 @@ async function liquidStream() {
                 ctx.myPositions = myPositions;
                 if (!_.isEmpty(totalPosition)) {
                     _.filter(totalPosition, async (position) => {
-                        if (position.symbol == 'BTCUSDT' || position.symbol == 'ETHUSDT') return; // tự trade với 2 coin này
+                        if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong danh sách trắng thì bỏ qua
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
                         let leadPosition = _.find(leadPositions, {symbol: position.symbol});
                         let myPosition = _.find(myPositions, {symbol: position.symbol});
@@ -129,162 +131,7 @@ async function liquidStream() {
             console.log(e);
         }
     })
-
-    /**
-     * BOT SCALP THEO LIQUID
-     */
-    const ws1 = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
-    let isScalping = false;
-    ws1.on('message', async (event) => {
-        if (isScalping) return; // chờ tiến trình copy cũ chạy xong
-        try {
-            isScalping = true;
-            let result = JSON.parse(event);
-            let originalQuantity = result.o.q;
-            let averagePrice = result.o.ap;
-            let totalValue = originalQuantity * averagePrice;
-            let symbol = result.o.s;
-            let side = result.o.S == 'BUY' ? 'SHORT': 'LONG';
-            let myPosition = []
-            if (totalValue > 50000 && ctx.liquidTrade) {
-                switch(symbol) {
-                    case 'ETHUSDT':
-                        myPosition = await lib.fetchPositionBySymbol(symbol);
-                        if (_.isEmpty(myPosition)) {
-                            let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                            let quantity = 0.1;
-                            // if (totalValue > 100000 && totalValue < 200000) {
-                            //     quantity = 0.8;
-                            // } else if (totalValue > 200000 && totalValue < 600000) {
-                            //     quantity = 1;
-                            // } else if (totalValue > 700000) {
-                            //     quantity = 1.3;
-                            // }
-                            let newSide = '';
-                            let rawSide = await lib.getRSI('BTCUSDT', '1m');
-                            if (rawSide <= 30) newSide = 'SHORT';
-                            if (rawSide >= 70) newSide = 'LONG';
-                            console.log(`RSI ${rawSide}`);
-                            if (newSide != '') await lib.openPositionByType(side, obj, quantity, 100);
-                            isScalping = false
-                        }
-                        break;
-                    // case 'ADAUSDT':
-                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
-                    //     if (_.isEmpty(myPosition)) {
-                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                    //         let quantity = 300;
-                    //         if (totalValue > 100000) {
-                    //             quantity = 400;
-                    //         }
-                    //         await lib.openPositionByType(side, obj, quantity, 75);
-                    //     }
-                    //     break;
-                    // case 'AVAXUSDT':
-                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
-                    //     if (_.isEmpty(myPosition)) {
-                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                    //         let quantity = 5;
-                    //         if (totalValue > 100000) {
-                    //             quantity = 7;
-                    //         }
-                    //         await lib.openPositionByType(side, obj, quantity, 50);
-                    //     }
-                    //     break;
-                    // case 'RVNUSDT':
-                    //     myPosition = await lib.fetchPositionBySymbol(symbol);
-                    //     if (_.isEmpty(myPosition)) {
-                    //         let obj = {symbol, entryPrice: `~${averagePrice}`, amount: `Liquidated: ${lib.kFormatter(totalValue)}`};
-                    //         let quantity = 150;
-                    //         await lib.openPositionByType(side, obj, quantity, 50);
-                    //     }
-                    //     break;
-                    default:
-                        isScalping = false
-                        await lib.sendMessage(`#TEST ${side} #${symbol} at ${averagePrice}, Liquidated: ${lib.kFormatter(totalValue)}`);
-                        break;
-                }
-            }
-        } catch (e) {
-            isScalping = false
-            console.log(e);
-        }
-    });
-
-    /**
-     * BOT TỰ ĐỘNG CHỐT LÃI
-     */
-    const ws2 = new WebSocket('wss://fstream.binance.com/ws/ethusdt@markPrice@1s');
-    let gainingProfit = false;
-    let gainingAmt = 0;
-    let isAutoTP = false;
-    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
-    ws2.on('message', async (_event) => {
-        if (isAutoTP) return;
-        try {
-            if (ctx.autoTP) {
-                isAutoTP = true;
-                let positions = await lib.fetchPositions();
-                if (!_.isEmpty(positions)) {
-                    const position = _.find(positions, {symbol: 'ETHUSDT'});
-                    if (_.isEmpty(position)) return // tìm k có vị thế thì bỏ
-
-                    const amt = Math.abs(position.positionAmt);
-                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    let roe = lib.roe(position);
-                    if (gainingProfit) {
-                        if (roe < gainingAmt) {
-                            // chốt lãi
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit = false;
-                            gainingAmt = 0;
-                            isAutoTP = false;
-                            return
-                        }
-                        // các mốc level chốt lãi theo fibonacci
-                        if (roe > 0.382) gainingAmt = 0.236;
-                        if (roe > 0.5)   gainingAmt = 0.382;
-                        if (roe > 0.618) gainingAmt = 0.5;
-                        if (roe > 0.786) gainingAmt = 0.618;
-                        if (roe > 1)     gainingAmt = 0.786;
-                        if (roe > 1.618) gainingAmt = 1;
-                        if (roe > 2.618) gainingAmt = 1.618;
-                        if (roe > 4.237) gainingAmt = 2.618;
-
-                        if (roe > 4.5) {
-                            // chốt lãi thẳng nếu x4.5
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit = false;
-                            gainingAmt = 0;
-                            isAutoTP = false;
-                            return
-                        }
-                        return
-                    }
-
-                    if (roe > 0.236) {
-                        gainingProfit = true;
-                        gainingAmt = 0.10
-                        isAutoTP = false;
-                        return
-                    }
-                    if (roe <= -0.382) {
-                        // cắt lỗ fibo mốc 2
-                        await lib.closePositionByType(side, position, amt, true);
-                        isAutoTP = false;
-                        gainingProfit = false;
-                        gainingAmt = 0;
-                        return
-                    }
-                }
-                isAutoTP = false;
-            }
-        } catch (e) {
-            isAutoTP = false;
-            console.log(e);
-        }
-    })
 }
 
 // profit go here
-liquidStream().then()
+CopyStream().then()

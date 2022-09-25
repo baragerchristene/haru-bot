@@ -54,6 +54,9 @@ async function closePositionByType(type, position, quantity, close = false) {
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
+    if (ctx.inverseCopy) { // chức năng trade ngược
+        type == 'LONG' ? type = 'SHORT' : type = 'LONG';
+    }
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
     } else {
@@ -66,6 +69,9 @@ async function openPositionByType(type, position, quantity, leverage) {
     const symbol = position.symbol;
     await binance.futuresLeverage(symbol, leverage);
     let result = {}
+    if (ctx.inverseCopy) { // chức năng trade ngược
+        type == 'LONG' ? type = 'SHORT' : type = 'LONG';
+    }
     if (type == 'LONG') {
         result = await binance.futuresMarketBuy(symbol, quantity);
     } else {
@@ -88,7 +94,7 @@ function getMinQty(coin, exchanges) {
 function getMinQtyU(coin, exchanges, leverage) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
-    return ((Number(process.env.MIN_X)/coin.markPrice)*leverage).toFixed(countNumber);
+    return ((Number(ctx.minX)/coin.markPrice)*leverage).toFixed(countNumber);
 }
 
 function numDigitsAfterDecimal(x) {
