@@ -117,7 +117,7 @@ async function CopyStream() {
             } else {
                 // khởi chạy vòng đầu, xóa lịch sử cũ
                 // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
-                const copyPosition = await lib.fetchLeaderBoardPositions(process.env.COPY_ID);
+                const copyPosition = await lib.fetchLeaderBoardPositions(ctx.copyID);
                 let leadPositions = [];
                 if (copyPosition.error) {
                     ctx.autoCopy = false;
