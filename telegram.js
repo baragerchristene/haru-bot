@@ -17,11 +17,23 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
 async function sendMessage(message) {
     try {
-        await bot.telegram.sendMessage(group_id, message);
+        let messages = stringToChunks(message, 4096);
+        for(let msg of messages) {
+            await bot.telegram.sendMessage(group_id, msg);
+        }
     } catch (error) {
         console.log('send message error');
         console.log(error);
     }
+}
+
+function stringToChunks(string, chunkSize) {
+    const chunks = [];
+    while (string.length > 0) {
+        chunks.push(string.substring(0, chunkSize));
+        string = string.substring(chunkSize, string.length);
+    }
+    return chunks
 }
 
 async function log(message) {
@@ -41,8 +53,9 @@ function getPositionsStr(coins) {
     const message = _.reduce(coins, (msg, coin) => {
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
         let leverage = getLeverageLB(coin);
-        let amt = (coin.markPrice*coin.amount).toFixed(3)
-        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
+        let amt = (coin.markPrice*coin.amount).toFixed(3);
+        let roe = leadRoe(coin, leverage);
+        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}; roe: ${roe}%\n`;
         return msg;
     }, '');
     return message;
@@ -73,6 +86,19 @@ bot.command('dbi', async (ctx0) => {
     }
 });
 
+function leadRoe(position, leverage) {
+    let direction = 1;
+    if (position.amount > 0) {
+        direction = 1;
+    } else {
+        direction = -1;
+    }
+    let uPnlUSDT = position.amount*direction*(position.markPrice - position.entryPrice);
+    let entryMargin = position.amount*position.markPrice*(1/leverage)
+    let roe = ((uPnlUSDT/entryMargin)*100).toFixed(4);
+    return roe
+}
+
 bot.command('dbc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let coins = ctx.positions;
@@ -82,8 +108,9 @@ bot.command('dbc', async (ctx0) => {
     if (!_.isEmpty(coin)) {
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
         let leverage = getLeverageLB(coin);
-        let amt = (coin.markPrice*coin.amount).toFixed(3)
-        let message = `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}\n`;
+        let amt = (coin.markPrice*coin.amount).toFixed(3);
+        let roe = leadRoe(coin, leverage);
+        let message = `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}; roe: ${roe}%\n`;
         await sendMessage(message);
     } else {
         await sendMessage('Không có dữ liệu lịch sử');
@@ -217,7 +244,13 @@ bot.command('cid', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let copyID = getTgMessage(ctx0, 'cid');
     if (copyID && copyID != '') {
+        ctx.autoCopy = false
+        // chờ 10s
+        await delay(3000)
         ctx.copyID = copyID;
+        // chờ 1s
+        await delay(1000)
+        ctx.autoCopy = true
         await sendMessage(`Copy ID mới là ${ctx.copyID}`);
     } else {
         await sendMessage(`Copy ID không hợp lệ!`);
@@ -307,5 +340,7 @@ bot.command('h', async (ctx0) => {
 function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
 }
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = {sendMessage, log}
