@@ -77,7 +77,7 @@ async function openPositionByType(type, position, quantity, leverage) {
     } else {
         result = await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`#${symbol}, Successfully opened ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
+    await log(`#${symbol}, Mở vị thế ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
     if (result.code) {
         await delay(3000);
         await sendMessage(result); // send error response
