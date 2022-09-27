@@ -1,5 +1,5 @@
 const {Telegraf} = require("telegraf");
-const ctx = require("./context");
+var ctx = require("./context");
 const _ = require("lodash");
 const moment = require("moment-timezone");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
