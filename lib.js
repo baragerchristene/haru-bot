@@ -151,7 +151,10 @@ function getAmountChange(position, filterSymbols, amountChangeRate) {
 }
 
 function getLeverageLB(coin) {
-    return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
+    let leverage = _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
+    if (leverage > 0) {
+        return leverage
+    } else return 10;
 }
 
 async function detectPosition() {
