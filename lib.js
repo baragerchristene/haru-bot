@@ -54,8 +54,9 @@ async function closePositionByType(type, position, quantity, close = false) {
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
-    if (ctx.inverseCopy) { // chức năng trade ngược
-        type == 'LONG' ? type = 'SHORT' : type = 'LONG';
+    if (ctx.inverseCopy) { // trade ngược thì không DCA
+        await log(`#${symbol} Inverse DCA vị thế ${type}, số lượng ${quantity} | Source: amount: ${oldAmt} -> ${newAmt}; E: ${oldEntryPrice} -> ${newEntryPrice}`);
+        return;
     }
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
