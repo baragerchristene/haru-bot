@@ -324,6 +324,47 @@ bot.command('xa', async (ctx0) => {
     }
 });
 
+bot.command('tpsl', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let msg = _.toString(getTgMessage(ctx0, 'tpsl')).toUpperCase();
+    let vars = msg.split(' ');
+    if (vars.length == 3) {
+        let type = _.nth(vars, 0);
+        let symbol = _.nth(vars, 1);
+        let stopPrice = _.toNumber(_.nth(vars, 2));
+        let rawPosition = await fetchPositionBySymbol(symbol);
+        let position = {};
+        if (_.isEmpty(rawPosition)) {
+            await sendMessage(`Vị thế không tồn tại để TP/SL`);
+            return;
+        }
+        position = rawPosition[0];
+        let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+        let amount = Math.abs(position.positionAmt);
+
+        let orderType = '';
+        if (type == 'TP') orderType = 'TAKE_PROFIT_MARKET'
+        if (type == 'SL') orderType = 'STOP_MARKET'
+        let rs = {}
+
+        // cancel all previous order
+        let openOrders = await binance.futuresOpenOrders(symbol);
+        _.filter(openOrders, async (order) => {
+            if (order.type == orderType) {
+                await binance.futuresCancel(symbol, {orderId: order.orderId});
+            }
+        })
+        if (side == 'LONG') {
+            rs = await binance.futuresMarketSell(symbol, amount, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+        } else {
+            rs = await binance.futuresMarketBuy(symbol, amount, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+        }
+        await sendMessage(`Đã đặt ${type} cho ${symbol} thành công tại giá ${stopPrice}`);
+    } else {
+        await sendMessage(`Số lượng tham số không phù hợp ${vars.length}/3`);
+    }
+});
+
 bot.command('h', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let helpMessage = '/ss Xem trạng thái của bot \n' +
@@ -333,7 +374,7 @@ bot.command('h', async (ctx0) => {
     '/lpnl Xem tổng lỗ lãi của Leader \n' +
     '/xa {tên coin} đóng vị thế của coin theo lệnh thị trường \n' +
     '/dbc {tên coin} xem vị thế từng coin riêng của leader \n' +
-    '/xtp {tên coin} {số lượng} {giá stop}, đặt TP cho coin';
+    '/tpsl {loại lệnh tp hoặc sl} {tên coin} {giá stop}, đặt TP Market cho coin';
     await sendMessage(helpMessage);
 });
 
