@@ -115,8 +115,7 @@ async function fetchCopyPosition(leaderId) {
     let response = await twApi.fetchCopyPosition(leaderId);
     if (response.error) {
         let detail = _.get(response, 'detail');
-        console.log('Hệ thống đang bận: không lấy được vị thế của leader');
-        console.log(detail);
+        await log(detail);
         await delay(5000);
     }
     return response
@@ -187,5 +186,5 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI,
+    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};

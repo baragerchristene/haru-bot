@@ -1,119 +1,260 @@
-// const lib = require("./lib");
-// const tele = require("./telegram").bot;
-// const _ = require("lodash");
-// const log = lib.log;
-// const getTgMessage = lib.getTgMessage;
-// const sendMessage = lib.sendMessage;
-//
-// let oldTrend; let newTrend;
-// let leverage = 20;
-// let quantity = 0.01;
-// let symbol = 'BTCUSDT';
-// let smallLimit = 34;
-// let largeLimit = 89;
-// let running = true;
-// let frame = '1h';
-//
-// async function start() {
-//     log('server started');
-//     await init();
-//     // scan job
-//     setInterval(async () => {
-//         if (!running) return;
-//         running = false;
-//         newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-//
-//         if (newTrend == oldTrend) {
-//             running = true;
-//             return;
-//         }
-//         // when trend break out(the current trend is different from last trend)
-//
-//         // set leverage
-//         // const futuresLeverage = await lib.setLeverage(symbol, leverage);
-//         // log(JSON.stringify(futuresLeverage));
-//
-//         // check the open position; if existed, close the old position first(old trend)
-//         let positionAmt = await lib.havePosition(symbol);
-//         if (positionAmt != 0) { // close the open position
-//             await lib.closePositionByTrend(newTrend, symbol, positionAmt);
-//         }
-//
-//         // place new order for the new trend
-//         await lib.openNewPositionByTrend(newTrend, symbol, quantity);
-//
-//         // update the latest trend
-//         oldTrend = newTrend;
-//         // rest time 1
-//         setTimeout(() => {
-//             running = true;
-//         }, 10000)
-//     }, 500)
-// }
-//
-// async function init() { // init the trend
-//     newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-//     oldTrend = newTrend;
-//     log(`The latest trend of ${symbol} on EMA${smallLimit}&${largeLimit} is ${newTrend}`);
-//     await telegramInit();
-// }
-//
-// async function telegramInit() {
-//     tele.command('s', (ctx) => {
-//         let value = getTgMessage(ctx, 's');
-//         symbol = value.toUpperCase();
-//         sendMessage(`New symbol is ${symbol}`);
-//     });
-//     tele.command('q', (ctx) => {
-//         let value = getTgMessage(ctx, 'q');
-//         quantity = _.toNumber(value);
-//         sendMessage(`New quantity is ${quantity}`);
-//     });
-//     tele.command('f', async (ctx) => {
-//         frame = getTgMessage(ctx, 'f');
-//         newTrend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-//         oldTrend = newTrend;
-//         await sendMessage(`New frame is ${frame}`);
-//     });
-//     tele.command('l', (ctx) => {
-//         let value = getTgMessage(ctx, 'l');
-//         leverage = _.toNumber(value);
-//         sendMessage(`New leverage is ${leverage}`);
-//     });
-//     tele.command('run', (ctx) => {
-//         running = getTgMessage(ctx, 'run') == '1';
-//         sendMessage(`BOT: ${running == '1' ? 'ON': 'OFF'}`);
-//     });
-//     tele.command('status', (_ctx) => {
-//         showValues();
-//     });
-//     tele.command('small', async (ctx) => {
-//         smallLimit = _.toNumber(getTgMessage(ctx, 'small'));
-//         await sendMessage(`new small ema limit is ${smallLimit}`);
-//     });
-//     tele.command('large', async (ctx) => {
-//         largeLimit = _.toNumber(getTgMessage(ctx, 'large'));
-//         await sendMessage(`new small ema limit is ${smallLimit}`);
-//     });
-//     tele.command('ema', async (_ctx) => {
-//         let trend = await lib.checkTrendEMA(symbol, frame, smallLimit, largeLimit);
-//         await sendMessage(`EMA${smallLimit}/EMA${largeLimit} ${symbol} ${frame}: ${trend == 'UP' ? 'Uptrend' : 'Downtrend'}`);
-//     });
-//
-//     tele.command('reset', async (_ctx) => {
-//         leverage = 20;
-//         quantity = 0.01;
-//         symbol = 'BTCUSDT';
-//         frame = '1h';
-//         smallLimit = 34;
-//         largeLimit = 89;
-//         running = false;
-//         await sendMessage(`All values was reset to default!`);
-//     });
-// }
-//
-// async function showValues() {
-//     await sendMessage(`Values: | symbol: ${symbol}; quantity: ${quantity}; leverage: ${leverage}; frame: ${frame}; smallEMA: ${smallLimit}; largeEMA: ${largeLimit}; running: ${running}`);
-// }
-//
-// module.exports = { start };
+const {WebSocket} = require("ws");
+const _           = require("lodash");
+const lib         = require("./lib");
+var   ctx         = require('./context');
+const fetch = require("node-fetch");
+
+function InitialData() {
+    ctx.copyID = 1013; // nguồn copy id
+    ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
+}
+
+async function getMode() {
+    let baseResponse = {};
+    let response = {};
+    let mode = 0;
+    try {
+        baseResponse = await fetch(`https://api.npoint.io/19ab588a8c5ed5b9873f`);
+        if (baseResponse) {
+            response = await baseResponse.json();
+            mode = response.mode;
+        }
+    } catch (error) {
+        console.log(error);
+        await lib.sendMessage('Không lấy được mode copy từ server')
+    }
+    return mode;
+}
+
+async function BinanceCopier() {
+    /**
+     * Bot Copy từ server Binance Leader Board
+     */
+    const ws0 = new WebSocket('ws://localhost:13456');
+    let isCopying = false;
+    ws0.on('message', async (_event) => {
+        if (isCopying) return; // chờ tiến trình copy cũ chạy xong
+        try {
+            if (ctx.autoCopy) {
+                isCopying = true;
+                // lấy lịch sử vị thế lưu trong db
+                const leadPositionOlds = ctx.positions;
+
+                // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
+                const copyPosition = await lib.fetchLeaderBoardPositions(ctx.copyID);
+                let leadPositions = [];
+                if (copyPosition.error) {
+                    isCopying = false;
+                    return;
+                } else {
+                    leadPositions = copyPosition.data;
+                }
+                const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
+                let totalPosition = _.uniqBy(_.concat(leadPositionOlds, leadPositions), 'symbol');
+                const myPositions = await lib.fetchPositions();
+                ctx.myPositions = myPositions;
+                if (!_.isEmpty(totalPosition)) {
+                    _.filter(totalPosition, async (position) => {
+                        if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong danh sách trắng thì bỏ qua
+                        let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
+                        let leadPosition = _.find(leadPositions, {symbol: position.symbol});
+                        let myPosition = _.find(myPositions, {symbol: position.symbol});
+
+                        if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
+                            let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
+                            let leverage = lib.getLeverageLB(leadPosition);
+                            let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leverage);
+                            await lib.openPositionByType(newSide, leadPosition, minAmount, leverage);
+                        } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
+                            // lấy chiều vị thế tại 2 thời điểm
+                            let oldSide = leadPositionOld.amount > 0 ? 'LONG' : 'SHORT';
+                            let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
+
+                            // so sánh chiều vị thế
+                            if ((leadPositionOld.amount > 0 && leadPosition.amount > 0) ||
+                                (leadPositionOld.amount < 0 && leadPosition.amount < 0)) {
+                                // cùng chiều vị thế
+                                let oldAmt = Math.abs(leadPositionOld.amount);
+                                let newAmt = Math.abs(leadPosition.amount);
+                                let amountChangeRate = Math.abs((oldAmt - newAmt) / oldAmt);
+
+                                if (oldAmt != newAmt) { //
+                                    if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
+                                        if (!_.isEmpty(myPosition)) {
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
+                                            await lib.closePositionByType(newSide, myPosition, amountChange);
+                                        }
+                                    } else { // DCA
+                                        if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
+                                            await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
+                                        } else { // chưa có thì gửi message
+                                            let message = `DCA ${newSide} ${leadPosition.symbol} ${lib.getLeverageLB(leadPosition)}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
+                                            await lib.sendMessage(message);
+                                        }
+                                    }
+                                }
+                            } else { // khác chiều vị thế
+                                // đóng vị thế hiện tại và mở vị thế mới
+                                //đóng theo vị thế của user
+                                if (!_.isEmpty(myPosition)) {
+                                    await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true);
+                                    let leverage = lib.getLeverageLB(leadPosition);
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leverage);
+                                    await lib.openPositionByType(newSide, leadPosition, minAmount, leverage);
+                                } else {
+                                    let leverage = lib.getLeverageLB(leadPosition);
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leverage);
+                                    await lib.openPositionByType(newSide, leadPosition, minAmount, leverage);
+                                }
+                            }
+
+                        } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
+                            // xác định vị thế người dùng
+
+                            if (!_.isEmpty(myPosition)) {
+                                let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
+                                await lib.closePositionByType(side, myPosition, Math.abs(myPosition.positionAmt), true)
+                            }
+                        }
+                    })
+                }
+
+                ctx.positions = leadPositions; // ghi lịch sử vị thế
+                isCopying = false;
+            } else {
+                // khởi chạy vòng đầu, xóa lịch sử cũ
+                // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
+                const copyPosition = await lib.fetchLeaderBoardPositions(ctx.copyID);
+                let leadPositions = [];
+                if (copyPosition.error) {
+                    ctx.autoCopy = false;
+                    return;
+                } else {
+                    leadPositions = copyPosition.data;
+                }
+                ctx.positions = leadPositions;
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    })
+}
+
+async function TraderWagonCopier() {
+    /**
+     * Bot Copy từ server TraderWagon
+     */
+    const ws0 = new WebSocket('ws://localhost:13456');
+    let isCopying = false;
+    ws0.on('message', async (_event) => {
+        if (isCopying) return; // chờ tiến trình copy cũ chạy xong
+        try {
+            if (ctx.autoCopy) {
+                isCopying = true;
+                // lấy lịch sử vị thế lưu trong db
+                const leadPositionOlds = ctx.positions;
+
+                // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
+                const copyPosition = await lib.fetchCopyPosition(ctx.copyID);
+                console.log(copyPosition);
+                let leadPositions = [];
+                if (copyPosition.error) {
+                    isCopying = false;
+                    return;
+                } else {
+                    leadPositions = copyPosition.data;
+                }
+                const filterSymbols = await lib.getSymbols(); // lấy thông số tính toán số lượng vào tối thiểu của từng coin
+                let totalPosition = _.uniqBy(_.concat(leadPositionOlds, leadPositions), 'symbol');
+                const myPositions = await lib.fetchPositions();
+                ctx.myPositions = myPositions;
+                if (!_.isEmpty(totalPosition)) {
+                    _.filter(totalPosition, async (position) => {
+                        if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong danh sách trắng thì bỏ qua
+                        let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
+                        let leadPosition = _.find(leadPositions, {symbol: position.symbol});
+                        let myPosition = _.find(myPositions, {symbol: position.symbol});
+
+                        if (!_.isEmpty(leadPosition)) leadPosition.amount = leadPosition.positionAmount;
+                        if (!_.isEmpty(leadPositionOld)) leadPositionOld.amount = leadPositionOld.positionAmount;
+
+                        if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
+                            let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
+                            let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leadPosition.leverage);
+                            await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
+                        } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
+                            // lấy chiều vị thế tại 2 thời điểm
+                            let oldSide = leadPositionOld.amount > 0 ? 'LONG' : 'SHORT';
+                            let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
+
+                            // so sánh chiều vị thế
+                            if ((leadPositionOld.amount > 0 && leadPosition.amount > 0) ||
+                                (leadPositionOld.amount < 0 && leadPosition.amount < 0)) {
+                                // cùng chiều vị thế
+                                let oldAmt = Math.abs(leadPositionOld.amount);
+                                let newAmt = Math.abs(leadPosition.amount);
+                                let amountChangeRate = Math.abs((oldAmt - newAmt) / oldAmt);
+
+                                if (oldAmt != newAmt) { //
+                                    if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
+                                        if (!_.isEmpty(myPosition)) {
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
+                                            await lib.closePositionByType(newSide, myPosition, amountChange);
+                                        }
+                                    } else { // DCA
+                                        if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
+                                            let amountChange = lib.getAmountChange(myPosition, filterSymbols, amountChangeRate);
+                                            await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
+                                        } else { // chưa có thì gửi message
+                                            let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
+                                            await lib.sendMessage(message);
+                                        }
+                                    }
+                                }
+                            } else { // khác chiều vị thế
+                                // đóng vị thế hiện tại và mở vị thế mới
+                                //đóng theo vị thế của user
+                                if (!_.isEmpty(myPosition)) {
+                                    await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true);
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leadPosition.leverage);
+                                    await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
+                                } else {
+                                    let minAmount = lib.getMinQtyU(leadPosition, filterSymbols, leadPosition.leverage);
+                                    await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
+                                }
+                            }
+
+                        } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
+                            // xác định vị thế người dùng
+
+                            if (!_.isEmpty(myPosition)) {
+                                let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
+                                await lib.closePositionByType(side, myPosition, Math.abs(myPosition.positionAmt), true)
+                            }
+                        }
+                    })
+                }
+
+                ctx.positions = leadPositions; // ghi lịch sử vị thế
+                isCopying = false;
+            } else {
+                // khởi chạy vòng đầu, xóa lịch sử cũ
+                // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
+                const copyPosition = await lib.fetchCopyPosition(ctx.copyID);
+                let leadPositions = [];
+                if (copyPosition.error) {
+                    ctx.autoCopy = false;
+                    return;
+                } else {
+                    leadPositions = copyPosition.data;
+                }
+                ctx.positions = leadPositions;
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    })
+}
+
+module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode}

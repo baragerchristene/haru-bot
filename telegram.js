@@ -51,8 +51,11 @@ function isMe(ctxTg) {
 
 function getPositionsStr(coins) {
     const message = _.reduce(coins, (msg, coin) => {
+        if (!coin.amount) coin.amount = coin.positionAmount
+        if (!coin.pnl) coin.pnl = coin.unrealizedProfit
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
-        let leverage = getLeverageLB(coin);
+        let leverage = 0;
+        !coin.leverage ? leverage = getLeverageLB(coin) : leverage = coin.leverage
         let amt = (coin.markPrice*coin.amount).toFixed(3);
         let roe = leadRoe(coin, leverage);
         msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}; roe: ${roe}%\n`;
@@ -95,7 +98,7 @@ function leadRoe(position, leverage) {
     }
     let uPnlUSDT = position.amount*direction*(position.markPrice - position.entryPrice);
     let entryMargin = position.amount*position.markPrice*(1/leverage)
-    let roe = ((uPnlUSDT/entryMargin)*100).toFixed(4);
+    let roe = ((uPnlUSDT/entryMargin)*100).toFixed(2);
     return roe
 }
 
@@ -136,6 +139,7 @@ bot.command('lpnl', async (ctx0) => {
     let pnl = 0;
     if (!_.isEmpty(coins)) {
         pnl = _.reduce(coins, (result, coin) => {
+            if (!coin.pnl) coin.pnl = coin.unrealizedProfit;
             result += _.toNumber(coin.pnl);
             return result;
         }, 0)

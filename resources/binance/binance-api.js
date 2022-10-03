@@ -19,7 +19,6 @@ class BinanceApi {
             return {data: [], error: true, detail: response.error};
         }
     }
-
 }
 
 module.exports = BinanceApi
