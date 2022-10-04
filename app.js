@@ -20,6 +20,7 @@ async function CopyStream() {
     console.log(mode);
 
     bot.InitialData();
+    bot.AutoTakingProfit().then();
     switch (mode) {
         case 1:
             console.log('bot wagon')
