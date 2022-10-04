@@ -53,6 +53,7 @@ async function strategyOCC() {
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
                         await lib.closePositionByType(side, position, amount, true);
+                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: 0.01, entryPrice: closePrice}, 0.01, 125)
                     }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
