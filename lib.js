@@ -39,7 +39,8 @@ async function OCC(symbol, frame) {
     let close = closeSeries.getResult();
     console.log(close);
     console.log(open);
-    return close > open ? 'LONG' : 'SHORT';
+    // return close > open ? 'LONG' : 'SHORT';
+    return close > open ? 'SHORT' : 'LONG';
 }
 
 async function getRSI(symbol, interval) {
@@ -67,7 +68,8 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}%`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nE: ${position.entryPrice}, M: ${position.markPrice} `);
+    // await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}%`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -85,7 +87,7 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
 
 async function openPositionByType(type, position, quantity, leverage) {
     const symbol = position.symbol;
-    await binance.futuresLeverage(symbol, leverage);
+    // await binance.futuresLeverage(symbol, leverage);
     let result = {}
     if (ctx.inverseCopy) { // chức năng trade ngược
         type == 'LONG' ? type = 'SHORT' : type = 'LONG';

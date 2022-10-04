@@ -48,19 +48,12 @@ async function strategyOCC() {
                 // khác trend -> đảo chiều, đặt lệnh, chưa có entry thì là lệnh mới
                 if (currentEntry == 0) {
                     currentEntry = closePrice; // entry lấy giá đóng cửa
-                    await lib.sendMessage(`Cho bố mài ${newTrend}, Entry: ${currentEntry}`);
+                    await lib.openPositionByType(newTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry}, 0.001, 125)
                 } else { // cắt lệnh cũ
-                    let change = 0;
-                    if (currentTrend == 'SHORT') {
-                        change = currentEntry - closePrice;
-                    } else {
-                        change = closePrice - currentEntry;
-                    }
-                    let action = change > 0 ? 'chốt #lãi' : 'cắt #lỗ';
-                    await lib.sendMessage(`Cho bố mài ${action} lệnh cũ ${currentTrend} tại ${closePrice}, Entry: ${currentEntry};`);
+                    await lib.closePositionByType(currentTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry, markPrice: closePrice}, 0.001, true)
                     await lib.delay(1000);
                     currentEntry = closePrice; // entry lấy giá đóng cửa
-                    await lib.sendMessage(`Cho bố mài ${newTrend}, Entry: ${currentEntry}`);
+                    await lib.openPositionByType(newTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry}, 0.001, 125)
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
