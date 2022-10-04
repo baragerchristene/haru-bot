@@ -2,7 +2,7 @@ const {WebSocket} = require("ws");
 const _           = require("lodash");
 const lib         = require("./lib");
 var   ctx         = require('./context');
-const fetch = require("node-fetch");
+const fetch       = require("node-fetch");
 
 function InitialData() {
     ctx.copyID = 1013; // nguồn copy id
@@ -26,34 +26,34 @@ async function getMode() {
     return mode;
 }
 
-
-
 async function strategyOCC() {
     /**
      * Bot chạy theo thuật toán OCC Strategy R5.1
      */
     const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
+    let symbol = 'BTCUSDT';
 
-    let currentTrend = await lib.OCC('BTCUSDT', '1m');
-    console.log(currentTrend);
-    let currentEntry = 0;
+    let currentTrend = await lib.OCC(symbol, '1m');
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
         if (isCandleClose) {
             let closePrice = data.k.c;
-            let newTrend = await lib.OCC('BTCUSDT', '1m');
+            let newTrend = await lib.OCC(symbol, '1m');
             if (currentTrend != newTrend) {
-                // khác trend -> đảo chiều, đặt lệnh, chưa có entry thì là lệnh mới
-                if (currentEntry == 0) {
-                    currentEntry = closePrice; // entry lấy giá đóng cửa
-                    await lib.openPositionByType(newTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry}, 0.001, 125)
-                } else { // cắt lệnh cũ
-                    await lib.closePositionByType(currentTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry, markPrice: closePrice}, 0.001, true)
-                    await lib.delay(1000);
-                    currentEntry = closePrice; // entry lấy giá đóng cửa
-                    await lib.openPositionByType(newTrend, {symbol: 'BTCUSDT', amount: 0.001, entryPrice: currentEntry}, 0.001, 125)
+                let rawPosition = await lib.fetchPositionBySymbol(symbol);
+                if (_.isEmpty(rawPosition)) {
+                    // k có vị thế thì tạo mới
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: 0.01, entryPrice: closePrice}, 0.01, 125)
+                } else {
+                    // nếu có vị thế mà đang lỗ thì cắt đi
+                    let position = rawPosition[0];
+                    if (position.unRealizedProfit < 0) {
+                        let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+                        let amount = Math.abs(position.positionAmt);
+                        await lib.closePositionByType(side, position, amount, true);
+                    }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
@@ -293,4 +293,79 @@ async function TraderWagonCopier() {
     })
 }
 
-module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode, strategyOCC}
+async function AutoTakingProfit() {
+    /**
+     * BOT TỰ ĐỘNG CHỐT LÃI
+     */
+    const ws2 = new WebSocket('ws://localhost:13456');
+    let gainingProfit = false;
+    let gainingAmt = 0;
+    let isAutoTP = false;
+    // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
+    ws2.on('message', async (_event) => {
+        if (isAutoTP) return;
+        try {
+            if (ctx.autoTP) {
+                isAutoTP = true;
+                let rawPosition = await lib.fetchPositionBySymbol('BTCUSDT');
+                if (!_.isEmpty(rawPosition)) {
+                    const position = rawPosition[0];
+
+                    const amt = Math.abs(position.positionAmt);
+                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+                    let roe = lib.roe(position);
+                    if (gainingProfit) {
+                        if (roe < gainingAmt) {
+                            // chốt lãi
+                            await lib.closePositionByType(side, position, amt, true);
+                            gainingProfit = false;
+                            gainingAmt = 0;
+                            isAutoTP = false;
+                            return
+                        }
+                        // các mốc level chốt lãi theo fibonacci
+                        if (roe > 0.382) gainingAmt = 0.236;
+                        if (roe > 0.5)   gainingAmt = 0.382;
+                        if (roe > 0.618) gainingAmt = 0.5;
+                        if (roe > 0.786) gainingAmt = 0.618;
+                        if (roe > 1)     gainingAmt = 0.786;
+                        if (roe > 1.618) gainingAmt = 1;
+                        if (roe > 2.618) gainingAmt = 1.618;
+                        if (roe > 4.237) gainingAmt = 2.618;
+
+                        if (roe > 4.5) {
+                            // chốt lãi thẳng nếu x4.5
+                            await lib.closePositionByType(side, position, amt, true);
+                            gainingProfit = false;
+                            gainingAmt = 0;
+                            isAutoTP = false;
+                            return
+                        }
+                        return
+                    }
+
+                    if (roe > 0.236) {
+                        gainingProfit = true;
+                        gainingAmt = 0.10
+                        isAutoTP = false;
+                        return
+                    }
+                    if (roe <= -0.382) {
+                        // cắt lỗ fibo mốc 2
+                        await lib.closePositionByType(side, position, amt, true);
+                        isAutoTP = false;
+                        gainingProfit = false;
+                        gainingAmt = 0;
+                        return
+                    }
+                }
+                isAutoTP = false;
+            }
+        } catch (e) {
+            isAutoTP = false;
+            console.log(e);
+        }
+    })
+}
+
+module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode, strategyOCC, AutoTakingProfit}
