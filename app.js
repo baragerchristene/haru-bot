@@ -7,6 +7,7 @@ const port              = process.env.PORT || 3000;
 const server            = http.createServer(app);
 const wss               = new WebSocketServer({ port: 13456 });
 const bot               = require('./bot');
+const lib         = require("./lib");
 app.use('/', indexRouter); app.set('port', port);
 wss.on('connection', ws => {setInterval(() => { ws.send('ok') }, 500)});
 server.listen(port);
@@ -27,6 +28,10 @@ async function CopyStream() {
         case 2:
             console.log('bot binance')
             bot.BinanceCopier().then()
+            break
+        case 3:
+            console.log('bot OCC')
+            bot.strategyOCC().then()
             break
         default:
         // code block

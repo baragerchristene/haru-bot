@@ -26,6 +26,49 @@ async function getMode() {
     return mode;
 }
 
+
+
+async function strategyOCC() {
+    /**
+     * Bot chạy theo thuật toán OCC Strategy R5.1
+     */
+    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
+
+    let currentTrend = await lib.OCC('BTCUSDT', '1m');
+    console.log(currentTrend);
+    let currentEntry = 0;
+
+    ws0.on('message', async (_event) => {
+        let data = JSON.parse(_event);
+        let isCandleClose = data.k.x;
+        if (isCandleClose) {
+            let closePrice = data.k.c;
+            let newTrend = await lib.OCC('BTCUSDT', '1m');
+            if (currentTrend != newTrend) {
+                // khác trend -> đảo chiều, đặt lệnh, chưa có entry thì là lệnh mới
+                if (currentEntry == 0) {
+                    currentEntry = closePrice; // entry lấy giá đóng cửa
+                    await lib.sendMessage(`Cho bố mài ${newTrend}, Entry: ${currentEntry}`);
+                } else { // cắt lệnh cũ
+                    let change = 0;
+                    if (currentTrend == 'SHORT') {
+                        change = currentEntry - closePrice;
+                    } else {
+                        change = closePrice - currentEntry;
+                    }
+                    let action = change > 0 ? 'chốt #lãi' : 'cắt #lỗ';
+                    await lib.sendMessage(`Cho bố mài ${action} lệnh cũ ${currentTrend} tại ${closePrice}, Entry: ${currentEntry};`);
+                    await lib.delay(1000);
+                    currentEntry = closePrice; // entry lấy giá đóng cửa
+                    await lib.sendMessage(`Cho bố mài ${newTrend}, Entry: ${currentEntry}`);
+                }
+                currentTrend = newTrend; // set trend hiện tại cho lệnh
+            }
+        }
+    })
+}
+
+
 async function BinanceCopier() {
     /**
      * Bot Copy từ server Binance Leader Board
@@ -257,4 +300,4 @@ async function TraderWagonCopier() {
     })
 }
 
-module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode}
+module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode, strategyOCC}

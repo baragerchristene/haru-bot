@@ -25,6 +25,7 @@
     "technicalindicators": "^3.1.0",
     "telegraf": "^4.8.6",
     "trading-indicator": "^1.0.8",
+    "trading-signals": "^3.6.1",
     "ws": "^8.8.0"
   },
   "engines": {

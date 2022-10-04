@@ -11,6 +11,7 @@ const bnApi = new BinanceApi();
 const {binance, fetchPositions, getSymbols, fetchPositionBySymbol} = require('./resources/binance/utils');
 var ctx = require('./context');
 const moment = require("moment-timezone");
+const {FasterWSMA, WSMA, FasterDEMA} = require("trading-signals");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
@@ -23,6 +24,22 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaTrade = _.nth(emaTrades, emaTrades.length - 1);
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
+}
+
+async function OCC(symbol, frame) {
+    let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
+    latestCandles.pop();
+    const openSeries = new FasterDEMA(8);
+    const closeSeries = new FasterDEMA(8);
+    _.filter(latestCandles, (candle) => {
+        openSeries.update(_.toNumber(candle[1]));
+        closeSeries.update(_.toNumber(candle[4]));
+    })
+    let open = openSeries.getResult();
+    let close = closeSeries.getResult();
+    console.log(close);
+    console.log(open);
+    return close > open ? 'LONG' : 'SHORT';
 }
 
 async function getRSI(symbol, interval) {
@@ -186,5 +203,5 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition,
+    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
