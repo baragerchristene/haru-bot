@@ -16,30 +16,30 @@ server.listen(port);
  */
 async function CopyStream() {
 
-    let mode = await bot.getMode();
-    console.log(mode);
+//     let mode = await bot.getMode();
+//     console.log(mode);
 
-    bot.InitialData();
-    bot.AutoTakingProfit().then();
-    bot.TraderWagonCopier().then();
-    switch (mode) {
-        case 1:
-            console.log('bot wagon')
-            bot.TraderWagonCopier().then()
-            break
-        case 2:
-            console.log('bot binance')
-            bot.BinanceCopier().then()
-            break
-        case 3:
-            console.log('bot OCC')
-            bot.strategyOCC().then()
-            break
-        default:
-        // code block
-            console.log('Mode không xác định!')
+//     bot.InitialData();
+//     bot.AutoTakingProfit().then();
+//     bot.TraderWagonCopier().then();
+//     switch (mode) {
+//         case 1:
+//             console.log('bot wagon')
+//             bot.TraderWagonCopier().then()
+//             break
+//         case 2:
+//             console.log('bot binance')
+//             bot.BinanceCopier().then()
+//             break
+//         case 3:
+//             console.log('bot OCC')
+//             bot.strategyOCC().then()
+//             break
+//         default:
+//         // code block
+//             console.log('Mode không xác định!')
 
-    }
+//     }
 }
 
 // CopyStream().then() // profit go here
