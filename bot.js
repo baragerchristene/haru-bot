@@ -331,19 +331,20 @@ async function AutoTakingProfit() {
                                 isAutoTP = false;
                             }
                             // các mốc level chốt lãi theo fibonacci
-                            if (roe > 4.237) { gainingAmt = 2.618; isAutoTP = false; return; }
-                            if (roe > 2.618) { gainingAmt = 1.618; isAutoTP = false; return; }
-                            if (roe > 1.618) { gainingAmt = 1;     isAutoTP = false; return; }
-                            if (roe > 1)     { gainingAmt = 0.786; isAutoTP = false; return; }
-                            if (roe > 0.786) { gainingAmt = 0.618; isAutoTP = false; return; }
-                            if (roe > 0.618) { gainingAmt = 0.5;   isAutoTP = false; return; }
-                            if (roe > 0.5)   { gainingAmt = 0.45;  isAutoTP = false; return; }
-                            if (roe > 0.45)  { gainingAmt = 0.382; isAutoTP = false; return; }
-                            if (roe > 0.382) { gainingAmt = 0.236; isAutoTP = false; return; }
-                            if (roe > 0.236) { gainingAmt = 0.2;   isAutoTP = false; return; }
+                            if (roe > 4.237) { gainingAmt = 2.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 2.618) { gainingAmt = 1.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 1.618) { gainingAmt = 1;     console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 1)     { gainingAmt = 0.786; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.786) { gainingAmt = 0.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.618) { gainingAmt = 0.5;   console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.5)   { gainingAmt = 0.45;  console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.45)  { gainingAmt = 0.382; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.382) { gainingAmt = 0.236; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.236) { gainingAmt = 0.2;   console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > 0.2)   { gainingAmt = 0.15;  console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
                         }
                     } else {
-                        if (roe > 0.2) {
+                        if (roe > 0.15) {
                             gainingProfit = true;
                             gainingAmt = 0.10
                             isAutoTP = false;
