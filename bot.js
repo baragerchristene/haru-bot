@@ -334,14 +334,29 @@ async function AutoTakingProfit() {
                             }
                             // các mốc level chốt lãi theo fibonacci
                             if (roe > tpLevel) {
-                                if (tpLevel == 0.2)   { tpLevel = 0.236; gainingAmt = 0.15;  }
-                                if (tpLevel == 0.236) { tpLevel = 0.382; gainingAmt = 0.2;   }
-                                if (tpLevel == 0.382) { tpLevel = 0.5;   gainingAmt = 0.236; }
-                                if (tpLevel == 0.5)   { tpLevel = 0.618; gainingAmt = 0.382; }
-                                if (tpLevel == 0.618) { tpLevel = 0.786; gainingAmt = 0.5;   }
-                                if (tpLevel == 0.786) { tpLevel = 1.618; gainingAmt = 0.618; }
-                                if (tpLevel == 1.618) { tpLevel = 2.618; gainingAmt = 0.786; }
-                                if (tpLevel == 2.618) { tpLevel = 4.237; gainingAmt = 1.618; }
+                                switch (tpLevel) {
+                                    case 0.2:
+                                        tpLevel = 0.236; gainingAmt = 0.15;  break;
+                                    case 0.236:
+                                        tpLevel = 0.382; gainingAmt = 0.2;   break;
+                                    case 0.382:
+                                        tpLevel = 0.5;   gainingAmt = 0.236; break;
+                                    case 0.5:
+                                        tpLevel = 0.618; gainingAmt = 0.382; break;
+                                    case 0.618:
+                                        tpLevel = 0.786; gainingAmt = 0.5;   break;
+                                    case 0.786:
+                                        tpLevel = 1;     gainingAmt = 0.618; break;
+                                    case 1:
+                                        tpLevel = 1.618; gainingAmt = 0.786; break;
+                                    case 1.618:
+                                        tpLevel = 2.618; gainingAmt = 1;     break;
+                                    case 2.618:
+                                        tpLevel = 4.237; gainingAmt = 1.618; break;
+                                    default:
+                                        // code block
+                                        console.log('TP không xác định!')
+                                }
                             }
                         }
                     } else {
