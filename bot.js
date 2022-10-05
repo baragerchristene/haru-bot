@@ -46,7 +46,7 @@ async function strategyOCC() {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition)) {
                     // k có vị thế thì tạo mới
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: 0.01, entryPrice: closePrice}, 0.01, 125)
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: quantity, entryPrice: closePrice}, quantity, 125)
                 } else {
                     // nếu có vị thế mà đang lỗ thì cắt đi
                     let position = rawPosition[0];
@@ -54,7 +54,7 @@ async function strategyOCC() {
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
                         await lib.closePositionByType(side, position, amount, true);
-                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: 0.01, entryPrice: closePrice}, 0.01, 125)
+                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: quantity, entryPrice: closePrice}, quantity, 125)
                     }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
@@ -332,16 +332,16 @@ async function AutoTakingProfit() {
                                 isAutoTP = false;
                             }
                             // các mốc level chốt lãi theo fibonacci
-                            if (roe > 4.237) { gainingAmt = 2.618; return; }
-                            if (roe > 2.618) { gainingAmt = 1.618; return; }
-                            if (roe > 1.618) { gainingAmt = 1;     return; }
-                            if (roe > 1)     { gainingAmt = 0.786; return; }
-                            if (roe > 0.786) { gainingAmt = 0.618; return; }
-                            if (roe > 0.618) { gainingAmt = 0.5;   return; }
-                            if (roe > 0.5)   { gainingAmt = 0.45;  return; }
-                            if (roe > 0.45)  { gainingAmt = 0.382; return; }
-                            if (roe > 0.382) { gainingAmt = 0.236; return; }
-                            if (roe > 0.236) { gainingAmt = 0.2;   return; }
+                            if (roe > 4.237) { gainingAmt = 2.618; isAutoTP = false; return; }
+                            if (roe > 2.618) { gainingAmt = 1.618; isAutoTP = false; return; }
+                            if (roe > 1.618) { gainingAmt = 1;     isAutoTP = false; return; }
+                            if (roe > 1)     { gainingAmt = 0.786; isAutoTP = false; return; }
+                            if (roe > 0.786) { gainingAmt = 0.618; isAutoTP = false; return; }
+                            if (roe > 0.618) { gainingAmt = 0.5;   isAutoTP = false; return; }
+                            if (roe > 0.5)   { gainingAmt = 0.45;  isAutoTP = false; return; }
+                            if (roe > 0.45)  { gainingAmt = 0.382; isAutoTP = false; return; }
+                            if (roe > 0.382) { gainingAmt = 0.236; isAutoTP = false; return; }
+                            if (roe > 0.236) { gainingAmt = 0.2;   isAutoTP = false; return; }
                         }
                     } else {
                         if (roe > 0.2) {
