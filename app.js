@@ -42,6 +42,6 @@ async function CopyStream() {
     }
 }
 
-CopyStream().then() // profit go here
+// CopyStream().then() // profit go here
 
 
