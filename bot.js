@@ -326,8 +326,6 @@ async function AutoTakingProfit() {
                             isAutoTP = false;
                         } else {
                             // các mốc level chốt lãi theo fibonacci
-                            console.log(roe);
-                            console.log(gainingAmt);
                             if (roe > 0.382 && tpLevel == 0) gainingAmt = 0.236; tpLevel = 1;
                             if (roe > 0.5 && tpLevel == 1) gainingAmt = 0.382; tpLevel = 2;
                             if (roe > 0.618 && tpLevel == 2) gainingAmt = 0.5; tpLevel = 3;
@@ -363,6 +361,10 @@ async function AutoTakingProfit() {
                         }
 
                     }
+                } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
+                    gainingProfit = false;
+                    gainingAmt = 0;
+                    tpLevel = 0;
                 }
                 isAutoTP = false;
             }
