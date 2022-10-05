@@ -326,7 +326,7 @@ async function AutoTakingProfit() {
                             isAutoTP = false;
                         } else {
                             // các mốc level chốt lãi theo fibonacci
-update                            if (roe > 0.236 && tpLevel == 0) gainingAmt = 0.2;   tpLevel = 1;
+                            if (roe > 0.236 && tpLevel == 0) gainingAmt = 0.2;   tpLevel = 1;
                             if (roe > 0.382 && tpLevel == 1) gainingAmt = 0.236; tpLevel = 2;
                             if (roe > 0.5   && tpLevel == 2) gainingAmt = 0.382; tpLevel = 3;
                             if (roe > 0.618 && tpLevel == 3) gainingAmt = 0.5;   tpLevel = 4;
