@@ -30,17 +30,17 @@ async function strategyOCC() {
     /**
      * Bot chạy theo thuật toán OCC Strategy R5.1
      */
-    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
+    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_3m');
     let symbol = 'BTCUSDT';
 
-    let currentTrend = await lib.OCC(symbol, '1m');
+    let currentTrend = await lib.OCC(symbol, '3m');
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
         if (isCandleClose && ctx.occ) {
             let closePrice = data.k.c;
-            let newTrend = await lib.OCC(symbol, '1m');
+            let newTrend = await lib.OCC(symbol, '3m');
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition)) {
