@@ -301,6 +301,7 @@ async function AutoTakingProfit() {
     const ws2 = new WebSocket('ws://localhost:13456');
     let gainingProfit = false;
     let gainingAmt = 0;
+    let tpLevel = 0;
     let isAutoTP = false;
     // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
@@ -321,23 +322,27 @@ async function AutoTakingProfit() {
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
                             gainingAmt = 0;
+                            tpLevel = 0;
                             isAutoTP = false;
                         } else {
                             // các mốc level chốt lãi theo fibonacci
-                            if (roe > 0.382) gainingAmt = 0.236;
-                            if (roe > 0.5)   gainingAmt = 0.382;
-                            if (roe > 0.618) gainingAmt = 0.5;
-                            if (roe > 0.786) gainingAmt = 0.618;
-                            if (roe > 1)     gainingAmt = 0.786;
-                            if (roe > 1.618) gainingAmt = 1;
-                            if (roe > 2.618) gainingAmt = 1.618;
-                            if (roe > 4.237) gainingAmt = 2.618;
+                            console.log(roe);
+                            console.log(gainingAmt);
+                            if (roe > 0.382 && tpLevel == 0) gainingAmt = 0.236; tpLevel = 1;
+                            if (roe > 0.5 && tpLevel == 1) gainingAmt = 0.382; tpLevel = 2;
+                            if (roe > 0.618 && tpLevel == 2) gainingAmt = 0.5; tpLevel = 3;
+                            if (roe > 0.786 && tpLevel == 3) gainingAmt = 0.618; tpLevel = 4;
+                            if (roe > 1 && tpLevel == 4)     gainingAmt = 0.786; tpLevel = 5;
+                            if (roe > 1.618 && tpLevel == 5) gainingAmt = 1; tpLevel = 6;
+                            if (roe > 2.618 && tpLevel == 6) gainingAmt = 1.618; tpLevel = 7;
+                            if (roe > 4.237 && tpLevel == 7) gainingAmt = 2.618; tpLevel = 8;
 
                             if (roe > 4.5) {
                                 // chốt lãi thẳng nếu x4.5
                                 await lib.closePositionByType(side, position, amt, true);
                                 gainingProfit = false;
                                 gainingAmt = 0;
+                                tpLevel = 0;
                                 isAutoTP = false;
                             }
                         }
@@ -353,6 +358,7 @@ async function AutoTakingProfit() {
                                 isAutoTP = false;
                                 gainingProfit = false;
                                 gainingAmt = 0;
+                                tpLevel = 0;
                             }
                         }
 
