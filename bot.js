@@ -27,39 +27,39 @@ async function getMode() {
 }
 
 async function strategyOCC() {
-//     /**
-//      * Bot chạy theo thuật toán OCC Strategy R5.1
-//      */
-//     const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
-//     let symbol = 'BTCUSDT';
+    /**
+     * Bot chạy theo thuật toán OCC Strategy R5.1
+     */
+    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
+    let symbol = 'BTCUSDT';
 
-//     let currentTrend = await lib.OCC(symbol, '1m');
+    let currentTrend = await lib.OCC(symbol, '1m');
 
-//     ws0.on('message', async (_event) => {
-//         let data = JSON.parse(_event);
-//         let isCandleClose = data.k.x;
-//         if (isCandleClose && ctx.occ) {
-//             let closePrice = data.k.c;
-//             let newTrend = await lib.OCC(symbol, '1m');
-//             if (currentTrend != newTrend) {
-//                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
-//                 if (_.isEmpty(rawPosition)) {
-//                     // k có vị thế thì tạo mới
-//                     await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
-//                 } else {
-//                     // nếu có vị thế mà đang lỗ thì cắt đi
-//                     let position = rawPosition[0];
-//                     if (position.unRealizedProfit < 0) {
-//                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-//                         let amount = Math.abs(position.positionAmt);
-//                         await lib.closePositionByType(side, position, amount, true);
-//                         await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
-//                     }
-//                 }
-//                 currentTrend = newTrend; // set trend hiện tại cho lệnh
-//             }
-//         }
-//     })
+    ws0.on('message', async (_event) => {
+        let data = JSON.parse(_event);
+        let isCandleClose = data.k.x;
+        if (isCandleClose && ctx.occ) {
+            let closePrice = data.k.c;
+            let newTrend = await lib.OCC(symbol, '1m');
+            if (currentTrend != newTrend) {
+                let rawPosition = await lib.fetchPositionBySymbol(symbol);
+                if (_.isEmpty(rawPosition)) {
+                    // k có vị thế thì tạo mới
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
+                } else {
+                    // nếu có vị thế mà đang lỗ thì cắt đi
+                    let position = rawPosition[0];
+                    if (position.unRealizedProfit < 0) {
+                        let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+                        let amount = Math.abs(position.positionAmt);
+                        await lib.closePositionByType(side, position, amount, true);
+                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
+                    }
+                }
+                currentTrend = newTrend; // set trend hiện tại cho lệnh
+            }
+        }
+    })
 }
 
 
@@ -194,7 +194,6 @@ async function TraderWagonCopier() {
 
                 // lấy all vị thế đang có của lead trader trùng với danh sách coin cần trade và lưu vào lịch sử
                 const copyPosition = await lib.fetchCopyPosition(ctx.copyID);
-                console.log(copyPosition);
                 let leadPositions = [];
                 if (copyPosition.error) {
                     isCopying = false;
@@ -302,6 +301,7 @@ async function AutoTakingProfit() {
     let gainingProfit = false;
     let gainingAmt = 0;
     let isAutoTP = false;
+    let tpLevel =  0.2;
     // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
         if (isAutoTP) return;
@@ -321,6 +321,7 @@ async function AutoTakingProfit() {
                             await lib.closePositionByType(side, position, amt, true);
                             gainingProfit = false;
                             gainingAmt = 0;
+                            tpLevel =  0.2;
                             isAutoTP = false;
                         } else {
                             if (roe > 4.5) {
@@ -328,20 +329,20 @@ async function AutoTakingProfit() {
                                 await lib.closePositionByType(side, position, amt, true);
                                 gainingProfit = false;
                                 gainingAmt = 0;
+                                tpLevel =  0.2;
                                 isAutoTP = false;
                             }
                             // các mốc level chốt lãi theo fibonacci
-                            if (roe > 4.237) { gainingAmt = 2.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 2.618) { gainingAmt = 1.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 1.618) { gainingAmt = 1;     console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 1)     { gainingAmt = 0.786; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.786) { gainingAmt = 0.618; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.618) { gainingAmt = 0.5;   console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.5)   { gainingAmt = 0.45;  console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.45)  { gainingAmt = 0.382; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.382) { gainingAmt = 0.236; console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.236) { gainingAmt = 0.2;   console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
-                            if (roe > 0.2)   { gainingAmt = 0.15;  console.log(`roe: ${roe} & new gaining amount ${gainingAmt}`); isAutoTP = false; return; }
+                            if (roe > tpLevel) {
+                                if (tpLevel == 0.2)   { tpLevel = 0.236; gainingAmt = 0.15;  }
+                                if (tpLevel == 0.236) { tpLevel = 0.382; gainingAmt = 0.2;   }
+                                if (tpLevel == 0.382) { tpLevel = 0.5;   gainingAmt = 0.236; }
+                                if (tpLevel == 0.5)   { tpLevel = 0.618; gainingAmt = 0.382; }
+                                if (tpLevel == 0.618) { tpLevel = 0.786; gainingAmt = 0.5;   }
+                                if (tpLevel == 0.786) { tpLevel = 1.618; gainingAmt = 0.618; }
+                                if (tpLevel == 1.618) { tpLevel = 2.618; gainingAmt = 0.786; }
+                                if (tpLevel == 2.618) { tpLevel = 4.237; gainingAmt = 1.618; }
+                            }
                         }
                     } else {
                         if (roe > 0.15) {
@@ -355,6 +356,7 @@ async function AutoTakingProfit() {
                                 isAutoTP = false;
                                 gainingProfit = false;
                                 gainingAmt = 0;
+                                tpLevel =  0.2;
                             }
                         }
 
@@ -362,6 +364,7 @@ async function AutoTakingProfit() {
                 } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
                     gainingProfit = false;
                     gainingAmt = 0;
+                    tpLevel =  0.2;
                 }
                 isAutoTP = false;
             }
