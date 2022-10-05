@@ -21,6 +21,7 @@ async function CopyStream() {
 
     bot.InitialData();
     bot.AutoTakingProfit().then();
+    bot.TraderWagonCopier().then();
     switch (mode) {
         case 1:
             console.log('bot wagon')
