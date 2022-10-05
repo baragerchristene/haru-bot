@@ -32,6 +32,7 @@ async function strategyOCC() {
      */
     const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
     let symbol = 'BTCUSDT';
+    let quantity = 0.001;
 
     let currentTrend = await lib.OCC(symbol, '1m');
 
@@ -328,13 +329,14 @@ async function AutoTakingProfit() {
                             // các mốc level chốt lãi theo fibonacci
                             if (roe > 0.236 && tpLevel == 0) gainingAmt = 0.2;   tpLevel = 1;
                             if (roe > 0.382 && tpLevel == 1) gainingAmt = 0.236; tpLevel = 2;
-                            if (roe > 0.5   && tpLevel == 2) gainingAmt = 0.382; tpLevel = 3;
-                            if (roe > 0.618 && tpLevel == 3) gainingAmt = 0.5;   tpLevel = 4;
-                            if (roe > 0.786 && tpLevel == 4) gainingAmt = 0.618; tpLevel = 5;
-                            if (roe > 1     && tpLevel == 5) gainingAmt = 0.786; tpLevel = 6;
-                            if (roe > 1.618 && tpLevel == 6) gainingAmt = 1;     tpLevel = 7;
-                            if (roe > 2.618 && tpLevel == 7) gainingAmt = 1.618; tpLevel = 8;
-                            if (roe > 4.237 && tpLevel == 8) gainingAmt = 2.618; tpLevel = 9;
+                            if (roe > 0.45  && tpLevel == 2) gainingAmt = 0.382; tpLevel = 3;
+                            if (roe > 0.5   && tpLevel == 3) gainingAmt = 0.45;  tpLevel = 4;
+                            if (roe > 0.618 && tpLevel == 4) gainingAmt = 0.5;   tpLevel = 5;
+                            if (roe > 0.786 && tpLevel == 5) gainingAmt = 0.618; tpLevel = 6;
+                            if (roe > 1     && tpLevel == 6) gainingAmt = 0.786; tpLevel = 7;
+                            if (roe > 1.618 && tpLevel == 7) gainingAmt = 1;     tpLevel = 8;
+                            if (roe > 2.618 && tpLevel == 8) gainingAmt = 1.618; tpLevel = 9;
+                            if (roe > 4.237 && tpLevel == 9) gainingAmt = 2.618; tpLevel = 10;
 
                             if (roe > 4.5) {
                                 // chốt lãi thẳng nếu x4.5
