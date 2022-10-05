@@ -281,7 +281,7 @@ bot.command('vol', async (ctx0) => {
 
 bot.command('occq', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    let occQ = _.toNumber(Number(getTgMessage(ctx0, 'occq')).toFixed(0));
+    let occQ = _.toNumber(getTgMessage(ctx0, 'occq'));
     if (occQ > 0) {
         ctx.occQ = occQ;
         await sendMessage(`Min copy vol OCC từng lệnh mới là ${ctx.occQ}USDT`);
