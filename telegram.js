@@ -179,6 +179,7 @@ bot.command('ss', async () => {
         `COPY_ID: ${ctx.copyID}\n` +
         `Copy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
         `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n` +
+        `Auto OCC: ${ctx.occ ? 'bật': 'tắt'} | OCC vol: ${ctx.occQ}\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n`
     await sendMessage(msg);
 });
@@ -199,6 +200,12 @@ bot.command('atc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoCopy = getTgMessage(ctx0, 'atc') == '1';
     await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
+});
+
+bot.command('occ', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    ctx.occ = getTgMessage(ctx0, 'occ') == '1';
+    await sendMessage(`Bot OCC trade: ${ctx.occ ? 'bật' : 'tắt'}`);
 });
 
 bot.command('cmode', async (ctx0) => {
@@ -269,6 +276,17 @@ bot.command('vol', async (ctx0) => {
         await sendMessage(`Min copy vol từng lệnh mới là ${ctx.minX}USDT`);
     } else {
         await sendMessage(`Min copy vol không hợp lệ!`);
+    }
+});
+
+bot.command('occq', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let occQ = _.toNumber(Number(getTgMessage(ctx0, 'occq')).toFixed(0));
+    if (occQ > 0) {
+        ctx.occQ = occQ;
+        await sendMessage(`Min copy vol OCC từng lệnh mới là ${ctx.occQ}USDT`);
+    } else {
+        await sendMessage(`Min copy vol OCC không hợp lệ!`);
     }
 });
 

@@ -32,21 +32,20 @@ async function strategyOCC() {
      */
     const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_1m');
     let symbol = 'BTCUSDT';
-    let quantity = 0.001;
 
     let currentTrend = await lib.OCC(symbol, '1m');
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
-        if (isCandleClose) {
+        if (isCandleClose && ctx.occ) {
             let closePrice = data.k.c;
             let newTrend = await lib.OCC(symbol, '1m');
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition)) {
                     // k có vị thế thì tạo mới
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: quantity, entryPrice: closePrice}, quantity, 125)
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
                 } else {
                     // nếu có vị thế mà đang lỗ thì cắt đi
                     let position = rawPosition[0];
@@ -54,7 +53,7 @@ async function strategyOCC() {
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
                         await lib.closePositionByType(side, position, amount, true);
-                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: quantity, entryPrice: closePrice}, quantity, 125)
+                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
                     }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
