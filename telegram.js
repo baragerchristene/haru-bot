@@ -6,7 +6,7 @@ moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
 
-const {fetchPositions, binance, fetchPositionBySymbol, getMarkPrice} = require('./resources/binance/utils');
+const {fetchPositions, binance, fetchPositionBySymbol, getMarkPrice, getBalance} = require('./resources/binance/utils');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
 
@@ -172,6 +172,15 @@ bot.command('ps', async (ctx) => {
     } else {
         await sendMessage('Không có vị thế nào!');
     }
+});
+
+bot.command('as', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let balance = await getBalance();
+    let diff = balance - _.toNumber(ctx.lastBalance);
+    let change = diff > 0 ? '📉' : '📈';
+    ctx.lastBalance = balance;
+    await log(`Current balance is $${balance} | ${change} ${diff}`);
 });
 
 bot.command('ss', async () => {

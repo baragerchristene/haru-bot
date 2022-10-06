@@ -13,6 +13,7 @@ var occQ = 0.001;
 var occS = 'BTCUSDT';
 var inverseCopy = false;
 var ignoreCoins = ['BTCUSDT', 'ETHUSDT'];
+var lastBalance = 0;
 module.exports = {
     positions: positions,
     myPositions: myPositions,
@@ -28,5 +29,6 @@ module.exports = {
     ignoreCoins: ignoreCoins,
     occ: occ,
     occQ: occQ,
-    occS: occS
+    occS: occS,
+    lastBalance: lastBalance
 }

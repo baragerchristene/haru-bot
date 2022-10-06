@@ -43,4 +43,11 @@ async function getMarkPrice(symbol) {
     return {}
 }
 
-module.exports = {binance, fetchPositions, getSymbols, fetchPositionBySymbol, getMarkPrice}
+async function getBalance() {
+    const balances = await binance.futuresBalance();
+    const usdt = _.find(balances, {asset: 'USDT'})
+
+    return (_.toNumber(_.get(usdt, 'balance'))).toFixed(2);
+}
+
+module.exports = {binance, fetchPositions, getSymbols, fetchPositionBySymbol, getMarkPrice, getBalance}

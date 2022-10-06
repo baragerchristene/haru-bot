@@ -8,7 +8,7 @@ const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
 const twApi = new TraderWagonApi();
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
-const {binance, fetchPositions, getSymbols, fetchPositionBySymbol} = require('./resources/binance/utils');
+const {binance, fetchPositions, getSymbols, fetchPositionBySymbol, getBalance} = require('./resources/binance/utils');
 var ctx = require('./context');
 const moment = require("moment-timezone");
 const {FasterWSMA, WSMA, FasterDEMA} = require("trading-signals");
@@ -201,5 +201,5 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC,
+    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};

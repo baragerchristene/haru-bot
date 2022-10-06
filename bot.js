@@ -10,6 +10,7 @@ function InitialData() {
 }
 
 async function getMode() {
+    ctx.lastBalance = await lib.getBalance();
     let baseResponse = {};
     let response = {};
     let mode = 0;

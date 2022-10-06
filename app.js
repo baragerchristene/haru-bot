@@ -14,7 +14,6 @@ server.listen(port);
  * BOT COPY
  */
 async function CopyStream() {
-
     let mode = await bot.getMode();
     console.log(mode);
 
