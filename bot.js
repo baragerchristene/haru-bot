@@ -30,30 +30,34 @@ async function strategyOCC() {
     /**
      * Bot chạy theo thuật toán OCC Strategy R5.1
      */
-    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@kline_3m');
     let symbol = 'BTCUSDT';
-
-    let currentTrend = await lib.OCC(symbol, '3m');
+    let frame = '1m';
+    const ws0 = new WebSocket(`wss://fstream.binance.com/ws/btcusdt@kline_${frame}`);
+    let currentTrend = await lib.OCC(symbol, frame);
+    let antiSW = 0;
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
         if (isCandleClose && ctx.occ) {
             let closePrice = data.k.c;
-            let newTrend = await lib.OCC(symbol, '3m');
+            let newTrend = await lib.OCC(symbol, frame);
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition)) {
                     // k có vị thế thì tạo mới
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
+                    antiSW = 0;
                 } else {
+                    antiSW++;
                     // nếu có vị thế mà đang lỗ thì cắt đi
                     let position = rawPosition[0];
-                    if (position.unRealizedProfit < 0) {
+                    if (position.unRealizedProfit < 0 && antiSW > 3) {
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
                         await lib.closePositionByType(side, position, amount, true);
-                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125)
+                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
+                        antiSW = 0;
                     }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
