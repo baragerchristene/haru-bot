@@ -35,6 +35,7 @@ async function strategyOCC() {
     const ws0 = new WebSocket(`wss://fstream.binance.com/ws/btcusdt@kline_${frame}`);
     let currentTrend = await lib.OCC(symbol, frame);
     let antiSW = 0;
+    let dcaCount = 0;
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
@@ -53,11 +54,16 @@ async function strategyOCC() {
                     // nếu có vị thế mà đang lỗ thì cắt đi
                     let position = rawPosition[0];
                     if (position.unRealizedProfit < 0 && antiSW > 3) {
+                        dcaCount++;
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
-                        // await lib.closePositionByType(side, position, amount, true);
-                        await lib.openPositionByType(side, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 125);
-                        antiSW = 0;
+                        if (dcaCount > 3) { // DCA tối đa 3 lần
+                            await lib.closePositionByType(side, position, amount, true);
+                            dcaCount = 0;
+                        } else {
+                            await lib.openPositionByType(side, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 125);
+                            antiSW = 0;
+                        }
                     }
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
