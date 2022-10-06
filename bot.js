@@ -55,8 +55,8 @@ async function strategyOCC() {
                     if (position.unRealizedProfit < 0 && antiSW > 3) {
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
-                        await lib.closePositionByType(side, position, amount, true);
-                        await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
+                        // await lib.closePositionByType(side, position, amount, true);
+                        await lib.openPositionByType(side, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 125);
                         antiSW = 0;
                     }
                 }
