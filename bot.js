@@ -324,7 +324,7 @@ async function AutoTakingProfit() {
                     const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                     let roe = lib.roe(position);
 
-                    if (roe >= 0.382 || roe <= -0.382) {
+                    if (roe >= 0.236 || roe <= -0.382) {
                         // chốt lãi or cắt lỗ
                         await lib.closePositionByType(side, position, amt, true);
                     }

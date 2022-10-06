@@ -180,7 +180,7 @@ bot.command('as', async (ctx0) => {
     let diff = balance - _.toNumber(ctx.lastBalance);
     let change = diff > 0 ? '📉' : '📈';
     ctx.lastBalance = balance;
-    await log(`Current #balance is $${balance} | ${change} ${diff}`);
+    await log(`Current #balance is $${balance}\n${change} ${diff}`);
 });
 
 bot.command('ss', async () => {
