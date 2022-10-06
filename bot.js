@@ -57,10 +57,7 @@ async function strategyOCC() {
                         dcaCount++;
                         let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                         let amount = Math.abs(position.positionAmt);
-                        if (dcaCount > 3) { // DCA tối đa 3 lần
-                            await lib.closePositionByType(side, position, amount, true);
-                            dcaCount = 0;
-                        } else {
+                        if (dcaCount < 3) { // DCA tối đa 3 lần
                             await lib.openPositionByType(side, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 125);
                             antiSW = 0;
                         }
@@ -325,71 +322,11 @@ async function AutoTakingProfit() {
                     const amt = Math.abs(position.positionAmt);
                     const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
                     let roe = lib.roe(position);
-                    if (gainingProfit) {
-                        if (roe < gainingAmt) {
-                            // chốt lãi
-                            await lib.closePositionByType(side, position, amt, true);
-                            gainingProfit = false;
-                            gainingAmt = 0;
-                            tpLevel =  0.2;
-                            isAutoTP = false;
-                        } else {
-                            if (roe > 4.5) {
-                                // chốt lãi thẳng nếu x4.5
-                                await lib.closePositionByType(side, position, amt, true);
-                                gainingProfit = false;
-                                gainingAmt = 0;
-                                tpLevel =  0.2;
-                                isAutoTP = false;
-                            }
-                            // các mốc level chốt lãi theo fibonacci
-                            if (roe > tpLevel) {
-                                switch (tpLevel) {
-                                    case 0.2:
-                                        tpLevel = 0.236; gainingAmt = 0.15;  break;
-                                    case 0.236:
-                                        tpLevel = 0.382; gainingAmt = 0.2;   break;
-                                    case 0.382:
-                                        tpLevel = 0.5;   gainingAmt = 0.236; break;
-                                    case 0.5:
-                                        tpLevel = 0.618; gainingAmt = 0.382; break;
-                                    case 0.618:
-                                        tpLevel = 0.786; gainingAmt = 0.5;   break;
-                                    case 0.786:
-                                        tpLevel = 1;     gainingAmt = 0.618; break;
-                                    case 1:
-                                        tpLevel = 1.618; gainingAmt = 0.786; break;
-                                    case 1.618:
-                                        tpLevel = 2.618; gainingAmt = 1;     break;
-                                    case 2.618:
-                                        tpLevel = 4.237; gainingAmt = 1.618; break;
-                                    default:
-                                        // code block
-                                        console.log('TP không xác định!')
-                                }
-                            }
-                        }
-                    } else {
-                        if (roe > 0.15) {
-                            gainingProfit = true;
-                            gainingAmt = 0.10
-                            isAutoTP = false;
-                        } else if (roe <= -0.382) {
-                            if (roe <= -0.382) {
-                                // cắt lỗ fibo mốc 2
-                                await lib.closePositionByType(side, position, amt, true);
-                                isAutoTP = false;
-                                gainingProfit = false;
-                                gainingAmt = 0;
-                                tpLevel =  0.2;
-                            }
-                        }
 
+                    if (roe >= 0.382 || roe <= -0.382) {
+                        // chốt lãi or cắt lỗ
+                        await lib.closePositionByType(side, position, amt, true);
                     }
-                } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
-                    gainingProfit = false;
-                    gainingAmt = 0;
-                    tpLevel =  0.2;
                 }
                 isAutoTP = false;
             }

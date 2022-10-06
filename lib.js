@@ -37,7 +37,7 @@ async function OCC(symbol, frame) {
     })
     let open = openSeries.getResult();
     let close = closeSeries.getResult();
-    return close > open ? 'SHORT' : 'LONG';
+    return close > open ? 'LONG' : 'SHORT';
 }
 
 async function getRSI(symbol, interval) {
