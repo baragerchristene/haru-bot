@@ -27,50 +27,6 @@ async function getMode() {
     return mode;
 }
 
-async function strategyOCC() {
-    /**
-     * Bot chạy theo thuật toán OCC Strategy R5.1
-     */
-    let symbol = 'BTCUSDT';
-    let frame = '1m';
-    const ws0 = new WebSocket(`wss://fstream.binance.com/ws/btcusdt@kline_${frame}`);
-    let currentTrend = await lib.OCC(symbol, frame);
-    let antiSW = 0;
-    let dcaCount = 0;
-
-    ws0.on('message', async (_event) => {
-        let data = JSON.parse(_event);
-        let isCandleClose = data.k.x;
-        if (isCandleClose && ctx.occ) {
-            let closePrice = data.k.c;
-            let newTrend = await lib.OCC(symbol, frame);
-            if (currentTrend != newTrend) {
-                let rawPosition = await lib.fetchPositionBySymbol(symbol);
-                if (_.isEmpty(rawPosition)) {
-                    // k có vị thế thì tạo mới
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
-                    antiSW = 0;
-                } else {
-                    antiSW++;
-                    // nếu có vị thế mà đang lỗ thì cắt đi
-                    let position = rawPosition[0];
-                    if (position.unRealizedProfit < 0 && antiSW > 3) {
-                        dcaCount++;
-                        let side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                        let amount = Math.abs(position.positionAmt);
-                        if (dcaCount < 3) { // DCA tối đa 3 lần
-                            await lib.openPositionByType(side, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 125);
-                            antiSW = 0;
-                        }
-                    }
-                }
-                currentTrend = newTrend; // set trend hiện tại cho lệnh
-            }
-        }
-    })
-}
-
-
 async function BinanceCopier() {
     /**
      * Bot Copy từ server Binance Leader Board
@@ -301,15 +257,44 @@ async function TraderWagonCopier() {
     })
 }
 
+async function strategyOCC() {
+    /**
+     * Bot chạy theo thuật toán OCC Strategy R5.1
+     */
+    let symbol       = 'BTCUSDT';
+    let frame        = '1m';
+    const ws0        = new WebSocket(`wss://fstream.binance.com/ws/btcusdt@kline_${frame}`);
+    let currentTrend = await lib.OCC(symbol, frame);
+
+    ws0.on('message', async (_event) => {
+        let data = JSON.parse(_event);
+        let isCandleClose = data.k.x;
+        if (isCandleClose && ctx.occ) {
+            let closePrice = data.k.c;
+            let newTrend = await lib.OCC(symbol, frame);
+            if (currentTrend != newTrend) {
+                let rawPosition = await lib.fetchPositionBySymbol(symbol);
+                if (_.isEmpty(rawPosition)) {
+                    // k có vị thế thì tạo mới
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
+                }
+                currentTrend = newTrend; // set trend hiện tại cho lệnh
+            }
+        }
+    })
+}
+
 async function AutoTakingProfit() {
     /**
      * BOT TỰ ĐỘNG CHỐT LÃI
      */
-    const ws2 = new WebSocket('ws://localhost:13456');
+    const ws2         = new WebSocket('ws://localhost:13456');
     let gainingProfit = false;
-    let gainingAmt = 0;
-    let isAutoTP = false;
-    let tpLevel =  0.2;
+    let gainingAmt    = 0;
+    let isAutoTP      = false;
+    let originTpLevel = 0.382;
+    let tpLevel       = 0.382;
+    let dcaCount      = 0;
     // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
         if (isAutoTP) return;
@@ -319,15 +304,74 @@ async function AutoTakingProfit() {
                 let rawPosition = await lib.fetchPositionBySymbol('BTCUSDT');
                 if (!_.isEmpty(rawPosition)) {
                     const position = rawPosition[0];
-
-                    const amt = Math.abs(position.positionAmt);
-                    const side = position.positionAmt > 0 ? 'LONG' : 'SHORT';
-                    let roe = lib.roe(position);
-
-                    if (roe >= 0.236 || roe <= -0.382) {
-                        // chốt lãi or cắt lỗ
-                        await lib.closePositionByType(side, position, amt, true);
+                    const amt      = Math.abs(position.positionAmt);
+                    const side     = position.positionAmt > 0 ? 'LONG' : 'SHORT';
+                    let roe        = lib.roe(position);
+                    if (gainingProfit) {
+                        if (roe < gainingAmt) {
+                            // chốt lãi
+                            await lib.closePositionByType(side, position, amt, true);
+                            gainingProfit = false;
+                            gainingAmt    = 0;
+                            tpLevel       = originTpLevel;
+                            isAutoTP      = false;
+                            dcaCount      = 0;
+                        } else {
+                            if (roe > 4.5) {
+                                // chốt lãi thẳng nếu x4.5
+                                await lib.closePositionByType(side, position, amt, true);
+                                gainingProfit = false;
+                                gainingAmt    = 0;
+                                tpLevel       = originTpLevel;
+                                isAutoTP      = false;
+                                dcaCount      = 0;
+                            }
+                            // các mốc level chốt lãi theo fibonacci
+                            if (roe > tpLevel) {
+                                switch (tpLevel) {
+                                    case 0.382:
+                                        tpLevel = 0.5;   gainingAmt = 0.38; break;
+                                    case 0.5:
+                                        tpLevel = 0.618; gainingAmt = 0.49; break;
+                                    case 0.618:
+                                        tpLevel = 0.786; gainingAmt = 0.61; break;
+                                    case 0.786:
+                                        tpLevel = 1;     gainingAmt = 0.78; break;
+                                    case 1:
+                                        tpLevel = 1.618; gainingAmt = 0.90; break;
+                                    case 1.618:
+                                        tpLevel = 2.618; gainingAmt = 1.61; break;
+                                    case 2.618:
+                                        tpLevel = 4.237; gainingAmt = 2.61; break;
+                                    default:
+                                        // code block
+                                        console.log('TP không xác định!')
+                                }
+                            }
+                        }
+                    } else {
+                        if (roe > 0.237) {
+                            gainingProfit = true;
+                            gainingAmt    = 0.236
+                            isAutoTP      = false;
+                        } else if (roe <= -0.236 && dcaCount == 3) {
+                            // cắt lỗ fibo mốc 2
+                            await lib.closePositionByType(side, position, amt, true);
+                            isAutoTP      = false;
+                            gainingProfit = false;
+                            gainingAmt    = 0;
+                            tpLevel       = originTpLevel;
+                            dcaCount      = 0;
+                        } else if (roe <= -0.618 && dcaCount < 3) {
+                            dcaCount++;
+                            await lib.openPositionByType(side, position, amt, 125);
+                        }
                     }
+                } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
+                    gainingProfit = false;
+                    gainingAmt    = 0;
+                    tpLevel       = originTpLevel;
+                    dcaCount      = 0;
                 }
                 isAutoTP = false;
             }
