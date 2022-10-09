@@ -5,7 +5,7 @@ var   ctx         = require('./context');
 const fetch       = require("node-fetch");
 
 function InitialData() {
-    ctx.copyID = 1013; // nguồn copy id
+    ctx.copyID = process.env.COPY_ID; // nguồn copy id
     ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
 }
 

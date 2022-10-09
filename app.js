@@ -15,7 +15,7 @@ server.listen(port);
  */
 async function CopyStream() {
     bot.InitialData();
-    bot.TraderWagonCopier().then();
+    bot.BinanceCopier().then();
     // can do it with a loop but todo later
     bot.strategyOCC('BTCUSDT', '1m').then();
     bot.AutoTakingProfit('BTCUSDT').then();

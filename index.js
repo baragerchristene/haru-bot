@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router();
 const lib = require("./lib");
 var bodyParser = require('body-parser')
-var jsonParser = bodyParser.text()
+const _ = require("lodash");
+var jsonParser = bodyParser.json()
 /* GET ping page. */
 router.get('/ping', function (_req, res, _next) {
   res.json({message: 'pong'});
@@ -28,10 +29,11 @@ router.get('/db', async function (_req, res, _next) {
 });
 
 router.post('/hook', jsonParser, async function (req, res) {
-  let action = req.body.action;
+  let action = _.get(req, 'body.action') || '';
+  let price = _.get(req, 'body.price') || '';
   console.log(req.body);
   res.end();
-  lib.sendMessage(`Đặt lệnh ${action.toUpperCase()}`).then();
+  lib.sendMessage(`Đặt lệnh ${action.toUpperCase()} | ${price}`).then();
 })
 
 module.exports = router;
