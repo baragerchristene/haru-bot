@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
 const lib = require("./lib");
-
+var bodyParser = require('body-parser')
+var jsonParser = bodyParser.text()
 /* GET ping page. */
 router.get('/ping', function (_req, res, _next) {
   res.json({message: 'pong'});
@@ -25,5 +26,12 @@ router.get('/db', async function (_req, res, _next) {
   res.json({message: 'ok'});
   res.end();
 });
+
+router.post('/hook', jsonParser, async function (req, res) {
+  let action = req.body.action;
+  console.log(req.body);
+  res.end();
+  lib.sendMessage(`Đặt lệnh ${action.toUpperCase()}`).then();
+})
 
 module.exports = router;

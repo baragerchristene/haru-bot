@@ -257,14 +257,13 @@ async function TraderWagonCopier() {
     })
 }
 
-async function strategyOCC() {
+async function strategyOCC(symbol, frame) {
     /**
      * Bot chạy theo thuật toán OCC Strategy R5.1
      */
-    let symbol       = 'BTCUSDT';
-    let frame        = '1m';
-    const ws0        = new WebSocket(`wss://fstream.binance.com/ws/btcusdt@kline_${frame}`);
-    let currentTrend = await lib.OCC(symbol, frame);
+    const symbolKline = symbol.toLowerCase();
+    const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_${frame}`);
+    let currentTrend  = await lib.OCC(symbol, frame);
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
@@ -274,9 +273,9 @@ async function strategyOCC() {
             let newTrend = await lib.OCC(symbol, frame);
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
-                if (_.isEmpty(rawPosition)) {
-                    // k có vị thế thì tạo mới
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: ctx.occQ, entryPrice: closePrice}, ctx.occQ, 125);
+                if (_.isEmpty(rawPosition)) { // k có vị thế thì tạo mới
+                    let amount = _.get(_.find(ctx.occQ, {symbol: symbol}), 'quantity');
+                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
@@ -284,7 +283,7 @@ async function strategyOCC() {
     })
 }
 
-async function AutoTakingProfit() {
+async function AutoTakingProfit(symbol) {
     /**
      * BOT TỰ ĐỘNG CHỐT LÃI
      */
@@ -301,7 +300,7 @@ async function AutoTakingProfit() {
         try {
             if (ctx.autoTP) {
                 isAutoTP = true;
-                let rawPosition = await lib.fetchPositionBySymbol('BTCUSDT');
+                let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (!_.isEmpty(rawPosition)) {
                     const position = rawPosition[0];
                     const amt      = Math.abs(position.positionAmt);

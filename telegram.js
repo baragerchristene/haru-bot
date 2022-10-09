@@ -38,7 +38,7 @@ function stringToChunks(string, chunkSize) {
 
 async function log(message) {
     const now = moment().format("DD/MM/YYYY HH:mm:ss");
-    await sendMessage(`${now} => ${message}`);
+    await sendMessage(`${message}\n⏰ ${now}`);
 }
 
 function getTgMessage(ctxTg, command) {
@@ -184,11 +184,14 @@ bot.command('as', async (ctx0) => {
 });
 
 bot.command('ss', async () => {
+    let occMsg = _.reduce(ctx.occQ, (result, coin) => {
+        result+= `${coin.symbol} (${coin.quantity}), `;
+        return result;
+    }, '');
+
     let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ ${ctx.minX}USDT)\n` +
-        `COPY_ID: ${ctx.copyID}\n` +
-        `Copy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
-        `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}\n` +
-        `Auto OCC: ${ctx.occ ? 'bật': 'tắt'} | OCC vol: ${ctx.occQ}\n` +
+        `COPY_ID: ${ctx.copyID}, Copy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
+        `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}, ` + `Auto OCC: ${ctx.occ ? 'bật': 'tắt'}\nOCC size: ${occMsg}\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n`
     await sendMessage(msg);
 });
@@ -288,14 +291,33 @@ bot.command('vol', async (ctx0) => {
     }
 });
 
+// eg: occq btcusdt 0.001
 bot.command('occq', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    let occQ = _.toNumber(getTgMessage(ctx0, 'occq'));
-    if (occQ > 0) {
-        ctx.occQ = occQ;
-        await sendMessage(`Min copy vol OCC từng lệnh mới là ${ctx.occQ}USDT`);
+    let msg = _.toString(getTgMessage(ctx0, 'occq')).toUpperCase();
+    let vars = msg.split(' ');
+    if (vars.length == 2) {
+        let symbol = _.nth(vars, 0).toUpperCase();
+        let quantity = _.toNumber(_.nth(vars, 1));
+        let pair = _.find(ctx.occQ, {symbol: symbol});
+        if (_.isEmpty(pair)) {
+            await sendMessage(`Pair không hỗ trợ!`);
+        } else {
+            if (quantity <= 0) {
+                await sendMessage(`Số lượng không được nhỏ hơn 0`);
+            } else {
+                _.filter(ctx.occQ, (coin) => {
+                    if (coin.symbol == symbol) {
+                        coin.quantity = quantity;
+                    }
+                    return coin;
+                })
+                await sendMessage(`Min copy vol OCC từng lệnh mới của ${symbol} là ${quantity}`);
+            }
+        }
+
     } else {
-        await sendMessage(`Min copy vol OCC không hợp lệ!`);
+        await sendMessage(`Số lượng tham số không hợp lệ!`);
     }
 });
 

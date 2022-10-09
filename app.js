@@ -14,30 +14,15 @@ server.listen(port);
  * BOT COPY
  */
 async function CopyStream() {
-    let mode = await bot.getMode();
-    console.log(mode);
-
     bot.InitialData();
-    bot.AutoTakingProfit().then();
     bot.TraderWagonCopier().then();
-    switch (mode) {
-        case 1:
-            console.log('bot wagon')
-            bot.TraderWagonCopier().then()
-            break
-        case 2:
-            console.log('bot binance')
-            bot.BinanceCopier().then()
-            break
-        case 3:
-            console.log('bot OCC')
-            bot.strategyOCC().then()
-            break
-        default:
-        // code block
-            console.log('Mode không xác định!')
-
-    }
+    // can do it with a loop but todo later
+    bot.strategyOCC('BTCUSDT', '1m').then();
+    bot.AutoTakingProfit('BTCUSDT').then();
+    bot.strategyOCC('ETHUSDT', '1m').then();
+    bot.AutoTakingProfit('ETHUSDT').then();
+    bot.strategyOCC('XRPUSDT', '1m').then();
+    bot.AutoTakingProfit('XRPUSDT').then();
 }
 
 CopyStream().then() // profit go here

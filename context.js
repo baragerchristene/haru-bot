@@ -9,7 +9,11 @@ var copyID = '';
 var lastLiquid = {};
 var minTP = 5;
 var minX = 1;
-var occQ = 0.001;
+var occQ = [
+    {symbol: 'BTCUSDT', quantity: 0.001, frame : '1m'},
+    {symbol: 'ETHUSDT', quantity: 0.005, frame : '1m'},
+    {symbol: 'XRPUSDT', quantity: 12, frame : '1m'}
+];
 var occS = 'BTCUSDT';
 var inverseCopy = false;
 var ignoreCoins = ['BTCUSDT', 'ETHUSDT'];

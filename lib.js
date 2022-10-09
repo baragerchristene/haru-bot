@@ -93,7 +93,19 @@ async function openPositionByType(type, position, quantity, leverage) {
     } else {
         result = await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`#${symbol}, Mở vị thế ${type} ${leverage}X | vol: ${quantity} | Source = E: ${position.entryPrice}; vol: ${position.amount}`);
+    const rawPosition = await fetchPositionBySymbol(symbol);
+    if (!_.isEmpty(rawPosition)) {
+        const ps = rawPosition[0];
+        const direction = ps.positionAmt > 0 ? 'LONG' : 'SHORT';
+        const margin = ((ps.positionAmt*ps.markPrice)/ps.leverage).toFixed(2);
+        let message = `#${symbol}, Vị thế mới: ${direction} | ${ps.leverage}X\n`
+        + `Size: ${ps.positionAmt}${symbol}\n`
+        + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
+        + `Margin: ${margin}, Mark: ${ps.markPrice}\n`;
+        await log(message);
+    } else {
+        await log(`Mở vị thế không thành công!`);
+    }
     if (result.code) {
         await delay(3000);
         await sendMessage(result); // send error response
