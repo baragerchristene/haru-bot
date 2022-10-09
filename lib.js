@@ -99,9 +99,8 @@ async function openPositionByType(type, position, quantity, leverage) {
         const direction = ps.positionAmt > 0 ? 'LONG' : 'SHORT';
         const margin = ((ps.positionAmt*ps.markPrice)/ps.leverage).toFixed(2);
         let message = `#${symbol}, Vị thế mới: ${direction} | ${ps.leverage}X\n`
-        + `Size: ${ps.positionAmt}${symbol}\n`
-        + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
-        + `Margin: ${margin}, Mark: ${ps.markPrice}\n`;
+        + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
+        + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}`;
         await log(message);
     } else {
         await log(`Mở vị thế không thành công!`);
