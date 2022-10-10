@@ -353,7 +353,7 @@ async function AutoTakingProfit(symbol) {
                             gainingProfit = true;
                             gainingAmt    = 0.236
                             isAutoTP      = false;
-                        } else if (roe > 0.5 && dcaCount > 0) {
+                        } else if (roe > 0.05 && dcaCount > 0) {
                             // cắt lỗ fibo mốc 2
                             await lib.closePositionByType(side, position, amt, true);
                             isAutoTP      = false;
