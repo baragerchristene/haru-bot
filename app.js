@@ -33,6 +33,8 @@ async function CopyStream() {
     bot.AutoTakingProfit('ADAUSDT').then();
     bot.strategyOCC('TRXUSDT', '1m').then();
     bot.AutoTakingProfit('TRXUSDT').then();
+    bot.strategyOCC('AVAXUSDT', '1m').then();
+    bot.AutoTakingProfit('AVAXUSDT').then();
 
 }
 

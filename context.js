@@ -18,10 +18,11 @@ var occQ = [
     {symbol: 'MATICUSDT', quantity: 30, frame : '1m'},
     {symbol: 'ADAUSDT', quantity: 100, frame : '1m'},
     {symbol: 'TRXUSDT', quantity: 400, frame : '1m'},
+    {symbol: 'AVAXUSDT', quantity: 2, frame : '1m'},
 ];
 var occS = 'BTCUSDT';
 var inverseCopy = false;
-var ignoreCoins = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'ETCUSDT', 'BNBUSDT', 'MATICUSDT', 'ADAUSDT', 'TRXUSDT'];
+var ignoreCoins = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'ETCUSDT', 'BNBUSDT', 'MATICUSDT', 'ADAUSDT', 'TRXUSDT', 'AVAXUSDT'];
 var lastBalance = 0;
 module.exports = {
     positions: positions,
