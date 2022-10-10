@@ -23,6 +23,17 @@ async function CopyStream() {
     bot.AutoTakingProfit('ETHUSDT').then();
     bot.strategyOCC('XRPUSDT', '1m').then();
     bot.AutoTakingProfit('XRPUSDT').then();
+    bot.strategyOCC('ETCUSDT', '1m').then();
+    bot.AutoTakingProfit('ETCUSDT').then();
+    bot.strategyOCC('BNBUSDT', '1m').then();
+    bot.AutoTakingProfit('BNBUSDT').then();
+    bot.strategyOCC('MATICUSDT', '1m').then();
+    bot.AutoTakingProfit('MATICUSDT').then();
+    bot.strategyOCC('ADAUSDT', '1m').then();
+    bot.AutoTakingProfit('ADAUSDT').then();
+    bot.strategyOCC('TRXUSDT', '1m').then();
+    bot.AutoTakingProfit('TRXUSDT').then();
+
 }
 
 CopyStream().then() // profit go here

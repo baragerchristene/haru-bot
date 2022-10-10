@@ -10,13 +10,18 @@ var lastLiquid = {};
 var minTP = 5;
 var minX = 1;
 var occQ = [
-    {symbol: 'BTCUSDT', quantity: 0.001, frame : '1m'},
-    {symbol: 'ETHUSDT', quantity: 0.005, frame : '1m'},
-    {symbol: 'XRPUSDT', quantity: 12, frame : '1m'}
+    {symbol: 'BTCUSDT', quantity: 0.003, frame : '1m'},
+    {symbol: 'ETHUSDT', quantity: 0.05, frame : '1m'},
+    {symbol: 'XRPUSDT', quantity: 50, frame : '1m'},
+    {symbol: 'ETCUSDT', quantity: 2, frame : '1m'},
+    {symbol: 'BNBUSDT', quantity: 0.2, frame : '1m'},
+    {symbol: 'MATICUSDT', quantity: 30, frame : '1m'},
+    {symbol: 'ADAUSDT', quantity: 100, frame : '1m'},
+    {symbol: 'TRXUSDT', quantity: 400, frame : '1m'},
 ];
 var occS = 'BTCUSDT';
 var inverseCopy = false;
-var ignoreCoins = ['BTCUSDT', 'ETHUSDT'];
+var ignoreCoins = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'ETCUSDT', 'BNBUSDT', 'MATICUSDT', 'ADAUSDT', 'TRXUSDT'];
 var lastBalance = 0;
 module.exports = {
     positions: positions,
