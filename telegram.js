@@ -217,7 +217,16 @@ bot.command('atc', async (ctx0) => {
 bot.command('occ', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.occ = getTgMessage(ctx0, 'occ') == '1';
-    await sendMessage(`Bot OCC trade: ${ctx.occ ? 'bật' : 'tắt'}`);
+    _.filter(ctx.occQ, (coin) => {
+        coin.running = ctx.occ;
+        return coin;
+    })
+    //faster access list trading coin
+    ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
+        _.set(result, coin.symbol, coin);
+        return result;
+    }, {});
+    await sendMessage(`Bot OCC trade: ${ctx.occ ? 'đã bật tất cả' : 'đã tắt tất cả'}`);
 });
 
 bot.command('cmode', async (ctx0) => {
