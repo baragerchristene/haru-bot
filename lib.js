@@ -1,6 +1,7 @@
 require('dotenv').config({ path: 'env/live.env' });
 const {sendMessage, log} = require("./telegram");
 const EMA = require('technicalindicators').EMA
+const ADX = require('technicalindicators').ADX
 const RSI = require('technicalindicators').RSI
 const fetch = require("node-fetch");
 const _ = require("lodash");
@@ -11,7 +12,7 @@ const bnApi = new BinanceApi();
 const {binance, fetchPositions, getSymbols, fetchPositionBySymbol, getBalance} = require('./resources/binance/utils');
 var ctx = require('./context');
 const moment = require("moment-timezone");
-const {FasterWSMA, WSMA, FasterDEMA} = require("trading-signals");
+const {FasterDEMA} = require("trading-signals");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
@@ -25,19 +26,60 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     let emaSupport = _.nth(emaSupports, emaSupports.length - 1);
     return emaTrade > emaSupport ? 'UP' : 'DOWN';
 }
+// [
+//     [
+//         1499040000000,      // Open time
+//         "0.01634790",       // Open
+//         "0.80000000",       // High
+//         "0.01575800",       // Low
+//         "0.01577100",       // Close
+//         "148976.11427815",  // Volume
+//         1499644799999,      // Close time
+//         "2434.19055334",    // Quote asset volume
+//         308,                // Number of trades
+//         "1756.87402397",    // Taker buy base asset volume
+//         "28.46694368",      // Taker buy quote asset volume
+//         "17928899.62484339" // Ignore.
+//     ]
+// ]
+// Diễn giải ADX
+//
+// Dưới 20: thị trường không có xu hướng.
+//
+//     Tăng từ dưới lên trên 20: báo hiệu bắt đầu một xu hướng mới. Lúc này bắt đầu suy nghĩ đến việc mua hoặc bán trong xu hướng ngắn hạn hiện tại.
+//
+//     Dao động giữa 20 – 40: Nếu ADX tăng theo hướng từ 20 lên 40; nó hàm ý xác nhận mạnh xu hướng mới đã hình thành trước đó và tiếp tục di chuyển theo hướng đã bắt đầu. Điều này có nghĩa là nhà đầu tư có thể sử dụng lệnh mua hoặc bán khống (short-sell) tuỳ theo hướng đi của xu hướng thị trường. Trong giai đoạn này, nhà đầu tư phải hạn chế sử dụng chỉ báo Oscillator và các chỉ báo tiếp tục xu hướng như là MA.
+//
+//     Trên 40: xu hướng hiện tại là rất mạnh.
+//
+//     Cắt lằn 50 theo hướng tăng: xu hướng cực kỳ mạnh.
+//
+//     Cắt theo hướng tăng trên 70: Vô địch (power trend), điều này rất hiếm khi xảy ra.
+// Tín hiệu mua: Khi DI+ cắt và đi lên phía trên DI-
+// Tín hiệu bán: Khi DI- cắt và đi xuống phía dưới DI+
 
 async function OCC(symbol, frame) {
     let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
     latestCandles.pop();
     const openSeries = new FasterDEMA(8);
     const closeSeries = new FasterDEMA(8);
+    let adxSeries = new ADX({period : 14, high : [], low:[], close:[]});
+    let results = [];
     _.filter(latestCandles, (candle) => {
         openSeries.update(_.toNumber(candle[1]));
         closeSeries.update(_.toNumber(candle[4]));
+        let result = adxSeries.nextValue({close: _.toNumber(candle[4]), high: _.toNumber(candle[2]), low: _.toNumber(candle[3])});
+        if(result) results.push(result);
     })
     let open = openSeries.getResult();
     let close = closeSeries.getResult();
-    return close > open ? 'LONG' : 'SHORT';
+    let adx = results[results.length - 1];
+
+    return {
+        adx: adx.adx,
+        trend: close > open ? 'LONG' : 'SHORT',
+        adxTrend: adx.pdi > adx.mdi ? 'LONG' : 'SHORT'
+    }
 }
 
 async function getRSI(symbol, interval) {

@@ -185,13 +185,13 @@ bot.command('as', async (ctx0) => {
 
 bot.command('ss', async () => {
     let occMsg = _.reduce(ctx.occQ, (result, coin) => {
-        result+= `${coin.symbol} (${coin.quantity}), `;
+        result+= `${coin.symbol} (${coin.quantity}, ${coin.running ? 'bật':'tắt'}), `;
         return result;
     }, '');
 
     let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ ${ctx.minX}USDT)\n` +
-        `COPY_ID: ${ctx.copyID}, Copy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
-        `Auto TP: ${ctx.autoTP ? 'bật': 'tắt'}, ` + `Auto OCC: ${ctx.occ ? 'bật': 'tắt'}\nOCC size: ${occMsg}\n` +
+        `COPY_ID: ${ctx.copyID}\nCopy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
+        `Auto OCCTP & Size: ${occMsg}\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n`
     await sendMessage(msg);
 });

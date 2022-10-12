@@ -268,19 +268,21 @@ async function strategyOCC(symbol, frame) {
      */
     const symbolKline = symbol.toLowerCase();
     const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_${frame}`);
-    let currentTrend  = await lib.OCC(symbol, frame);
+    let trendDetector = await lib.OCC(symbol, frame);
+    let currentTrend  = trendDetector.trend;
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
         if (isCandleClose && ctx.occO[symbol].running) {
-            let closePrice = data.k.c;
-            let newTrend = await lib.OCC(symbol, frame);
+            let closePrice       = data.k.c;
+            let newTrendDetector = await lib.OCC(symbol, frame);
+            let newTrend         = newTrendDetector.trend;
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
-                if (_.isEmpty(rawPosition)) { // k có vị thế thì tạo mới
+                if (_.isEmpty(rawPosition) && newTrendDetector.adx > 20) { // k có vị thế thì tạo mới
                     let amount = ctx.occO[symbol].quantity;
-                    await lib.openPositionByType(newTrend, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 0);
+                    await lib.openPositionByType(newTrendDetector.adxTrend, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
@@ -303,7 +305,7 @@ async function AutoTakingProfit(symbol) {
     ws2.on('message', async (_event) => {
         if (isAutoTP) return;
         try {
-            if (ctx.autoTP) {
+            if (ctx.occO[symbol].running) {
                 isAutoTP = true;
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (!_.isEmpty(rawPosition)) {
