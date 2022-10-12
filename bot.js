@@ -7,6 +7,11 @@ const fetch       = require("node-fetch");
 function InitialData() {
     ctx.copyID = process.env.COPY_ID; // nguồn copy id
     ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
+    //faster access list trading coin
+    ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
+        _.set(result, coin.symbol, coin);
+        return result;
+    }, {});
 }
 
 async function getMode() {
@@ -268,13 +273,13 @@ async function strategyOCC(symbol, frame) {
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
-        if (isCandleClose && ctx.occ) {
+        if (isCandleClose && ctx.occO[symbol].running) {
             let closePrice = data.k.c;
             let newTrend = await lib.OCC(symbol, frame);
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition)) { // k có vị thế thì tạo mới
-                    let amount = _.get(_.find(ctx.occQ, {symbol: symbol}), 'quantity');
+                    let amount = ctx.occO[symbol].quantity;
                     await lib.openPositionByType(newTrend, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh

@@ -16,26 +16,19 @@ server.listen(port);
 async function CopyStream() {
     bot.InitialData();
     bot.BinanceCopier().then();
-    // can do it with a loop but todo later
+    // // can do it with a loop but todo later
     bot.strategyOCC('BTCUSDT', '1m').then();
     bot.AutoTakingProfit('BTCUSDT').then();
     bot.strategyOCC('ETHUSDT', '1m').then();
     bot.AutoTakingProfit('ETHUSDT').then();
     bot.strategyOCC('XRPUSDT', '1m').then();
     bot.AutoTakingProfit('XRPUSDT').then();
-    bot.strategyOCC('ETCUSDT', '1m').then();
-    bot.AutoTakingProfit('ETCUSDT').then();
     bot.strategyOCC('BNBUSDT', '1m').then();
     bot.AutoTakingProfit('BNBUSDT').then();
     bot.strategyOCC('MATICUSDT', '1m').then();
     bot.AutoTakingProfit('MATICUSDT').then();
-    bot.strategyOCC('ADAUSDT', '1m').then();
-    bot.AutoTakingProfit('ADAUSDT').then();
     bot.strategyOCC('TRXUSDT', '1m').then();
     bot.AutoTakingProfit('TRXUSDT').then();
-    bot.strategyOCC('AVAXUSDT', '1m').then();
-    bot.AutoTakingProfit('AVAXUSDT').then();
-
 }
 
 CopyStream().then() // profit go here

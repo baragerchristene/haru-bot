@@ -312,8 +312,44 @@ bot.command('occq', async (ctx0) => {
                     }
                     return coin;
                 })
+                //faster access list trading coin
+                ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
+                    _.set(result, coin.symbol, coin);
+                    return result;
+                }, {});
                 await sendMessage(`Min copy vol OCC từng lệnh mới của ${symbol} là ${quantity}`);
             }
+        }
+
+    } else {
+        await sendMessage(`Số lượng tham số không hợp lệ!`);
+    }
+});
+
+// eg: occr btcusdt 1
+bot.command('occr', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let msg = _.toString(getTgMessage(ctx0, 'occr')).toUpperCase();
+    let vars = msg.split(' ');
+    if (vars.length == 2) {
+        let symbol = _.nth(vars, 0).toUpperCase();
+        let running = _.toNumber(_.nth(vars, 1)) == 1;
+        let pair = _.find(ctx.occQ, {symbol: symbol});
+        if (_.isEmpty(pair)) {
+            await sendMessage(`Pair không hỗ trợ!`);
+        } else {
+            _.filter(ctx.occQ, (coin) => {
+                if (coin.symbol == symbol) {
+                    coin.running = running;
+                }
+                return coin;
+            })
+            //faster access list trading coin
+            ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
+                _.set(result, coin.symbol, coin);
+                return result;
+            }, {});
+            await sendMessage(`Trạng thái OCC của ${symbol}: ${running ? 'bật' : 'tắt'}`);
         }
 
     } else {
