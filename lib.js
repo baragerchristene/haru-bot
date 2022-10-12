@@ -123,7 +123,7 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
     await log(`#${symbol} DCA vị thế ${type}, số lượng ${quantity} | Source: amount: ${oldAmt} -> ${newAmt}; E: ${oldEntryPrice} -> ${newEntryPrice}`);
 }
 
-async function openPositionByType(type, position, quantity, leverage) {
+async function openPositionByType(type, position, quantity, leverage, isDca) {
     const symbol = position.symbol;
     // await binance.futuresLeverage(symbol, leverage);
     let result = {}
@@ -140,9 +140,16 @@ async function openPositionByType(type, position, quantity, leverage) {
         const ps = rawPosition[0];
         const direction = ps.positionAmt > 0 ? 'LONG' : 'SHORT';
         const margin = ((ps.positionAmt*ps.markPrice)/ps.leverage).toFixed(2);
-        let message = `#${symbol}, Vị thế mới: ${direction} | ${ps.leverage}X\n`
-        + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
-        + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}`;
+        let message = '';
+        if (isDca) {
+            message = `#${symbol}, DCA vị thế: ${direction} | ${ps.leverage}X\n`
+                + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
+                + `Entry: ${position.entryPrice}->${ps.entryPrice}, Mark: ${ps.markPrice}`;
+        } else {
+            message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
+                + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
+                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; occTrend: ${position.newTrend}`;
+        }
         await log(message);
     } else {
         await log(`Mở vị thế không thành công!`);

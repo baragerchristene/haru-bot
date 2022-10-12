@@ -282,7 +282,7 @@ async function strategyOCC(symbol, frame) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition) && newTrendDetector.adx > 20) { // k có vị thế thì tạo mới
                     let amount = ctx.occO[symbol].quantity;
-                    await lib.openPositionByType(newTrendDetector.adxTrend, {symbol: symbol, amount: amount, entryPrice: closePrice}, amount, 0);
+                    await lib.openPositionByType(newTrendDetector.adxTrend, {symbol: symbol, amount: amount, entryPrice: closePrice, trend: newTrend}, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
@@ -370,7 +370,7 @@ async function AutoTakingProfit(symbol) {
                             dcaCount      = 0;
                         } else if (roe <= -0.99 && dcaCount < 3) {
                             dcaCount++;
-                            await lib.openPositionByType(side, position, amt, 125);
+                            await lib.openPositionByType(side, position, amt, 125, true);
                         }
                     }
                 } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
