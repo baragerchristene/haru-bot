@@ -282,7 +282,13 @@ async function strategyOCC(symbol, frame) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
                 if (_.isEmpty(rawPosition) && newTrendDetector.adx > 20) { // k có vị thế thì tạo mới
                     let amount = ctx.occO[symbol].quantity;
-                    await lib.openPositionByType(newTrendDetector.adxTrend, {symbol: symbol, amount: amount, entryPrice: closePrice, trend: newTrend}, amount, 0);
+                    let customPs = {
+                        symbol: symbol,
+                        amount: amount,
+                        entryPrice: closePrice,
+                        trend: newTrend,
+                        message: newTrendDetector.message}
+                    await lib.openPositionByType(newTrendDetector.adxTrend, customPs, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }

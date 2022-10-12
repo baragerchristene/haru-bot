@@ -75,10 +75,13 @@ async function OCC(symbol, frame) {
     let close = closeSeries.getResult();
     let adx = results[results.length - 1];
 
+    let adxMsg = `ADX: ${adx.adx.toFixed(1)}, DI+: ${adx.pdi.toFixed(1)}, DI-: ${adx.mdi.toFixed(1)}`
+
     return {
         adx: adx.adx,
         trend: close > open ? 'LONG' : 'SHORT',
-        adxTrend: adx.pdi > adx.mdi ? 'LONG' : 'SHORT'
+        adxTrend: adx.pdi > adx.mdi ? 'LONG' : 'SHORT',
+        message: adxMsg
     }
 }
 
@@ -148,7 +151,8 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
         } else {
             message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
                 + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
-                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; occTrend: ${position.trend}`;
+                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; occTrend: ${position.trend}\n`
+                + `Extra: ${position.message}`;
         }
         await log(message);
     } else {

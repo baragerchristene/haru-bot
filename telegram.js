@@ -5,7 +5,7 @@ const moment = require("moment-timezone");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const BinanceApi = require("./resources/binance/binance-api");
 const bnApi = new BinanceApi();
-
+const fetch = require("node-fetch");
 const {fetchPositions, binance, fetchPositionBySymbol, getMarkPrice, getBalance} = require('./resources/binance/utils');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
@@ -326,8 +326,43 @@ bot.command('occq', async (ctx0) => {
                     _.set(result, coin.symbol, coin);
                     return result;
                 }, {});
+
                 await sendMessage(`Min copy vol OCC từng lệnh mới của ${symbol} là ${quantity}`);
             }
+        }
+
+    } else {
+        await sendMessage(`Số lượng tham số không hợp lệ!`);
+    }
+});
+
+// eg: occa apeusdt 0.001
+bot.command('occa', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let msg = _.toString(getTgMessage(ctx0, 'occa')).toUpperCase();
+    let vars = msg.split(' ');
+    if (vars.length == 2) {
+        let symbol = _.nth(vars, 0).toUpperCase();
+        let quantity = _.toNumber(_.nth(vars, 1));
+        let pair = _.find(ctx.occQ, {symbol: symbol});
+        if (_.isEmpty(pair)) {
+            if (quantity <= 0) {
+                await sendMessage(`Số lượng không được nhỏ hơn 0`);
+            } else {
+                ctx.occQ.push({symbol: symbol, quantity: quantity, running: true},)
+                //faster access list trading coin
+                ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
+                    _.set(result, coin.symbol, coin);
+                    return result;
+                }, {});
+                await fetch(`http://localhost:${process.env.PORT}/occa`, {
+                    method: 'post',
+                    body: JSON.stringify({symbol, quantity}),
+                    headers: {'Content-Type': 'application/json'}
+                });
+            }
+        } else {
+            await sendMessage(`Pair đã tồn tại!`);
         }
 
     } else {
