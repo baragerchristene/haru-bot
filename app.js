@@ -29,6 +29,15 @@ async function CopyStream() {
     bot.AutoTakingProfit('MATICUSDT').then();
     bot.strategyOCC('TRXUSDT', '1m').then();
     bot.AutoTakingProfit('TRXUSDT').then();
+
+    bot.strategyOCC('DOTUSDT', '1m').then();
+    bot.AutoTakingProfit('DOTUSDT').then();
+
+    bot.strategyOCC('GMTUSDT', '1m').then();
+    bot.AutoTakingProfit('GMTUSDT').then();
+
+    bot.strategyOCC('NEARUSDT', '1m').then();
+    bot.AutoTakingProfit('NEARUSDT').then();
 }
 
 CopyStream().then() // profit go here
