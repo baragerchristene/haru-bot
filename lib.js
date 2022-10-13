@@ -267,3 +267,4 @@ module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
     fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
+
