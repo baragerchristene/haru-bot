@@ -366,17 +366,13 @@ async function AutoTakingProfit(symbol) {
                             gainingProfit = true;
                             gainingAmt    = 0.236
                             isAutoTP      = false;
-                        } else if (roe > 0.05 && dcaCount > 0) {
-                            // cắt lỗ fibo mốc 2
+                        } else if (roe <= -0.235) { // cắt lỗ trực tiếp nếu -20%
                             await lib.closePositionByType(side, position, amt, true);
                             isAutoTP      = false;
                             gainingProfit = false;
                             gainingAmt    = 0;
                             tpLevel       = originTpLevel;
                             dcaCount      = 0;
-                        } else if (roe <= -0.99 && dcaCount < 3) {
-                            dcaCount++;
-                            await lib.openPositionByType(side, position, amt, 125, true);
                         }
                     }
                 } else { // nếu k có vị thế thì set các biến về default trong trường hợp người dùng cắt thủ công
