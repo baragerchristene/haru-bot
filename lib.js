@@ -3,6 +3,7 @@ const {sendMessage, log} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const ADX = require('technicalindicators').ADX
 const RSI = require('technicalindicators').RSI
+const IchimokuCloud = require('technicalindicators').IchimokuCloud
 const fetch = require("node-fetch");
 const _ = require("lodash");
 const TraderWagonApi = require("./resources/trader-wagon/trader-wagon-api");
@@ -59,30 +60,51 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
 // Tín hiệu bán: Khi DI- cắt và đi xuống phía dưới DI+
 
 async function OCC(symbol, frame) {
-    let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
-    latestCandles.pop();
-    const openSeries = new FasterDEMA(8);
+    let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500}); latestCandles.pop();
+
+    const openSeries  = new FasterDEMA(8);
     const closeSeries = new FasterDEMA(8);
-    let adxSeries = new ADX({period : 14, high : [], low:[], close:[]});
-    let results = [];
-    _.filter(latestCandles, (candle) => {
-        openSeries.update(_.toNumber(candle[1]));
-        closeSeries.update(_.toNumber(candle[4]));
-        let result = adxSeries.nextValue({close: _.toNumber(candle[4]), high: _.toNumber(candle[2]), low: _.toNumber(candle[3])});
-        if(result) results.push(result);
-    })
-    let open = openSeries.getResult();
-    let close = closeSeries.getResult();
-    let adx = results[results.length - 1];
-
-    let adxMsg = `ADX: ${adx.adx.toFixed(1)}, DI+: ${adx.pdi.toFixed(1)}, DI-: ${adx.mdi.toFixed(1)}`
-
-    return {
-        adx: adx.adx,
-        trend: close > open ? 'LONG' : 'SHORT',
-        adxTrend: adx.pdi > adx.mdi ? 'LONG' : 'SHORT',
-        message: adxMsg
+    let   adxSeries   = new ADX({period : 14, high : [], low:[], close:[]});
+    let   results     = [];
+    let ichimokuInput = {
+        high: [],
+        low: [],
+        conversionPeriod: 9,
+        basePeriod: 26,
+        spanPeriod: 52,
+        displacement: 26
     }
+    _.filter(latestCandles, (candle) => {
+        // list price values
+        let openPrice    = _.toNumber(candle[1]);
+        let highestPrice = _.toNumber(candle[2]);
+        let lowestPrice  = _.toNumber(candle[3]);
+        let closePrice   = _.toNumber(candle[4]);
+
+        // OCC series
+        openSeries.update(openPrice);
+        closeSeries.update(closePrice);
+
+        let result = adxSeries.nextValue({close: closePrice, high: highestPrice, low: lowestPrice});
+        if(result) results.push(result);
+
+        // Ichimoku highest and lowest
+        ichimokuInput.high.push(highestPrice);
+        ichimokuInput.low.push(lowestPrice);
+    })
+    let open  = openSeries.getResult();
+    let close = closeSeries.getResult();
+    let adx   = results[results.length - 1];
+
+    let ichimokuSeries = IchimokuCloud.calculate(ichimokuInput);
+    let ichimoku       = ichimokuSeries[ichimokuSeries.length - 1];
+    let occTrend       = close > open ? 'LONG' : 'SHORT';
+    let adxTrend       = adx.pdi > adx.mdi ? 'LONG' : 'SHORT';
+    let ichimokuTrend  = ichimoku.conversion > ichimoku.base ? 'LONG' : 'SHORT';
+
+    let extMsg = `ADX: ${adx.adx.toFixed(1)}, Trend: ADX: ${adxTrend} | OCC: ${occTrend} | Ichimoku: ${ichimokuTrend}`;
+
+    return { adx: adx.adx, trend: occTrend, message: extMsg }
 }
 
 async function getRSI(symbol, interval) {
@@ -110,7 +132,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}%`);
+    await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#LÃI' : '#LỖ'}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -151,7 +173,7 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
         } else {
             message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
                 + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
-                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; adxTrend: ${position.trend}\n`
+                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
                 + `Extra: ${position.message}`;
         }
         await log(message);

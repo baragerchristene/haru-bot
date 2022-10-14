@@ -286,7 +286,6 @@ async function strategyOCC(symbol, frame) {
                         symbol: symbol,
                         amount: amount,
                         entryPrice: closePrice,
-                        trend: newTrendDetector.adxTrend,
                         message: newTrendDetector.message}
                     await lib.openPositionByType(newTrend, customPs, amount, 0);
                 }
