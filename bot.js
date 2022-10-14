@@ -286,9 +286,9 @@ async function strategyOCC(symbol, frame) {
                         symbol: symbol,
                         amount: amount,
                         entryPrice: closePrice,
-                        trend: newTrend,
+                        trend: newTrendDetector.adxTrend,
                         message: newTrendDetector.message}
-                    await lib.openPositionByType(newTrendDetector.adxTrend, customPs, amount, 0);
+                    await lib.openPositionByType(newTrend, customPs, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }

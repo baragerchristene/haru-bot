@@ -151,7 +151,7 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
         } else {
             message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
                 + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
-                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; occTrend: ${position.trend}\n`
+                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}; adxTrend: ${position.trend}\n`
                 + `Extra: ${position.message}`;
         }
         await log(message);
