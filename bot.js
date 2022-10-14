@@ -280,7 +280,7 @@ async function strategyOCC(symbol, frame) {
             let newTrend         = newTrendDetector.trend;
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
-                if (_.isEmpty(rawPosition) && newTrendDetector.adx > 20) { // k có vị thế thì tạo mới
+                if (_.isEmpty(rawPosition) && newTrendDetector.adx > 40) { // k có vị thế thì tạo mới
                     let amount = ctx.occO[symbol].quantity;
                     let customPs = {
                         symbol: symbol,
