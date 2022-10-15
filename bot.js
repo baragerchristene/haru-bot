@@ -262,35 +262,46 @@ async function TraderWagonCopier() {
     })
 }
 
-async function strategyOCC(symbol, frame) {
+async function strategyOCC(symbol) {
     /**
      * Bot chạy theo thuật toán OCC Strategy R5.1
      */
     const symbolKline = symbol.toLowerCase();
-    const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_${frame}`);
-    let trendDetector = await lib.OCC(symbol, frame);
-    let currentTrend  = trendDetector.trend;
+
+    const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_1m`);
+    const wsTrend     = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_5m`);
+
+    let currentTrend  = await lib.OCC(symbol, '1m');
+    let longTrend     = await lib.OCC(symbol, '5m');
 
     ws0.on('message', async (_event) => {
         let data = JSON.parse(_event);
         let isCandleClose = data.k.x;
         if (isCandleClose && ctx.occO[symbol].running) {
-            let closePrice       = data.k.c;
-            let newTrendDetector = await lib.OCC(symbol, frame);
-            let newTrend         = newTrendDetector.trend;
+            let closePrice = data.k.c;
+            let newTrend   = await lib.OCC(symbol, '1m');
             if (currentTrend != newTrend) {
                 let rawPosition = await lib.fetchPositionBySymbol(symbol);
-                if (_.isEmpty(rawPosition) && newTrendDetector.adx > 40) { // k có vị thế thì tạo mới
+                if (_.isEmpty(rawPosition) && newTrend == longTrend) { // k có vị thế thì tạo mới
                     let amount = ctx.occO[symbol].quantity;
                     let customPs = {
                         symbol: symbol,
                         amount: amount,
                         entryPrice: closePrice,
-                        message: newTrendDetector.message}
+                        message: ''}
                     await lib.openPositionByType(newTrend, customPs, amount, 0);
                 }
                 currentTrend = newTrend; // set trend hiện tại cho lệnh
             }
+        }
+    })
+
+    //detect the trend of bigger wave
+    wsTrend.on('message', async (_event) => {
+        let data = JSON.parse(_event);
+        let isCandleClose = data.k.x;
+        if (isCandleClose) {
+            longTrend = await lib.OCC(symbol, '5m');
         }
     })
 }
