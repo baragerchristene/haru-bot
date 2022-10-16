@@ -30,26 +30,26 @@ router.get('/db', async function (_req, res, _next) {
   res.end();
 });
 
-router.post('/hook', jsonParser, async function (req, res) {
-  let action = _.get(req, 'body.action') || '';
-  let price = _.get(req, 'body.price') || '';
-  console.log(req.body);
-  res.end();
-  lib.sendMessage(`Đặt lệnh ${action.toUpperCase()} | ${price}`).then();
-})
-
-router.post('/occa', jsonParser, async function (req, res) {
-  let response = _.get(req, 'body');
-  res.end();
-  if (_.isEmpty(response)) {
-    lib.sendMessage('Dữ liệu rỗng').then();
-  } else {
-    let symbol = response.symbol;
-    let quantity = _.toNumber(response.quantity);
-    bot.strategyOCC(symbol, '1m').then();
-    bot.AutoTakingProfit(symbol).then();
-    await lib.sendMessage(`Đã chạy OCC tạm thời cho ${symbol}, số lượng tối thiểu ${quantity}`);
-  }
-})
+// router.post('/hook', jsonParser, async function (req, res) {
+//   let action = _.get(req, 'body.action') || '';
+//   let price = _.get(req, 'body.price') || '';
+//   console.log(req.body);
+//   res.end();
+//   lib.sendMessage(`Đặt lệnh ${action.toUpperCase()} | ${price}`).then();
+// })
+//
+// router.post('/occa', jsonParser, async function (req, res) {
+//   let response = _.get(req, 'body');
+//   res.end();
+//   if (_.isEmpty(response)) {
+//     lib.sendMessage('Dữ liệu rỗng').then();
+//   } else {
+//     let symbol = response.symbol;
+//     let quantity = _.toNumber(response.quantity);
+//     bot.strategyOCC(symbol, '1m').then();
+//     bot.AutoTakingProfit(symbol).then();
+//     await lib.sendMessage(`Đã chạy OCC tạm thời cho ${symbol}, số lượng tối thiểu ${quantity}`);
+//   }
+// })
 
 module.exports = router;
