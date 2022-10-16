@@ -31,8 +31,8 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
 async function OCC(symbol, frame) {
     let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
     // latestCandles.pop();
-    let openSeries  = new FasterDEMA(8);
-    let closeSeries = new FasterDEMA(8);
+    let openSeries  = new FasterDEMA(10);
+    let closeSeries = new FasterDEMA(10);
 
     _.filter(latestCandles, (candle) => {
         openSeries.update(_.toNumber(candle[1]));

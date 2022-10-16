@@ -11,14 +11,14 @@ var minTP = 5;
 var minX = 1;
 var occQ = [
     {symbol: 'BTCUSDT',   quantity: 0.003, running: false},
-    {symbol: 'ETHUSDT',   quantity: 0.05,  running: false},
-    {symbol: 'XRPUSDT',   quantity: 50,    running: false},
-    {symbol: 'BNBUSDT',   quantity: 0.2,   running: false},
-    {symbol: 'MATICUSDT', quantity: 30,    running: false},
-    {symbol: 'TRXUSDT',   quantity: 400,   running: false},
-    {symbol: 'DOTUSDT',   quantity: 2,     running: false},
-    {symbol: 'GMTUSDT',   quantity: 9,     running: false},
-    {symbol: 'NEARUSDT',  quantity: 3,     running: false},
+    {symbol: 'ETHUSDT',   quantity: 0.005, running: true},
+    {symbol: 'XRPUSDT',   quantity: 50,    running: true},
+    {symbol: 'BNBUSDT',   quantity: 0.2,   running: true},
+    {symbol: 'MATICUSDT', quantity: 30,    running: true},
+    {symbol: 'TRXUSDT',   quantity: 400,   running: true},
+    {symbol: 'DOTUSDT',   quantity: 2,     running: true},
+    {symbol: 'GMTUSDT',   quantity: 9,     running: true},
+    {symbol: 'NEARUSDT',  quantity: 3,     running: true},
 ];
 var occO = {};
 var occS = 'BTCUSDT';
