@@ -67,7 +67,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    ctx.profit+= position.unRealizedProfit;
+    ctx.profit+= Number(position.unRealizedProfit);
     await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#LÃI' : '#LỖ'} | Total: ${ctx.profit}`);
 }
 
