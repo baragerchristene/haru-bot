@@ -192,7 +192,8 @@ bot.command('ss', async () => {
     let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ ${ctx.minX}USDT)\n` +
         `COPY_ID: ${ctx.copyID}\nCopy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
         `Auto OCCTP & Size: ${occMsg}\n` +
-        `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n`
+        `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
+        `Total profit: ${ctx.profit}`
     await sendMessage(msg);
 });
 
