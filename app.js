@@ -17,7 +17,7 @@ async function CopyStream() {
     bot.InitialData();
     // bot.BinanceCopier().then();
     // // can do it with a loop but todo later
-    bot.strategyOCC('BTCUSDT').then();   bot.AutoTakingProfit('BTCUSDT').then();
+    bot.strategyOCC('BTCBUSD').then();   bot.AutoTakingProfit('BTCBUSD').then();
     bot.strategyOCC('ETHUSDT').then();   bot.AutoTakingProfit('ETHUSDT').then();
     bot.strategyOCC('XRPUSDT').then();   bot.AutoTakingProfit('XRPUSDT').then();
     bot.strategyOCC('BNBUSDT').then();   bot.AutoTakingProfit('BNBUSDT').then();

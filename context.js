@@ -11,6 +11,7 @@ var minTP = 5;
 var minX = 1;
 var occQ = [
     {symbol: 'BTCUSDT',   quantity: 0.003, running: false},
+    {symbol: 'BTCBUSD',   quantity: 0.001, running: true},
     {symbol: 'ETHUSDT',   quantity: 0.005, running: true},
     {symbol: 'XRPUSDT',   quantity: 50,    running: true},
     {symbol: 'BNBUSDT',   quantity: 0.2,   running: true},
@@ -23,7 +24,7 @@ var occQ = [
 var occO = {};
 var occS = 'BTCUSDT';
 var inverseCopy = false;
-var ignoreCoins = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'BNBUSDT', 'MATICUSDT', 'TRXUSDT', 'DOTUSDT', 'GMTUSDT', 'NEARUSDT'];
+var ignoreCoins = ['BTCBUSD', 'ETHUSDT', 'XRPUSDT', 'BNBUSDT', 'MATICUSDT', 'TRXUSDT', 'DOTUSDT', 'GMTUSDT', 'NEARUSDT'];
 var lastBalance = 0;
 var profit = 0;
 module.exports = {
