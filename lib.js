@@ -54,7 +54,7 @@ async function OCC(symbol, frame) {
 
     return {
         trend: closeSeries.getResult() > openSeries.getResult() ? 'LONG' : 'SHORT',
-        realTrend: macd.histogram > 0 ? 'LONG' : 'SHORT'
+        realTrend: macd[macd.length - 1].histogram > 0 ? 'LONG' : 'SHORT'
     }
 }
 
