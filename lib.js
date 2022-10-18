@@ -2,6 +2,7 @@ require('dotenv').config({ path: 'env/live.env' });
 const {sendMessage, log} = require("./telegram");
 const EMA = require('technicalindicators').EMA
 const ADX = require('technicalindicators').ADX
+const MACD = require('technicalindicators').MACD
 const RSI = require('technicalindicators').RSI
 const IchimokuCloud = require('technicalindicators').IchimokuCloud
 const fetch = require("node-fetch");
@@ -30,16 +31,31 @@ async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
 
 async function OCC(symbol, frame) {
     let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
-    // latestCandles.pop();
+    latestCandles.pop();
     let openSeries  = new FasterDEMA(10);
     let closeSeries = new FasterDEMA(10);
+
+    let macdInput = {
+        values            : [],
+        fastPeriod        : 12,
+        slowPeriod        : 26,
+        signalPeriod      : 10,
+        SimpleMAOscillator: false,
+        SimpleMASignal    : false
+    }
 
     _.filter(latestCandles, (candle) => {
         openSeries.update(_.toNumber(candle[1]));
         closeSeries.update(_.toNumber(candle[4]));
+        macdInput.values.push(_.toNumber(candle[4]));
     })
 
-    return closeSeries.getResult() > openSeries.getResult() ? 'LONG' : 'SHORT';
+    let macd = MACD.calculate(macdInput);
+
+    return {
+        trend: closeSeries.getResult() > openSeries.getResult() ? 'LONG' : 'SHORT',
+        realTrend: macd.histogram > 0 ? 'LONG' : 'SHORT'
+    }
 }
 
 async function getRSI(symbol, interval) {

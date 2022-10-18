@@ -269,15 +269,16 @@ async function strategyOCC(symbol) {
     const symbolKline = symbol.toLowerCase();
 
     const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_1m`);
-    let currentTrend  = await lib.OCC(symbol, '1m');
-
+    let initTrend     = await lib.OCC(symbol, '1m');
+    let currentTrend  = initTrend.trend;
     ws0.on('message', async (_event) => {
         try {
             let data = JSON.parse(_event);
             let isCandleClose = data.k.x;
             if (isCandleClose && ctx.occO[symbol].running) {
                 let closePrice = data.k.c;
-                let newTrend   = await lib.OCC(symbol, '1m');
+                let detector   = await lib.OCC(symbol, '1m');
+                let newTrend   = detector.trend;
                 if (currentTrend != newTrend) {
                     let rawPosition = await lib.fetchPositionBySymbol(symbol);
                     if (_.isEmpty(rawPosition)) { // k có vị thế thì tạo mới
@@ -287,7 +288,7 @@ async function strategyOCC(symbol) {
                             amount: amount,
                             entryPrice: closePrice,
                             message: ''}
-                        await lib.openPositionByType(newTrend, customPs, amount, 0);
+                        await lib.openPositionByType(detector.realTrend, customPs, amount, 0);
                     }
                     currentTrend = newTrend; // set trend hiện tại cho lệnh
                 }
