@@ -15,7 +15,7 @@ var occQ = [
     {symbol: 'ADAUSDT',   quantity: 20,    running: true, tp: 0, sl: 0},
     {symbol: 'TRXUSDT',   quantity: 400,   running: true, tp: 0, sl: 0},
     {symbol: 'DOTUSDT',   quantity: 2,     running: true, tp: 0, sl: 0},
-    {symbol: 'GMTUSDT',   quantity: 9,     running: true, tp: 0, sl: 0},
+    {symbol: 'GMTUSDT',   quantity: 12,    running: true, tp: 0, sl: 0},
     {symbol: 'NEARUSDT',  quantity: 3,     running: true, tp: 0, sl: 0},
 ];
 var occO = {};
