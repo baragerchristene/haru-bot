@@ -162,7 +162,7 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
         }
         await log(message);
     } else {
-        await log(`Mở vị thế không thành công!`);
+        await log(`Mở vị thế không thành công! ${symbol} ${quantity}`);
     }
     if (result.code) {
         await delay(3000);
