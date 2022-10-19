@@ -10,7 +10,6 @@ var lastLiquid = {};
 var minTP = 5;
 var minX = 1;
 var occQ = [
-    {symbol: 'XRPBUSD',   quantity: 50,    running: true, tp: 0, sl: 0},
     {symbol: 'XRPUSDT',   quantity: 50,    running: true, tp: 0, sl: 0},
     {symbol: 'ETCUSDT',   quantity: 0.44,  running: true, tp: 0, sl: 0},
     {symbol: 'ADAUSDT',   quantity: 20,    running: true, tp: 0, sl: 0},

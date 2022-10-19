@@ -18,10 +18,10 @@ async function CopyStream() {
     // bot.BinanceCopier().then();
     // // can do it with a loop but todo later
     // xuôi
-    bot.strategyOCC('XRPBUSD').then();   bot.AutoTakingProfit('XRPBUSD').then();
-    bot.strategyOCC('XRPUSDT').then();   bot.AutoTakingProfit('XRPUSDT').then();
-    bot.strategyOCC('ETCUSDT').then();   bot.AutoTakingProfit('ETCUSDT').then();
-    bot.strategyOCC('ADAUSDT').then();   bot.AutoTakingProfit('ADAUSDT').then();
+    // bot.strategyOCC('XRPBUSD').then();   bot.AutoTakingProfit('XRPBUSD').then();
+    bot.strategyRevertOCC('XRPUSDT').then();   bot.AutoTakingProfit('XRPUSDT').then();
+    bot.strategyRevertOCC('ETCUSDT').then();   bot.AutoTakingProfit('ETCUSDT').then();
+    bot.strategyRevertOCC('ADAUSDT').then();   bot.AutoTakingProfit('ADAUSDT').then();
 
     // ngược
     bot.strategyRevertOCC('TRXUSDT').then();   bot.AutoTakingProfit('TRXUSDT').then();
