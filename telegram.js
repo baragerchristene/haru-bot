@@ -120,8 +120,8 @@ bot.command('dbc', async (ctx0) => {
     }
 });
 
-bot.command('pnl', async (ctx) => {
-    if (!isMe(ctx)) return;
+bot.command('pnl', async (ctx0) => {
+    if (!isMe(ctx0)) return;
     let positions = await fetchPositions();
     let pnl = 0;
     if (!_.isEmpty(positions)) {
@@ -130,7 +130,13 @@ bot.command('pnl', async (ctx) => {
             return result;
         }, 0)
     }
-    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
+
+    let list = _.values(ctx.occO);
+    let ext = _.reduce(list, (result, item) => {
+        result+= `${item.symbol} TP: ${item.tp} SL: ${item.sl}, `; return result;
+    }, '');
+
+    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}\n${ext}`);
 });
 
 bot.command('lpnl', async (ctx0) => {

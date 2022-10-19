@@ -10,14 +10,14 @@ var lastLiquid = {};
 var minTP = 5;
 var minX = 1;
 var occQ = [
-    {symbol: 'ETHUSDT',   quantity: 0.005, running: true},
-    {symbol: 'XRPUSDT',   quantity: 50,    running: true},
-    {symbol: 'BNBUSDT',   quantity: 0.2,   running: true},
-    {symbol: 'MATICUSDT', quantity: 30,    running: true},
-    {symbol: 'TRXUSDT',   quantity: 400,   running: true},
-    {symbol: 'DOTUSDT',   quantity: 2,     running: true},
-    {symbol: 'GMTUSDT',   quantity: 9,     running: true},
-    {symbol: 'NEARUSDT',  quantity: 3,     running: true},
+    {symbol: 'XRPBUSD',   quantity: 50,    running: true, tp: 0, sl: 0},
+    {symbol: 'XRPUSDT',   quantity: 50,    running: true, tp: 0, sl: 0},
+    {symbol: 'ETCUSDT',   quantity: 0.44,  running: true, tp: 0, sl: 0},
+    {symbol: 'ADAUSDT',   quantity: 20,    running: true, tp: 0, sl: 0},
+    {symbol: 'TRXUSDT',   quantity: 400,   running: true, tp: 0, sl: 0},
+    {symbol: 'DOTUSDT',   quantity: 2,     running: true, tp: 0, sl: 0},
+    {symbol: 'GMTUSDT',   quantity: 9,     running: true, tp: 0, sl: 0},
+    {symbol: 'NEARUSDT',  quantity: 3,     running: true, tp: 0, sl: 0},
 ];
 var occO = {};
 var occS = 'BTCUSDT';

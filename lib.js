@@ -58,6 +58,35 @@ async function OCC(symbol, frame) {
     }
 }
 
+async function revertOCC(symbol, frame) {
+    let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
+    latestCandles.pop();
+    let openSeries  = new FasterDEMA(10);
+    let closeSeries = new FasterDEMA(10);
+
+    let macdInput = {
+        values            : [],
+        fastPeriod        : 12,
+        slowPeriod        : 26,
+        signalPeriod      : 10,
+        SimpleMAOscillator: false,
+        SimpleMASignal    : false
+    }
+
+    _.filter(latestCandles, (candle) => {
+        openSeries.update(_.toNumber(candle[1]));
+        closeSeries.update(_.toNumber(candle[4]));
+        macdInput.values.push(_.toNumber(candle[4]));
+    })
+
+    let macd = MACD.calculate(macdInput);
+
+    return {
+        trend: closeSeries.getResult() > openSeries.getResult() ? 'LONG' : 'SHORT',
+        realTrend: macd[macd.length - 1].histogram > 0 ? 'SHORT' : 'LONG'
+    }
+}
+
 async function getRSI(symbol, interval) {
     const latestCandles = await binance.futuresCandles(symbol, interval, { limit: 1500 });
     let values = _.reduce(latestCandles, (result, value) => {
@@ -84,6 +113,9 @@ async function closePositionByType(type, position, quantity, close = false) {
         await binance.futuresMarketBuy(symbol, quantity);
     }
     ctx.profit+= Number(position.unRealizedProfit);
+    if (position.unRealizedProfit > 0) {
+        ctx.occO[symbol].tp++;
+    } else ctx.occO[symbol].sl++;
     await log(`#${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#LÃI' : '#LỖ'} | Total: ${ctx.profit}`);
 }
 
@@ -239,6 +271,6 @@ function roe(position) {
 
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
-    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance,
+    fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance, revertOCC,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
 

@@ -8,10 +8,7 @@ function InitialData() {
     ctx.copyID = process.env.COPY_ID; // nguồn copy id
     ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
     //faster access list trading coin
-    ctx.occO = _.reduce(ctx.occQ, (result, coin) => {
-        _.set(result, coin.symbol, coin);
-        return result;
-    }, {});
+    ctx.occO = _.keyBy(ctx.occQ, 'symbol');
 }
 
 async function getMode() {
@@ -300,6 +297,44 @@ async function strategyOCC(symbol) {
     })
 }
 
+async function strategyRevertOCC(symbol) {
+    /**
+     * Bot chạy theo thuật toán OCC Strategy R5.1
+     */
+    const symbolKline = symbol.toLowerCase();
+
+    const ws0         = new WebSocket(`wss://fstream.binance.com/ws/${symbolKline}@kline_1m`);
+    let initTrend     = await lib.revertOCC(symbol, '1m');
+    let currentTrend  = initTrend.trend;
+    ws0.on('message', async (_event) => {
+        try {
+            let data = JSON.parse(_event);
+            let isCandleClose = data.k.x;
+            if (isCandleClose && ctx.occO[symbol].running) {
+                let closePrice = data.k.c;
+                let detector   = await lib.revertOCC(symbol, '1m');
+                let newTrend   = detector.trend;
+                if (currentTrend != newTrend) {
+                    let rawPosition = await lib.fetchPositionBySymbol(symbol);
+                    if (_.isEmpty(rawPosition)) { // k có vị thế thì tạo mới
+                        let amount = ctx.occO[symbol].quantity;
+                        let customPs = {
+                            symbol: symbol,
+                            amount: amount,
+                            entryPrice: closePrice,
+                            message: ''}
+                        await lib.openPositionByType(detector.realTrend, customPs, amount, 0);
+                    }
+                    currentTrend = newTrend; // set trend hiện tại cho lệnh
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+
+    })
+}
+
 async function AutoTakingProfit(symbol) {
     /**
      * BOT TỰ ĐỘNG CHỐT LÃI
@@ -394,4 +429,4 @@ async function AutoTakingProfit(symbol) {
     })
 }
 
-module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode, strategyOCC, AutoTakingProfit}
+module.exports = {BinanceCopier, InitialData, TraderWagonCopier, getMode, strategyOCC, strategyRevertOCC, AutoTakingProfit}
