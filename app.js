@@ -20,16 +20,15 @@ async function CopyStream() {
 
     // xuôi
     bot.strategyOCC('SOLUSDT').then();         bot.AutoTakingProfit('SOLUSDT').then();
-    bot.strategyOCC('EOSUSDT').then();         bot.AutoTakingProfit('EOSUSDT').then();
-    bot.strategyOCC('BALUSDT').then();         bot.AutoTakingProfit('BALUSDT').then();
-    bot.strategyOCC('LINKUSDT').then();        bot.AutoTakingProfit('LINKUSDT').then();
-    bot.strategyOCC('CHZUSDT').then();         bot.AutoTakingProfit('CHZUSDT').then();
-    bot.strategyOCC('AXSUSDT').then();         bot.AutoTakingProfit('AXSUSDT').then();
-    bot.strategyOCC('APEUSDT').then();         bot.AutoTakingProfit('APEUSDT').then();
     bot.strategyOCC('LTCUSDT').then();         bot.AutoTakingProfit('LTCUSDT').then();
 
     // ngược
     bot.strategyRevertOCC('NEARUSDT').then();  bot.AutoTakingProfit('NEARUSDT').then();
+    bot.strategyRevertOCC('EOSUSDT').then();   bot.AutoTakingProfit('EOSUSDT').then();
+    bot.strategyRevertOCC('BALUSDT').then();   bot.AutoTakingProfit('BALUSDT').then();
+    bot.strategyRevertOCC('CHZUSDT').then();   bot.AutoTakingProfit('CHZUSDT').then();
+    bot.strategyRevertOCC('AXSUSDT').then();   bot.AutoTakingProfit('AXSUSDT').then();
+
 }
 
 CopyStream().then() // profit go here
