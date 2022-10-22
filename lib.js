@@ -112,7 +112,11 @@ async function closePositionByType(type, position, quantity, close = false) {
     } else {
         await binance.futuresMarketBuy(symbol, quantity);
     }
-    ctx.profit+= Number(position.unRealizedProfit);
+
+    position.unRealizedProfit = Number(position.unRealizedProfit) - Math.abs(position.unRealizedProfit)*0.0006;
+
+
+    ctx.profit+= position.unRealizedProfit;
     if (position.unRealizedProfit > 0) {
         ctx.occO[symbol].tp++;
     } else ctx.occO[symbol].sl++;
