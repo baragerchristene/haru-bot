@@ -19,10 +19,10 @@ async function CopyStream() {
     // // can do it with a loop but todo later
 
     // xuôi
-    bot.strategyOCC('SOLUSDT').then();         bot.AutoTakingProfit('SOLUSDT').then();
     bot.strategyOCC('LTCUSDT').then();         bot.AutoTakingProfit('LTCUSDT').then();
 
     // ngược
+    bot.strategyRevertOCC('SOLUSDT').then();   bot.AutoTakingProfit('SOLUSDT').then();
     bot.strategyRevertOCC('NEARUSDT').then();  bot.AutoTakingProfit('NEARUSDT').then();
     bot.strategyRevertOCC('EOSUSDT').then();   bot.AutoTakingProfit('EOSUSDT').then();
     bot.strategyRevertOCC('BALUSDT').then();   bot.AutoTakingProfit('BALUSDT').then();
