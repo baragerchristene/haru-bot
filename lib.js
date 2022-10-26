@@ -16,6 +16,7 @@ var ctx = require('./context');
 const moment = require("moment-timezone");
 const {FasterDEMA} = require("trading-signals");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
+const SuperTrend = require("supertrend-indicator");
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
@@ -56,6 +57,21 @@ async function OCC(symbol, frame) {
         trend: closeSeries.getResult() > openSeries.getResult() ? 'LONG' : 'SHORT',
         realTrend: macd[macd.length - 1].histogram > 0 ? 'LONG' : 'SHORT'
     }
+}
+
+async function getSuperTrend(symbol, frame) {
+    let inputST = [];
+    let latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
+    latestCandles.pop();
+    _.filter(latestCandles, (candle) => {
+        let input =  { high: Number(candle[2]), low: Number(candle[3]), close: Number(candle[4]) }
+        inputST.push(input)
+    })
+    let trends = SuperTrend(inputST, 1, 10) // 2 is multiplier, 10 is atr period/length
+    let direction = _.get(trends[trends.length - 1], 'trendDirection');
+    if (direction == 1)  return 'LONG'
+    if (direction == -1) return 'SHORT'
+    return ''
 }
 
 async function revertOCC(symbol, frame) {
@@ -274,5 +290,6 @@ function roe(position) {
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
     fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance, revertOCC,
+    getSuperTrend,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
 
