@@ -379,8 +379,8 @@ async function AutoTakingProfit(symbol) {
     let gainingProfit = false;
     let gainingAmt    = 0;
     let isAutoTP      = false;
-    let originTpLevel = 0.382;
-    let tpLevel       = 0.382;
+    let originTpLevel = 0.236;
+    let tpLevel       = 0.236;
     let dcaCount      = 0;
     // 23.6%, 38.2%, 50% 61.8%, 78.6%, 100%, 161.8%, 261.8%, and 423.6% //
     ws2.on('message', async (_event) => {
@@ -416,6 +416,8 @@ async function AutoTakingProfit(symbol) {
                             // các mốc level chốt lãi theo fibonacci
                             if (roe > tpLevel) {
                                 switch (tpLevel) {
+                                    case 0.236:
+                                        tpLevel = 0.382; gainingAmt = 0.23; break;
                                     case 0.382:
                                         tpLevel = 0.5;   gainingAmt = 0.38; break;
                                     case 0.5:
@@ -437,9 +439,9 @@ async function AutoTakingProfit(symbol) {
                             }
                         }
                     } else {
-                        if (roe > 0.237) {
+                        if (roe > 0.12) {
                             gainingProfit = true;
-                            gainingAmt    = 0.236
+                            gainingAmt    = 0.1
                             isAutoTP      = false;
                         } else if (roe <= -0.235) { // cắt lỗ trực tiếp nếu -20%
                             await lib.closePositionByType(side, position, amt, true);
