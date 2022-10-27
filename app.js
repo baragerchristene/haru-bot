@@ -19,8 +19,9 @@ async function CopyStream() {
     // // can do it with a loop but todo later
     // xuôi
     bot.superTrending('BALUSDT').then();   bot.AutoTakingProfit('BALUSDT').then();
-    bot.superTrending('XRPUSDT').then();   bot.AutoTakingProfit('XRPUSDT').then();
-    bot.superTrending('ETCUSDT').then();   bot.AutoTakingProfit('ETCUSDT').then();
+    bot.superTrending('MATICUSDT').then(); bot.AutoTakingProfit('MATICUSDT').then();
+    bot.superTrending('ADAUSDT').then();   bot.AutoTakingProfit('ADAUSDT').then();
+    bot.superTrending('AVAXUSDT').then();  bot.AutoTakingProfit('AVAXUSDT').then();
     // ngược
 }
 
