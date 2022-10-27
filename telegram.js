@@ -58,7 +58,7 @@ function getPositionsStr(coins) {
         !coin.leverage ? leverage = getLeverageLB(coin) : leverage = coin.leverage
         let amt = `${kFormatter(coin.markPrice*coin.amount/leverage)} USDT`;
         let roe = leadRoe(coin, leverage);
-        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}\nEntry: ${coin.entryPrice}\nMark: ${coin.markPrice}\nuPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
+        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}\nEntry: ${coin.entryPrice}\nMark: ${coin.markPrice}\n${coin.pnl > 0 ? '🟢':'🔴'} uPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
         msg+= '___________________________________\n'
         return msg;
     }, '');
