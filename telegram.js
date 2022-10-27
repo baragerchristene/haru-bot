@@ -56,9 +56,10 @@ function getPositionsStr(coins) {
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
         let leverage = 0;
         !coin.leverage ? leverage = getLeverageLB(coin) : leverage = coin.leverage
-        let amt = (coin.markPrice*coin.amount).toFixed(3);
+        let amt = `${kFormatter(coin.markPrice*coin.amount/leverage)} USDT`;
         let roe = leadRoe(coin, leverage);
-        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPNL(ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
+        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}\nEntry: ${coin.entryPrice}\nMark: ${coin.markPrice}\nuPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
+        msg+= '___________________________________\n'
         return msg;
     }, '');
     return message;
@@ -184,10 +185,10 @@ bot.command('as', async (ctx0) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'}\nFixed Vol ~ ${ctx.minX}USDT)\n` +
+    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'}\nFixed Vol ~ ${ctx.minX}USDT\n` +
         `COPY_ID: ${ctx.copyID}\nCopy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
-        `Total PNL: ${ctx.profit.toFixed(2)}USDT`
+        `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
 });
 
@@ -518,6 +519,10 @@ bot.command('h', async (ctx0) => {
 
 function getLeverageLB(coin) {
     return _.toNumber(Math.abs((coin.roe*(coin.amount*1*coin.markPrice))/coin.pnl).toFixed(0));
+}
+
+function kFormatter(num) {
+    return Math.abs(num) > 999 ? Math.sign(num) * ((Math.abs(num) / 1000).toFixed(2)) + 'K' : (Math.sign(num) * Math.abs(num)).toFixed(2)
 }
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
