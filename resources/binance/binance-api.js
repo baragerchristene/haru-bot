@@ -19,6 +19,22 @@ class BinanceApi {
             return {data: [], error: true, detail: response.error};
         }
     }
+
+    async getLeaderboardRank() {
+        let path = `bapi/futures/v2/public/future/leaderboard/getLeaderboardRank`;
+        let payload = {
+            isShared: true,
+            periodType: "DAILY",
+            statisticsType: "ROI",
+            tradeType: "PERPETUAL"
+        }
+        let response = await api.post(path, payload);
+        if (response.code && response.code == "000000") {
+            return response.data
+        } else {
+            return []
+        }
+    }
 }
 
 module.exports = BinanceApi

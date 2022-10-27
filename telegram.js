@@ -90,6 +90,24 @@ bot.command('dbi', async (ctx0) => {
     }
 });
 
+bot.command('ldb', async (ctx0) => {
+    let data = await bnApi.getLeaderboardRank();
+    if (_.isEmpty(data)) {
+        await sendMessage('Không lấy được dữ liệu');
+    } else {
+        if (!_.isEmpty(data)) {
+            let msg = _.reduce(data, (msgs, user) => {
+                msgs+= `Rank: ${user.rank} | ROE: ${(user.value*100).toFixed(2)}%\nID: ${user.encryptedUid}\nName: ${user.nickName}\n`;
+                msgs+= '___________________________________\n'
+                return msgs
+            }, '')
+            await sendMessage(msg);
+        } else {
+            await sendMessage('Không có dữ liệu');
+        }
+    }
+});
+
 function leadRoe(position, leverage) {
     let direction = 1;
     if (position.amount > 0) {
