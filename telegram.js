@@ -50,7 +50,8 @@ function isMe(ctxTg) {
 }
 
 function getPositionsStr(coins) {
-    const message = _.reduce(coins, (msg, coin) => {
+    let total = 0;
+    let message = _.reduce(coins, (msg, coin) => {
         if (!coin.amount) coin.amount = coin.positionAmount
         if (!coin.pnl) coin.pnl = coin.unrealizedProfit
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
@@ -60,8 +61,10 @@ function getPositionsStr(coins) {
         let roe = leadRoe(coin, leverage);
         msg+= `${side} ${leverage}X #${coin.symbol} ${amt}\nEntry: ${coin.entryPrice}\nMark: ${coin.markPrice}\n${coin.pnl > 0 ? '🟢':'🔴'} uPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
         msg+= '___________________________________\n'
+        total+=coin.pnl;
         return msg;
     }, '');
+    message+= `Total PNL: ${total.toFixed(2)} USDT`
     return message;
 }
 
