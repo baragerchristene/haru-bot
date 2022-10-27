@@ -136,7 +136,7 @@ bot.command('pnl', async (ctx0) => {
     let sl = 0;
     let ext = _.reduce(list, (result, item) => {
         tp+=item.tp; sl+=item.sl;
-        result+= `${item.symbol} TP: ${item.tp} SL: ${item.sl}, `; return result;
+        result+= `${item.symbol} TP: ${item.tp} SL: ${item.sl}\n`; return result;
     }, '');
 
     await sendMessage(`Current uPNL total ${pnl.toFixed(3)}\n${ext}\n TPA: ${tp} | SLA: ${sl}`);
