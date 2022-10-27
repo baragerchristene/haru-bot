@@ -467,6 +467,16 @@ bot.command('xa', async (ctx0) => {
     }
 });
 
+bot.command('lp', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let lastPnl = getTgMessage(ctx0, 'lp');
+    lastPnl = _.toNumber(lastPnl);
+    ctx.profit+= lastPnl;
+    await sendMessage(`Đã cập nhật chính xác TP: ${ctx.profit}`);
+});
+
+// ctx.profit
+
 bot.command('tpsl', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let msg = _.toString(getTgMessage(ctx0, 'tpsl')).toUpperCase();
