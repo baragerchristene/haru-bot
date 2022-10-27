@@ -152,7 +152,7 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
 
 async function openPositionByType(type, position, quantity, leverage, isDca) {
     const symbol = position.symbol;
-    // await binance.futuresLeverage(symbol, leverage);
+    await binance.futuresLeverage(symbol, leverage);
     let result = {}
     if (ctx.inverseCopy) { // chức năng trade ngược
         type == 'LONG' ? type = 'SHORT' : type = 'LONG';
@@ -176,14 +176,12 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
             message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
                 + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
                 + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
-                + `Extra: ${position.message}`;
         }
         await log(message);
     } else {
         await log(`Mở vị thế không thành công! ${symbol} ${quantity}`);
     }
     if (result.code) {
-        await delay(3000);
         await sendMessage(result); // send error response
     }
 }

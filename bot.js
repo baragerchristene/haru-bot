@@ -58,7 +58,7 @@ async function BinanceCopier() {
                 ctx.myPositions = myPositions;
                 if (!_.isEmpty(totalPosition)) {
                     _.filter(totalPosition, async (position) => {
-                        if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong danh sách trắng thì bỏ qua
+                        if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong white list thì bỏ qua
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
                         let leadPosition = _.find(leadPositions, {symbol: position.symbol});
                         let myPosition = _.find(myPositions, {symbol: position.symbol});

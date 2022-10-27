@@ -58,7 +58,7 @@ function getPositionsStr(coins) {
         !coin.leverage ? leverage = getLeverageLB(coin) : leverage = coin.leverage
         let amt = (coin.markPrice*coin.amount).toFixed(3);
         let roe = leadRoe(coin, leverage);
-        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}; roe: ${roe}%\n`;
+        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPNL(ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`;
         return msg;
     }, '');
     return message;
@@ -130,16 +130,7 @@ bot.command('pnl', async (ctx0) => {
             return result;
         }, 0)
     }
-
-    let list = _.values(ctx.occO);
-    let tp = 0;
-    let sl = 0;
-    let ext = _.reduce(list, (result, item) => {
-        tp+=item.tp; sl+=item.sl;
-        result+= `${item.symbol} TP: ${item.tp} SL: ${item.sl}\n`; return result;
-    }, '');
-
-    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}\n${ext}\n TPA: ${tp} | SLA: ${sl}`);
+    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
 });
 
 bot.command('lpnl', async (ctx0) => {
@@ -174,7 +165,7 @@ bot.command('ps', async (ctx) => {
             let uPnlUSDT = coin.positionAmt*direction*(coin.markPrice - coin.entryPrice);
             let entryMargin = coin.positionAmt*coin.markPrice*(1/coin.leverage)
             let roe = ((uPnlUSDT/entryMargin)*100).toFixed(2);
-            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; ${coin.unRealizedProfit > 0 ? '🟢':'🔴'} uPnl: ${coin.unRealizedProfit}; roe: ${roe}%\n`;
+            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; ${coin.unRealizedProfit > 0 ? '🟢':'🔴'} uPNL(ROE): ${coin.unRealizedProfit.toFixed(2)}(${roe}%)\n`;
             return msg;
         }, '')
         await sendMessage(message);
@@ -193,16 +184,10 @@ bot.command('as', async (ctx0) => {
 });
 
 bot.command('ss', async () => {
-    let occMsg = _.reduce(ctx.occQ, (result, coin) => {
-        result+= `${coin.symbol} (${coin.quantity}, ${coin.running ? 'bật':'tắt'}), `;
-        return result;
-    }, '');
-
-    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'} (Fixed Vol ~ ${ctx.minX}USDT)\n` +
+    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'}\nFixed Vol ~ ${ctx.minX}USDT)\n` +
         `COPY_ID: ${ctx.copyID}\nCopy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
-        `Auto OCCTP & Size: ${occMsg}\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
-        `Total profit: ${ctx.profit}`
+        `Total PNL: ${ctx.profit.toFixed(2)}USDT`
     await sendMessage(msg);
 });
 

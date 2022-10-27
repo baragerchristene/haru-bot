@@ -15,14 +15,7 @@ server.listen(port);
  */
 async function CopyStream() {
     bot.InitialData();
-    // bot.BinanceCopier().then();
-    // // can do it with a loop but todo later
-    // xuôi
-    bot.superTrending('BALUSDT').then();   bot.AutoTakingProfit('BALUSDT').then();
-    bot.superTrending('MATICUSDT').then(); bot.AutoTakingProfit('MATICUSDT').then();
-    bot.superTrending('ADAUSDT').then();   bot.AutoTakingProfit('ADAUSDT').then();
-    bot.superTrending('AVAXUSDT').then();  bot.AutoTakingProfit('AVAXUSDT').then();
-    // ngược
+    bot.BinanceCopier().then();
 }
 
 CopyStream().then() // profit go here
