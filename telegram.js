@@ -124,6 +124,18 @@ function leadRoe(position, leverage) {
     return roe
 }
 
+function leadRoe2(position) {
+    let direction = 1;
+    if (position.positionAmt > 0) {
+        direction = 1;
+    } else {
+        direction = -1;
+    }
+    let uPnlUSDT = position.positionAmt*direction*(position.markPrice - position.entryPrice);
+    let entryMargin = position.positionAmt*position.markPrice*(1/position.leverage)
+    return ((uPnlUSDT/entryMargin)*100)
+}
+
 bot.command('dbc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let coins = ctx.positions;
@@ -146,13 +158,15 @@ bot.command('pnl', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let positions = await fetchPositions();
     let pnl = 0;
+    let roe = 0;
     if (!_.isEmpty(positions)) {
         pnl = _.reduce(positions, (result, coin) => {
             result += _.toNumber(coin.unRealizedProfit);
+            roe+= leadRoe2(coin);
             return result;
         }, 0)
     }
-    await sendMessage(`Current uPNL total ${pnl.toFixed(3)}`);
+    await sendMessage(`Current uPNL total ${pnl.toFixed(3)} | ${roe.toFixed(2)}%`);
 });
 
 bot.command('lpnl', async (ctx0) => {
@@ -183,11 +197,11 @@ bot.command('ps', async (ctx) => {
                 side = 'SHORT';
                 direction = -1;
             }
-            let amt = (coin.markPrice*coin.positionAmt).toFixed(3);
+            let amt = kFormatter((coin.markPrice*coin.positionAmt)/coin.leverage);
             let uPnlUSDT = coin.positionAmt*direction*(coin.markPrice - coin.entryPrice);
             let entryMargin = coin.positionAmt*coin.markPrice*(1/coin.leverage)
             let roe = ((uPnlUSDT/entryMargin)*100).toFixed(2);
-            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt}; E: ${coin.entryPrice}; M: ${coin.markPrice}; ${coin.unRealizedProfit > 0 ? '🟢':'🔴'} uPNL(ROE): ${Number(coin.unRealizedProfit).toFixed(2)}(${roe}%)\n`;
+            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt} USDT; E: ${coin.entryPrice}; M: ${coin.markPrice}; ${coin.unRealizedProfit > 0 ? '🟢':'🔴'} uPNL(ROE): ${Number(coin.unRealizedProfit).toFixed(2)}(${roe}%)\n`;
             return msg;
         }, '')
         await sendMessage(message);

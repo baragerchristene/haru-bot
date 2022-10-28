@@ -134,7 +134,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     if (position.unRealizedProfit > 0) {
         ctx.occO[symbol].tp++;
     } else ctx.occO[symbol].sl++;
-    await log(`${position.unRealizedProfit > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Đóng' : 'Cắt 1 phần'} vị thế ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#LÃI' : '#LỖ'} | Total: ${ctx.profit}`);
+    await log(`${position.unRealizedProfit > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : 'Close apart'} ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -168,13 +168,14 @@ async function openPositionByType(type, position, quantity, leverage, isDca) {
         const direction = ps.positionAmt > 0 ? 'LONG' : 'SHORT';
         const margin = ((ps.positionAmt*ps.markPrice)/ps.leverage).toFixed(2);
         let message = '';
+        let symbolQ = symbol.replace('USDT', '')
         if (isDca) {
-            message = `#${symbol}, DCA vị thế: ${direction} | ${ps.leverage}X\n`
-                + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
+            message = `#${symbol}, DCA ${direction} | ${ps.leverage}X\n`
+                + `Size: ${ps.positionAmt} ${symbolQ}, Margin: ${margin} USDT\n`
                 + `Entry: ${position.entryPrice}->${ps.entryPrice}, Mark: ${ps.markPrice}`;
         } else {
-            message = `#${symbol}, Mở vị thế: ${direction} | ${ps.leverage}X\n`
-                + `Size: ${ps.positionAmt} ${symbol}, Margin: ${margin}USDT\n`
+            message = `#${symbol}, Open ${direction} | ${ps.leverage}X\n`
+                + `Size: ${ps.positionAmt} ${symbolQ}, Margin: ${margin} USDT\n`
                 + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
         }
         await log(message);
