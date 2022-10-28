@@ -131,9 +131,9 @@ async function closePositionByType(type, position, quantity, close = false) {
 
     position.unRealizedProfit = Number(position.unRealizedProfit) - Math.abs(position.positionAmt)*Number(position.entryPrice)*0.0006;
     ctx.profit+= position.unRealizedProfit;
-    if (position.unRealizedProfit > 0) {
-        ctx.occO[symbol].tp++;
-    } else ctx.occO[symbol].sl++;
+    // if (position.unRealizedProfit > 0) {
+    //     ctx.occO[symbol].tp++;
+    // } else ctx.occO[symbol].sl++;
     await log(`${position.unRealizedProfit > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : 'Close apart'} ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
 }
 
