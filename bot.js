@@ -10,30 +10,6 @@ async function InitialData() {
     ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
     //faster access list trading coin
     ctx.occO = _.keyBy(ctx.occQ, 'symbol');
-    await syncIgnorer();
-}
-
-async function syncIgnorer() {
-    let myPositions = await lib.fetchPositions();
-    let openOrders  = await lib.getAllOpenOrders();
-    if (!_.isEmpty(myPositions)) {
-        _.filter(myPositions, (position) => {
-            if (position.symbol != 'BTCUSDT') {
-                // có open order thì thêm vào ignore
-                if (_.some(openOrders, {symbol: position.symbol})) {
-                    if (!_.some(ctx.ignoreCoins, {symbol: position.symbol})) {
-                        ctx.ignoreCoins.push(position.symbol)
-                    }
-                } else { // nếu không có thì xóa khỏi ignore
-                    if (_.some(ctx.ignoreCoins, {symbol: position.symbol})) {
-                        ctx.ignoreCoins = ctx.ignoreCoins.filter(e => e !== position.symbol);
-                    }
-                }
-            }
-
-        })
-
-    }
 }
 
 async function autoSyncIgnorer() {
@@ -41,7 +17,26 @@ async function autoSyncIgnorer() {
     let isCopying = false;
     ws0.on('message', async (_event) => {
         if (isCopying) return; // chờ tiến trình copy cũ chạy xong
-        await syncIgnorer();
+        let myPositions = await lib.fetchPositions();
+        let openOrders  = await lib.getAllOpenOrders();
+        if (!_.isEmpty(myPositions)) {
+            _.filter(myPositions, (position) => {
+                if (position.symbol != 'BTCUSDT') {
+                    // có open order thì thêm vào ignore
+                    if (_.some(openOrders, {symbol: position.symbol})) {
+                        if (!_.some(ctx.ignoreCoins, {symbol: position.symbol})) {
+                            ctx.ignoreCoins.push(position.symbol)
+                        }
+                    } else { // nếu không có thì xóa khỏi ignore
+                        if (_.some(ctx.ignoreCoins, {symbol: position.symbol})) {
+                            ctx.ignoreCoins = ctx.ignoreCoins.filter(e => e !== position.symbol);
+                        }
+                    }
+                }
+
+            })
+
+        }
         isCopying = false;
     })
 }
