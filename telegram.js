@@ -230,10 +230,10 @@ bot.command('as', async (ctx0) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Copy thuận:  ${ctx.autoCopy ? 'ON' : 'OFF'} Fixed Vol ~ ${ctx.minX}USDT\n` +
-        `Copy ngược: ${ctx.autoInvertCopy ? 'ON' : 'OFF'} Fixed Vol ~ ${ctx.minX}USDT\n` +
-        `ID:  ${ctx.copyID}\n` +
-        `IID: ${ctx.copyIID}\n(TP: ${(ctx.itp*100).toFixed(2)})%\n` +
+    let msg = `Copy thuận:  ${ctx.autoCopy ? '🟢':'🔴'} Fixed Vol ~ ${ctx.minX}USDT\n` +
+        `Copy ngược: ${ctx.autoInvertCopy ? '🟢':'🔴'} Fixed Vol ~ ${ctx.minX}USDT\n` +
+        `ID: ${ctx.copyID}\n` +
+        `IID: ${ctx.copyIID}\n(ITP: ${(ctx.itp*100).toFixed(2)})%\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
         `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
