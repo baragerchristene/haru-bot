@@ -225,9 +225,7 @@ async function fetchCopyPosition(leaderId) {
     let response = await twApi.fetchCopyPosition(leaderId);
     if (response.error) {
         let detail = _.get(response, 'detail');
-        if (!_.includes(detail, 'invalid json')) {
-            await log(detail);
-        }
+        console.log(detail);
         await delay(5000);
     }
     return response
@@ -237,9 +235,7 @@ async function fetchLeaderBoardPositions(encryptedUid) {
     let response = await bnApi.fetchFutureLeaderBoardPositionsById(encryptedUid);
     if (response.error) {
         let detail = _.get(response, 'detail');
-        if (!_.includes(detail, 'invalid json')) {
-            await log(detail);
-        }
+        console.log(detail);
         await delay(5000);
     }
     return response
