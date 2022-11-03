@@ -1,4 +1,5 @@
 const HttpWrapper = require("../../cores/http-wrapper");
+const _ = require("lodash");
 const api = new HttpWrapper('https://www.binance.com');
 
 class BinanceApi {
@@ -10,7 +11,7 @@ class BinanceApi {
         }
         let response = await api.post(path, payload);
         if (response.success) {
-            if (response.data.otherPositionRetList && response.data.otherPositionRetList.length > 0) {
+            if (!_.isEmpty(_.get(response, 'data.otherPositionRetList'))) {
                 return {data: response.data.otherPositionRetList, error: false};
             } else {
                 return {data: [], error: false};

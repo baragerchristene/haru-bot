@@ -78,6 +78,16 @@ bot.command('db', async (ctx0) => {
     }
 });
 
+bot.command('idb', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let positions = ctx.positionsI;
+    if (!_.isEmpty(positions)) {
+        await sendMessage(getPositionsStr(positions));
+    } else {
+        await sendMessage('Không có dữ liệu lịch sử');
+    }
+});
+
 bot.command('dbi', async (ctx0) => {
     let leaderId = getTgMessage(ctx0, 'dbi');
     let response = await bnApi.fetchFutureLeaderBoardPositionsById(leaderId);
@@ -220,9 +230,10 @@ bot.command('as', async (ctx0) => {
 });
 
 bot.command('ss', async () => {
-    let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'}\nFixed Vol ~ ${ctx.minX}USDT\n` +
-        `COPY_ID: ${ctx.copyID}\n` +
-        `COPY_IID: ${ctx.copyIID}\n(TP: ${ctx.itp*100})%\n` +
+    let msg = `Copy thuận:  ${ctx.autoCopy ? 'ON' : 'OFF'} Fixed Vol ~ ${ctx.minX}USDT\n` +
+        `Copy ngược: ${ctx.autoInvertCopy ? 'ON' : 'OFF'} Fixed Vol ~ ${ctx.minX}USDT\n` +
+        `ID:  ${ctx.copyID}\n` +
+        `IID: ${ctx.copyIID}\n(TP: ${(ctx.itp*100).toFixed(2)})%\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
         `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
@@ -248,7 +259,7 @@ bot.command('atc', async (ctx0) => {
 
 bot.command('atci', async (ctx0) => {
     if (!isMe(ctx0)) return;
-    ctx.autoCopy = getTgMessage(ctx0, 'atci') == '1';
+    ctx.autoInvertCopy = getTgMessage(ctx0, 'atci') == '1';
     await sendMessage(`Bot copy trade ngược: ${ctx.autoInvertCopy ? 'bật' : 'tắt'}`);
 });
 
@@ -360,7 +371,7 @@ bot.command('itp', async (ctx0) => {
     let itp = _.toNumber(getTgMessage(ctx0, 'itp'));
     if (itp > 0) {
         ctx.itp = itp;
-        await sendMessage(`Min TP từng lệnh mới là ${ctx.itp}USDT`);
+        await sendMessage(`Min TP từng lệnh mới là ${ctx.itp}%`);
     } else {
         await sendMessage(`Min TP không hợp lệ!`);
     }
