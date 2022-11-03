@@ -1,11 +1,14 @@
 var positions = [];
+var positionsI = [];
 var myPositions = [];
 var trigger = true;
 var liquidTrade = false;
 var autoTP = false;
 var autoCopy = false;
+var autoInvertCopy = false;
 var occ = false;
 var copyID = '';
+var copyIID = '';
 var lastLiquid = {};
 var minTP = 5;
 var minX = 1;
@@ -22,16 +25,20 @@ var inverseCopy = false;
 var ignoreCoins = ['BTCUSDT'];
 var lastBalance = 0;
 var profit = 0;
+var itp = 0.236;
 module.exports = {
     positions: positions,
+    positionsI: positionsI,
     myPositions: myPositions,
     trigger: trigger,
     liquidTrade: liquidTrade,
     autoTP: autoTP,
     autoCopy: autoCopy,
+    autoInvertCopy: autoInvertCopy,
     lastLiquid: lastLiquid,
     minTP: minTP,
     copyID: copyID,
+    copyIID: copyIID,
     minX: minX,
     inverseCopy: inverseCopy,
     ignoreCoins: ignoreCoins,
@@ -40,5 +47,6 @@ module.exports = {
     occS: occS,
     lastBalance: lastBalance,
     occO: occO,
-    profit: profit
+    profit: profit,
+    itp: itp
 }

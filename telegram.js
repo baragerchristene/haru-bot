@@ -144,7 +144,7 @@ bot.command('dbc', async (ctx0) => {
     let coin = _.find(coins, {symbol});
     if (!_.isEmpty(coin)) {
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
-        let leverage = getLeverageLB(coin);
+        let leverage = coin.leverage;
         let amt = (coin.markPrice*coin.amount).toFixed(3);
         let roe = leadRoe(coin, leverage);
         let message = `${side} ${leverage}X #${coin.symbol} ${amt}; LE: ${coin.entryPrice}; Mark: ${coin.markPrice}; uPnl: ${coin.pnl}; roe: ${roe}%\n`;
@@ -221,7 +221,8 @@ bot.command('as', async (ctx0) => {
 
 bot.command('ss', async () => {
     let msg = `Trạng thái bot copy hiện tại: ${ctx.autoCopy ? 'đang chạy' : 'đã tắt'}\nFixed Vol ~ ${ctx.minX}USDT\n` +
-        `COPY_ID: ${ctx.copyID}\nCopy Mode: ${ctx.inverseCopy ? 'ngược':'thuận'}\n` +
+        `COPY_ID: ${ctx.copyID}\n` +
+        `COPY_IID: ${ctx.copyIID}\n(TP: ${ctx.itp*100})%\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
         `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
@@ -243,6 +244,12 @@ bot.command('atc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoCopy = getTgMessage(ctx0, 'atc') == '1';
     await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
+});
+
+bot.command('atci', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    ctx.autoCopy = getTgMessage(ctx0, 'atci') == '1';
+    await sendMessage(`Bot copy trade ngược: ${ctx.autoInvertCopy ? 'bật' : 'tắt'}`);
 });
 
 bot.command('occ', async (ctx0) => {
@@ -320,6 +327,23 @@ bot.command('cid', async (ctx0) => {
     }
 });
 
+bot.command('ciid', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let copyID = getTgMessage(ctx0, 'ciid');
+    if (copyID && copyID != '') {
+        ctx.autoInvertCopy = false
+        // chờ 10s
+        await delay(3000)
+        ctx.copyIID = copyID;
+        // chờ 1s
+        await delay(1000)
+        ctx.autoInvertCopy = true
+        await sendMessage(`Copy IID mới là ${ctx.copyIID}`);
+    } else {
+        await sendMessage(`Copy IID không hợp lệ!`);
+    }
+});
+
 bot.command('vol', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let minX = _.toNumber(Number(getTgMessage(ctx0, 'vol')).toFixed(0));
@@ -328,6 +352,17 @@ bot.command('vol', async (ctx0) => {
         await sendMessage(`Min copy vol từng lệnh mới là ${ctx.minX}USDT`);
     } else {
         await sendMessage(`Min copy vol không hợp lệ!`);
+    }
+});
+
+bot.command('itp', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let itp = _.toNumber(getTgMessage(ctx0, 'itp'));
+    if (itp > 0) {
+        ctx.itp = itp;
+        await sendMessage(`Min TP từng lệnh mới là ${ctx.itp}USDT`);
+    } else {
+        await sendMessage(`Min TP không hợp lệ!`);
     }
 });
 

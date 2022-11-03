@@ -131,59 +131,67 @@ async function closePositionByType(type, position, quantity, close = false) {
 
     position.unRealizedProfit = Number(position.unRealizedProfit) - Math.abs(position.positionAmt)*Number(position.entryPrice)*0.0006;
     ctx.profit+= position.unRealizedProfit;
-    // if (position.unRealizedProfit > 0) {
-    //     ctx.occO[symbol].tp++;
-    // } else ctx.occO[symbol].sl++;
     await log(`${position.unRealizedProfit > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : 'Close apart'} ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
-    if (ctx.inverseCopy) { // trade ngược thì không DCA
-        await log(`#${symbol} Inverse DCA vị thế ${type}, số lượng ${quantity} | Source: amount: ${oldAmt} -> ${newAmt}; E: ${oldEntryPrice} -> ${newEntryPrice}`);
-        return;
-    }
     if (type == 'LONG') {
         await binance.futuresMarketBuy(symbol, quantity);
     } else {
         await binance.futuresMarketSell(symbol, quantity);
     }
-    await log(`#${symbol} DCA vị thế ${type}, số lượng ${quantity} | Source: amount: ${oldAmt} -> ${newAmt}; E: ${oldEntryPrice} -> ${newEntryPrice}`);
+    log(`#${symbol}, DCA ${type}, Amount: ${quantity}\nChange: ${oldAmt} -> ${newAmt}\nEntry: ${oldEntryPrice} -> ${newEntryPrice}`).then();
 }
 
-async function openPositionByType(type, position, quantity, leverage, isDca) {
+async function openPositionByType(type, position, quantity, leverage, isInvertTrading) {
     const symbol = position.symbol;
     await binance.futuresLeverage(symbol, leverage);
     let result = {}
-    if (ctx.inverseCopy) { // chức năng trade ngược
+    if (isInvertTrading) { // chức năng trade ngược
         type == 'LONG' ? type = 'SHORT' : type = 'LONG';
     }
     if (type == 'LONG') {
-        result = await binance.futuresMarketBuy(symbol, quantity);
+        result = await binance.futuresMarketBuy(symbol, quantity, { newOrderRespType: 'RESULT' });
     } else {
-        result = await binance.futuresMarketSell(symbol, quantity);
+        result = await binance.futuresMarketSell(symbol, quantity, { newOrderRespType: 'RESULT' });
     }
-    const rawPosition = await fetchPositionBySymbol(symbol);
-    if (!_.isEmpty(rawPosition)) {
-        const ps = rawPosition[0];
-        const direction = ps.positionAmt > 0 ? 'LONG' : 'SHORT';
-        const margin = ((ps.positionAmt*ps.markPrice)/ps.leverage).toFixed(2);
-        let message = '';
-        let symbolQ = symbol.replace('USDT', '')
-        if (isDca) {
-            message = `#${symbol}, DCA ${direction} | ${ps.leverage}X\n`
-                + `Size: ${ps.positionAmt} ${symbolQ}, Margin: ${margin} USDT\n`
-                + `Entry: ${position.entryPrice}->${ps.entryPrice}, Mark: ${ps.markPrice}`;
-        } else {
-            message = `#${symbol}, Open ${direction} | ${ps.leverage}X\n`
-                + `Size: ${ps.positionAmt} ${symbolQ}, Margin: ${margin} USDT\n`
-                + `Entry: ${ps.entryPrice}, Mark: ${ps.markPrice}\n`
-        }
-        await log(message);
+
+    if (!_.isEmpty(result) && result.status == 'FILLED') {
+        let avgPrice = Number(result.avgPrice);
+        const margin = ((quantity*avgPrice)/leverage).toFixed(2);
+
+        let symbolQ = symbol.replace('USDT', '');
+        let message = `#${symbol}, Open ${type} | ${leverage}X\n`
+            + `Size: ${quantity} ${symbolQ}, Margin: ${margin} USDT\n`
+            + `Entry: ${avgPrice}\n`
+        log(message).then();
+        setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage).then();
     } else {
-        await log(`Mở vị thế không thành công! ${symbol} ${quantity}`);
+        log(`Mở vị thế không thành công! ${symbol} ${quantity}`).then();
     }
     if (result.code) {
-        await sendMessage(result); // send error response
+        sendMessage(result).then(); // send error response
+    }
+}
+
+async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage) {
+    if (isInvertTrading) { // nếu là trade ngược thì đặt sẵn TP
+        let openOrders = await binance.futuresOpenOrders(symbol);
+        let orderType = 'TAKE_PROFIT_MARKET';
+        _.filter(openOrders, async (order) => {
+            if (order.type == orderType) {
+                await binance.futuresCancel(symbol, {orderId: order.orderId});
+            }
+        })
+        let tpResult = {}
+        let stopPrice = getPriceByRoe(avgPrice, quantity, leverage, ctx.itp, type);
+        if (type == 'LONG') {
+            tpResult = await binance.futuresMarketSell(symbol, quantity, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+        } else {
+            tpResult = await binance.futuresMarketBuy(symbol, quantity, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+        }
+        console.log(tpResult);
+        log(`#${symbol}, Updated TP for Invert Trading at ${stopPrice}`).then();
     }
 }
 
@@ -286,9 +294,25 @@ function roe(position) {
     return uPnlUSDT/entryMargin;
 }
 
+function getPriceByRoe(entry, quantity, leverage, roe, side) {
+    let entryPrice;
+    if (side == 'LONG') {
+        entryPrice = entry/(1 - (roe*(1/leverage)));
+    } else {
+        entryPrice = (-1)*entry/(-1 - (roe*(1/leverage)));
+    }
+    let fixedNumber = numDigitsAfterDecimal(entry)
+    return Number(entryPrice.toFixed(fixedNumber))
+}
+
+async function getAllOpenOrders() {
+    let openOrders = await binance.futuresOpenOrders();
+    return openOrders;
+}
+
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
     fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance, revertOCC,
-    getSuperTrend,
+    getSuperTrend, getAllOpenOrders,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
 
