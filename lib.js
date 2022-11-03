@@ -226,7 +226,7 @@ async function fetchCopyPosition(leaderId) {
     if (response.error) {
         let detail = _.get(response, 'detail');
         console.log(detail);
-        await delay(5000);
+        // await delay(5000);
     }
     return response
 }
@@ -236,7 +236,7 @@ async function fetchLeaderBoardPositions(encryptedUid) {
     if (response.error) {
         let detail = _.get(response, 'detail');
         console.log(detail);
-        await delay(5000);
+        // await delay(5000);
     }
     return response
 }
