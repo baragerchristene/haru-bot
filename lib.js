@@ -195,16 +195,16 @@ async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, 
     }
 }
 
-function getMinQty(coin, exchanges) {
-    let assert = _.find(exchanges, {symbol: coin.symbol});
+function getMinQty(coin) {
+    let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
     if (_.isEmpty(assert)) return 0;
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
     return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
 }
 
-function getMinQtyU(coin, exchanges, leverage) {
-    let assert = _.find(exchanges, {symbol: coin.symbol});
+function getMinQtyU(coin, leverage) {
+    let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
     return ((Number(ctx.minX)/coin.markPrice)*leverage).toFixed(countNumber);
 }
@@ -242,11 +242,11 @@ async function fetchLeaderBoardPositions(encryptedUid) {
     return response
 }
 
-function getAmountChange(position, filterSymbols, amountChangeRate) {
+function getAmountChange(position, amountChangeRate) {
     let myAmt = Math.abs(position.positionAmt); // khối lượng của tôi
     let fraction = numDigitsAfterDecimal(myAmt);
     let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
-    let minAmt = getMinQty(position, filterSymbols);
+    let minAmt = getMinQty(position);
     let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
     let multiplierOrigin = Math.round(myAmt/minAmt); // lấy bội số vs min
     if (multiplier >= 1) {
