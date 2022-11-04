@@ -197,6 +197,7 @@ async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, 
 
 function getMinQty(coin, exchanges) {
     let assert = _.find(exchanges, {symbol: coin.symbol});
+    if (_.isEmpty(assert)) return 0;
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
     return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
