@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const axios = require("axios");
 
 class HttpWrapper {
     constructor(url) {
@@ -39,6 +40,20 @@ class HttpWrapper {
             console.log(error);
             response.error = error;
         }
+        return response;
+    }
+
+    async x_post(path, bodyPayload) {
+        let link = `${this.url}/${path}`;
+        let response = {};
+        await axios.post(link, bodyPayload)
+            .then(res => {
+                response = res.data;
+            })
+            .catch(err => {
+                console.log('Error: ', err.message);
+            })
+
         return response;
     }
 

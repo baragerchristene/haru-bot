@@ -10,7 +10,7 @@ class BinanceApi {
             tradeType: "PERPETUAL"
         }
         if (!encryptedUid || encryptedUid == '') return {data: [], error: false};
-        let response = await api.post(path, payload);
+        let response = await api.x_post(path, payload);
         if (response.success) {
             if (!_.isEmpty(_.get(response, 'data.otherPositionRetList'))) {
                 return {data: response.data.otherPositionRetList, error: false};
