@@ -42,9 +42,12 @@ async function autoSyncIgnorer() {
     })
 }
 
+
+
 async function autoSyncExchange() {
     const ws0 = new WebSocket('ws://localhost:13456');
     let running = false;
+
     ws0.on('message', async (_event) => {
         if (running) return; // chờ tiến trình cũ chạy xong
         let filterSymbols = await lib.getSymbols();
@@ -573,16 +576,16 @@ async function AutoTakingProfit(symbol) {
     })
 }
 
-module.exports = {
-    binanceCopier,
-    InitialData,
-    TraderWagonCopier,
-    getMode,
-    superTrending,
-    strategyOCC,
-    strategyRevertOCC,
-    AutoTakingProfit,
-    invertBinanceCopier,
-    autoSyncIgnorer,
-    autoSyncExchange
-}
+// module.exports = {
+//     binanceCopier,
+//     InitialData,
+//     TraderWagonCopier,
+//     getMode,
+//     superTrending,
+//     strategyOCC,
+//     strategyRevertOCC,
+//     AutoTakingProfit,
+//     invertBinanceCopier,
+//     autoSyncIgnorer,
+//     autoSyncExchange
+// }
