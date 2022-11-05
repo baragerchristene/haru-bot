@@ -197,7 +197,10 @@ async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, 
 
 function getMinQty(coin) {
     let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
-    if (_.isEmpty(assert)) return 0;
+    if (_.isEmpty(assert)) {
+        console.log(`Can't find assert for ${coin.symbol}`)
+        return 0;
+    }
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
     return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
@@ -205,6 +208,10 @@ function getMinQty(coin) {
 
 function getMinQtyU(coin, leverage) {
     let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
+    if (_.isEmpty(assert)) {
+        console.log(`Can't find assert for ${coin.symbol}`)
+        return 0;
+    }
     let countNumber = numDigitsAfterDecimal(assert.lotSize);
     return ((Number(ctx.minX)/coin.markPrice)*leverage).toFixed(countNumber);
 }
@@ -311,9 +318,15 @@ async function getAllOpenOrders() {
     return openOrders;
 }
 
+function welcome() {
+    const now = moment().format("HH:mm:ss DD/MM/YYYY");
+    let msg = `||| Bot started: ${now} ///`;
+    console.log(msg);
+}
+
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
     fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance, revertOCC,
-    getSuperTrend, getAllOpenOrders,
+    getSuperTrend, getAllOpenOrders, welcome,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
 

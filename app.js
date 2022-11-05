@@ -15,6 +15,7 @@ server.listen(port);
  */
 async function CopyStream() {
     await bot.InitialData();
+    bot.autoSyncExchange().then();
     bot.binanceCopier().then();
 }
 

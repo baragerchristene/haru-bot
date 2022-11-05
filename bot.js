@@ -10,6 +10,7 @@ async function InitialData() {
     ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
     //faster access list trading coin
     ctx.occO = _.keyBy(ctx.occQ, 'symbol');
+    lib.welcome();
 }
 
 async function autoSyncIgnorer() {
