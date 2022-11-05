@@ -14,6 +14,10 @@ class BotUI {
         lib.welcome();
     }
 
+    async getLastSession() {
+        //todo
+    }
+
     autoSyncExchanges() {
         setInterval(()=>{
             if (!this.syncingEx) {

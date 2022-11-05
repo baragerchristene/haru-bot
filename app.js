@@ -14,11 +14,12 @@ const BotUI             = require('./botUI');
 /**
  * BOT COPY
  */
-function CopyStream() {
+async function CopyStream() {
     const bot = new BotUI();
+    await bot.getLastSession();
     bot.autoSyncExchanges();
     bot.autoBinanceCopier();
     bot.autoBinanceInvertCopier();
 }
 
-CopyStream() // profit go here
+CopyStream().then() // profit go here
