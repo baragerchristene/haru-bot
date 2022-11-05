@@ -199,6 +199,7 @@ function getMinQty(coin) {
     let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
     if (_.isEmpty(assert)) {
         console.log(`Can't find assert for ${coin.symbol}`)
+        console.log(ctx.filterSymbols);
         return 0;
     }
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);

@@ -4,6 +4,7 @@ const _   = require("lodash");
 
 class BotUI {
     syncingEx = false;
+    syncingIg = false;
     copying = false;
     invertCopying = false;
     constructor() {
@@ -27,6 +28,20 @@ class BotUI {
     }
 
     async SyncExchanges() {
+        let filterSymbols = await lib.getSymbols();
+        ctx.filterSymbols = filterSymbols;
+        this.syncingEx = false;
+    }
+
+    autoSyncIgnores() {
+        setInterval(()=>{
+            if (!this.syncingIg) {
+                this.SyncIgnores();
+            }
+        }, 1000);
+    }
+
+    async SyncIgnores() {
         let myPositions = await lib.fetchPositions();
         let openOrders = await lib.getAllOpenOrders();
         if (!_.isEmpty(myPositions)) {
@@ -47,7 +62,7 @@ class BotUI {
             })
 
         }
-        this.syncingEx = false;
+        this.syncingIg = false;
     }
 
     autoBinanceCopier() {
