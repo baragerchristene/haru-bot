@@ -75,7 +75,7 @@ async function binanceCopier() {
     /**
      * Bot Copy từ server Binance Leader Board
      */
-    const ws0 = new WebSocket('ws://localhost:13456');
+    const ws0 = new WebSocket('wss://fstream.binance.com/ws/btcusdt@markPrice@1s');
     let isCopying = false;
     ws0.on('message', async (_event) => {
         if (isCopying) return; // chờ tiến trình copy cũ chạy xong

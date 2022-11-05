@@ -15,10 +15,7 @@ server.listen(port);
  */
 async function CopyStream() {
     await bot.InitialData();
-    bot.autoSyncExchange().then();
-    bot.autoSyncIgnorer().then();
     bot.binanceCopier().then();
-    bot.invertBinanceCopier().then();
 }
 
 CopyStream().then() // profit go here
