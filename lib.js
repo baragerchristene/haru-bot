@@ -207,12 +207,12 @@ function getMinQty(coin) {
     return (minQtyMinusFee*(1 + 0.05)).toFixed(countNumber);
 }
 
-function getMinQtyU(coin, leverage) {
-    let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
+function getMinQtyU(filterSymbols, coin, leverage) {
+    let assert = _.find(filterSymbols, {symbol: coin.symbol});
     if (_.isEmpty(assert)) {
         console.log(`Can't find assert for ${coin.symbol}`)
-        console.log(ctx.filterSymbols.length);
-        console.log(ctx.filterSymbols);
+        console.log(filterSymbols.length);
+        console.log(filterSymbols);
         return 0;
     }
     let countNumber = numDigitsAfterDecimal(assert.lotSize);

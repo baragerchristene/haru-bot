@@ -4,6 +4,7 @@ const _   = require("lodash");
 
 class BotUI {
     syncingEx = false;
+    filterSymbols = [];
     syncingIg = false;
     copying = false;
     invertCopying = false;
@@ -28,8 +29,7 @@ class BotUI {
     }
 
     async SyncExchanges() {
-        let filterSymbols = await lib.getSymbols();
-        ctx.filterSymbols = filterSymbols;
+        this.filterSymbols = await lib.getSymbols();
         this.syncingEx = false;
     }
 
@@ -103,7 +103,7 @@ class BotUI {
 
                         if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
                             let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                            let minAmount = lib.getMinQtyU(leadPosition, leadPosition.leverage);
+                            let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
                             await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                         } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
                             // lấy chiều vị thế tại 2 thời điểm
@@ -139,10 +139,10 @@ class BotUI {
                                 //đóng theo vị thế của user
                                 if (!_.isEmpty(myPosition)) {
                                     await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true);
-                                    let minAmount = lib.getMinQtyU(leadPosition, leadPosition.leverage);
+                                    let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                                 } else {
-                                    let minAmount = lib.getMinQtyU(leadPosition, leadPosition.leverage);
+                                    let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                                 }
                             }
@@ -214,7 +214,7 @@ class BotUI {
 
                         if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
                             let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                            let minAmount = lib.getMinQtyU(leadPosition, leadPosition.leverage);
+                            let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
                             await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage, true);
                         } else if (!_.isEmpty(leadPositionOld) && _.isEmpty(leadPosition)) { // cũ có, mới không có => đóng vị thế
                             // xác định vị thế người dùng
