@@ -261,7 +261,7 @@ function getAmountChange(position, amountChangeRate) {
         amountChange = Number((minAmt*multiplier).toFixed(fraction));
     } else {
         if (multiplierOrigin > 1) {
-            amountChange = minAmt;
+            amountChange = minAmt*2;
         } else {
             amountChange = myAmt;
         }
