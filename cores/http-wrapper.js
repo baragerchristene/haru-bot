@@ -47,7 +47,7 @@ class HttpWrapper {
         let link = `${this.url}/${path}`;
         let response = {};
         try {
-            await axios.post(link, bodyPayload)
+            await axios.post(link, bodyPayload, {headers: {"Accept": "application/json, text/plain, */*"}})
                 .then(res => {
                     response = res.data;
                 })
