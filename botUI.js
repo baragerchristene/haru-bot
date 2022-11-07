@@ -49,7 +49,7 @@ class BotUI {
                 if (position.symbol != 'BTCUSDT') {
                     // có open order thì thêm vào ignore
                     if (_.some(openOrders, {symbol: position.symbol})) {
-                        if (!_.some(ctx.ignoreCoins, {symbol: position.symbol})) {
+                        if (!_.every(ctx.ignoreCoins, {symbol: position.symbol})) {
                             ctx.ignoreCoins.push(position.symbol)
                         }
                     } else { // nếu không có thì xóa khỏi ignore
