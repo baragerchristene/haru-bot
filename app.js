@@ -4,7 +4,7 @@ const BotUI             = require('./botUI');
  */
 async function CopyStream() {
     const bot = new BotUI();
-    // await bot.getLastSession();
+    await bot.getLastSession();
     bot.autoSyncExchanges();
     bot.autoSyncIgnores();
     bot.autoBinanceCopier();

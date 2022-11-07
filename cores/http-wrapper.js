@@ -46,14 +46,18 @@ class HttpWrapper {
     async x_post(path, bodyPayload) {
         let link = `${this.url}/${path}`;
         let response = {};
-        await axios.post(link, bodyPayload)
-            .then(res => {
-                response = res.data;
-            })
-            .catch(err => {
-                console.log('Error: ', err.message);
-            })
-
+        try {
+            await axios.post(link, bodyPayload)
+                .then(res => {
+                    response = res.data;
+                })
+                .catch(err => {
+                    console.log('Error: ', err.message);
+                })
+        } catch (e) {
+            console.log('x-post error');
+            console.log(e);
+        }
         return response;
     }
 
