@@ -23,6 +23,7 @@ async function getSymbols() {
     let customSymbols = [];
     _.filter(exchangeInfo.symbols, (symbol) => {
         let newSymbol = {};
+        newSymbol.symbol = symbol.symbol;
         _.filter(symbol.filters, (filter) => {
             if (filter.filterType == 'LOT_SIZE') {
                 newSymbol.lotSize = filter.stepSize;
