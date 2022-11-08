@@ -168,9 +168,11 @@ async function openPositionByType(type, position, quantity, leverage, isInvertTr
         setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage).then();
     } else {
         log(`Mở vị thế không thành công! ${symbol} ${quantity}`).then();
+        console.log(result);
     }
     if (result.code) {
         sendMessage(result).then(); // send error response
+        console.log(result);
     }
 }
 
