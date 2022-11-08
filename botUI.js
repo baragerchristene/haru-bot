@@ -120,12 +120,12 @@ class BotUI {
                             if (oldAmt != newAmt) { //
                                 if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                     if (!_.isEmpty(myPosition)) {
-                                        let amountChange = lib.getAmountChange(myPosition, amountChangeRate);
+                                        let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
                                         await lib.closePositionByType(newSide, myPosition, amountChange);
                                     }
                                 } else { // DCA
                                     if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                                        let amountChange = lib.getAmountChange(myPosition, amountChangeRate);
+                                        let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
                                         await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
                                     } else { // chưa có thì gửi message
                                         let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;

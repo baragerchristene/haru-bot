@@ -195,11 +195,11 @@ async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, 
     }
 }
 
-function getMinQty(coin) {
-    let assert = _.find(ctx.filterSymbols, {symbol: coin.symbol});
+function getMinQty(filterSymbols, coin) {
+    let assert = _.find(filterSymbols, {symbol: coin.symbol});
     if (_.isEmpty(assert)) {
         console.log(`Can't find assert for ${coin.symbol}`)
-        console.log(ctx.filterSymbols.length);
+        console.log(filterSymbols.length);
         return 0;
     }
     let minQtyMinusFee = _.max([assert.lotSize, assert.notional/coin.markPrice]);
@@ -252,11 +252,11 @@ async function fetchLeaderBoardPositions(encryptedUid) {
     return response
 }
 
-function getAmountChange(position, amountChangeRate) {
+function getAmountChange(filterSymbols, position, amountChangeRate) {
     let myAmt = Math.abs(position.positionAmt); // khối lượng của tôi
     let fraction = numDigitsAfterDecimal(myAmt);
     let amountChange = Math.abs(myAmt * amountChangeRate).toFixed(fraction);
-    let minAmt = getMinQty(position);
+    let minAmt = getMinQty(filterSymbols, position);
     let multiplier = Math.round(amountChange/minAmt); // lấy bội số vs min
     let multiplierOrigin = Math.round(myAmt/minAmt); // lấy bội số vs min
     if (multiplier >= 1) {
