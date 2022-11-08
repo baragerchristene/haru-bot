@@ -61,6 +61,8 @@ class BotUI {
 
             })
 
+        } else {
+            ctx.ignoreCoins = ['BTCUSDT']; // trỏ về mặc định
         }
         this.syncingIg = false;
     }
