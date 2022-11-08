@@ -13,7 +13,8 @@ async function CopyStream() {
 
 CopyStream().then() // profit go here
 process.on('uncaughtException', err => {
-    console.log(`Uncaught Exception: ${err.message}`)
+    console.log(`Uncaught Exception marked`)
+    console.log(err);
     // process.exit(1)
 })
 
