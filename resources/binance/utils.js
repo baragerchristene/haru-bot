@@ -20,19 +20,20 @@ async function fetchPositionBySymbol(symbol) {
 
 async function getSymbols() {
     const exchangeInfo = await binance.futuresExchangeInfo();
-    const symbols =  _.get(exchangeInfo, 'symbols');
-    return _.map(symbols, (symbol) => {
+    let customSymbols = [];
+    _.filter(exchangeInfo.symbols, (symbol) => {
         let newSymbol = {};
-        newSymbol.symbol = symbol.symbol;
-        _.filter(_.get(symbol, 'filters'), (filter) => {
+        _.filter(symbol.filters, (filter) => {
             if (filter.filterType == 'LOT_SIZE') {
                 newSymbol.lotSize = filter.stepSize;
-            } else if (filter.filterType == 'MIN_NOTIONAL') {
+            }
+            if (filter.filterType == 'MIN_NOTIONAL') {
                 newSymbol.notional = filter.notional
             }
         })
-        return newSymbol;
+        customSymbols.push(newSymbol)
     })
+    return customSymbols
 }
 
 async function getMarkPrice(symbol) {
