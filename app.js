@@ -12,13 +12,3 @@ async function CopyStream() {
 }
 
 CopyStream().then() // profit go here
-process.on('uncaughtException', err => {
-    console.log(`Uncaught Exception marked`)
-    console.log(err);
-    // process.exit(1)
-})
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled rejection at ', promise, `reason: ${err.message}`)
-    // process.exit(1)
-})
