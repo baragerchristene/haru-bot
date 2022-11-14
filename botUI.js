@@ -1,6 +1,7 @@
+const {WebSocket} = require("ws");
 const ctx = require("./context");
-const lib = require("./lib");
 const _   = require("lodash");
+const lib = require("./lib");
 
 class BotUI {
     filterSymbols = [];
