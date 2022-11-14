@@ -22,6 +22,12 @@ class BotUI {
             if (previousSession.ignoreCoins) {
                 ctx.ignoreCoins = previousSession.ignoreCoins;
             }
+            if (previousSession.minX) {
+                ctx.minX = previousSession.minX;
+            }
+            if (previousSession.copyID) {
+                ctx.copyID = previousSession.copyID;
+            }
         }
     }
 

@@ -368,6 +368,10 @@ bot.command('cid', async (ctx0) => {
         // chờ 1s
         await delay(1000)
         ctx.autoCopy = true
+        let session = read();
+        if (_.isEmpty(session)) session = {}
+        session.copyID = ctx.copyID;
+        write(session);
         await sendMessage(`Copy ID mới là ${ctx.copyID}`);
     } else {
         await sendMessage(`Copy ID không hợp lệ!`);
@@ -396,6 +400,10 @@ bot.command('vol', async (ctx0) => {
     let minX = _.toNumber(Number(getTgMessage(ctx0, 'vol')).toFixed(0));
     if (minX > 0) {
         ctx.minX = minX;
+        let session = read();
+        if (_.isEmpty(session)) session = {}
+        session.minX = ctx.minX;
+        write(session);
         await sendMessage(`Min copy vol từng lệnh mới là ${ctx.minX}USDT`);
     } else {
         await sendMessage(`Min copy vol không hợp lệ!`);
