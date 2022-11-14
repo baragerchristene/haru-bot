@@ -4,7 +4,6 @@ const _   = require("lodash");
 const lib = require("./lib");
 
 class BotUI {
-    filterSymbols = [];
     constructor() {
         ctx.copyID = process.env.COPY_ID; // nguồn copy id
         ctx.minX = process.env.MIN_X; // giá trị ban đầu của mỗi lệnh mở vị thế
@@ -15,18 +14,6 @@ class BotUI {
 
     async getLastSession() {
         //todo
-    }
-
-    async autoSyncExchanges() {
-        this.filterSymbols = await lib.getSymbols();
-        const ws0 = new WebSocket('ws://localhost:13457');
-        let syncingExchanges = false;
-        ws0.on('message', async (_event) => {
-            if (syncingExchanges) return; // chờ tiến trình copy cũ chạy xong
-            syncingExchanges = true;
-            this.filterSymbols = await lib.getSymbols();
-            syncingExchanges = false;
-        })
     }
 
     async autoBinanceCopier() {
@@ -52,6 +39,7 @@ class BotUI {
                 const myPositions = await lib.fetchPositions();
                 ctx.myPositions = myPositions;
                 if (!_.isEmpty(totalPosition)) {
+                    let filterSymbols = await lib.getSymbols();
                     _.filter(totalPosition, async (position) => {
                         if (_.includes(ctx.ignoreCoins, position.symbol)) return; // nằm trong white list thì bỏ qua
                         let leadPositionOld = _.find(leadPositionOlds, {symbol: position.symbol});
@@ -60,7 +48,7 @@ class BotUI {
 
                         if (_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // cũ k có, mới có => đặt lệnh mới
                             let newSide = leadPosition.amount > 0 ? 'LONG' : 'SHORT';
-                            let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
+                            let minAmount = lib.getMinQtyU(filterSymbols, leadPosition, leadPosition.leverage);
                             await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                         } else if (!_.isEmpty(leadPositionOld) && !_.isEmpty(leadPosition)) { // khi cả cũ và mới đều có dữ liệu
                             // lấy chiều vị thế tại 2 thời điểm
@@ -78,12 +66,12 @@ class BotUI {
                                 if (oldAmt != newAmt) { //
                                     if (leadPosition.entryPrice == leadPositionOld.entryPrice) { // chốt lãi or cắt lỗ 1 phần
                                         if (!_.isEmpty(myPosition)) {
-                                            let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
+                                            let amountChange = lib.getAmountChange(filterSymbols, myPosition, amountChangeRate);
                                             await lib.closePositionByType(newSide, myPosition, amountChange);
                                         }
                                     } else { // DCA
                                         if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
-                                            let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
+                                            let amountChange = lib.getAmountChange(filterSymbols, myPosition, amountChangeRate);
                                             await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
                                         } else { // chưa có thì gửi message
                                             let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
@@ -96,10 +84,10 @@ class BotUI {
                                 //đóng theo vị thế của user
                                 if (!_.isEmpty(myPosition)) {
                                     await lib.closePositionByType(oldSide, myPosition, Math.abs(myPosition.positionAmt), true);
-                                    let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
+                                    let minAmount = lib.getMinQtyU(filterSymbols, leadPosition, leadPosition.leverage);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                                 } else {
-                                    let minAmount = lib.getMinQtyU(this.filterSymbols, leadPosition, leadPosition.leverage);
+                                    let minAmount = lib.getMinQtyU(filterSymbols, leadPosition, leadPosition.leverage);
                                     await lib.openPositionByType(newSide, leadPosition, minAmount, leadPosition.leverage);
                                 }
                             }
