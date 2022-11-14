@@ -14,7 +14,15 @@ class BotUI {
     }
 
     async getLastSession() {
-        //todo
+        let previousSession = lib.read();
+        if (!_.isEmpty(previousSession)) {
+            if (previousSession.autoCopy) {
+                ctx.autoCopy = previousSession.autoCopy;
+            }
+            if (previousSession.ignoreCoins) {
+                ctx.ignoreCoins = previousSession.ignoreCoins;
+            }
+        }
     }
 
     async autoSyncExchanges() {

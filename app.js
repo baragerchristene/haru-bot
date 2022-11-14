@@ -19,6 +19,7 @@ wss1ms.on('connection', ws => {setInterval(() => { ws.send('ok') }, 2000)});
  */
 async function CopyStream() {
     const bot = new BotUI();
+    await bot.getLastSession();
     bot.autoSyncExchanges().then();
     bot.autoBinanceCopier().then();
 }

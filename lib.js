@@ -17,6 +17,28 @@ const moment = require("moment-timezone");
 const {FasterDEMA} = require("trading-signals");
 moment.tz.setDefault("Asia/Ho_Chi_Minh");
 const SuperTrend = require("supertrend-indicator");
+const fs = require('fs');
+
+function read(file= 'config') {
+    try {
+        const data = fs.readFileSync(`./${file}.json`, 'utf8');
+        // parse JSON string to JSON object
+        return JSON.parse(data);
+    } catch (err) {
+        log(`Error reading file from disk: ${err}`).then(r => {});
+    }
+}
+
+function write(data = {}, file = 'config') {
+    try {
+        // convert JSON object to a string
+        const raw = JSON.stringify(data, null, 4);
+        // write file to disk
+        fs.writeFileSync(`./${file}.json`, raw, 'utf8');
+    } catch (err) {
+        log(`Error writing file: ${err}`).then(r => {});
+    }
+}
 
 async function checkTrendEMA(symbol, frame, smallLimit, largeLimit) {
     const latestCandles = await binance.futuresCandles(symbol, frame, {limit: 1500});
@@ -329,9 +351,10 @@ function welcome() {
     console.log(msg);
 }
 
+
 module.exports = {
     sendMessage, openPositionByType, getSymbols, getMinQty, getMinQtyU, fetchPositions, numDigitsAfterDecimal,
     fetchPositionBySymbol, kFormatter, roe, getSide, getRSI, fetchCopyPosition, OCC, getBalance, revertOCC,
-    getSuperTrend, getAllOpenOrders, welcome,
+    getSuperTrend, getAllOpenOrders, welcome, read, write,
     closePositionByType,dcaPositionByType, delay, fetchLeaderBoardPositions, getLeverageLB, getAmountChange};
 

@@ -11,6 +11,30 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
 
 bot.launch()
+
+const fs = require('fs');
+
+function read(file= 'config') {
+    try {
+        const data = fs.readFileSync(`./${file}.json`, 'utf8');
+        // parse JSON string to JSON object
+        return JSON.parse(data);
+    } catch (err) {
+        log(`Error reading file from disk: ${err}`).then(r => {});
+    }
+}
+
+function write(data = {}, file = 'config') {
+    try {
+        // convert JSON object to a string
+        const raw = JSON.stringify(data, null, 4);
+        // write file to disk
+        fs.writeFileSync(`./${file}.json`, raw, 'utf8');
+    } catch (err) {
+        log(`Error writing file: ${err}`).then(r => {});
+    }
+}
+
 // Enable graceful stop
 // process.once('SIGINT', () => bot.stop('SIGINT'))
 // process.once('SIGTERM', () => bot.stop('SIGTERM'))
@@ -254,6 +278,10 @@ bot.command('atp', async (ctx0) => {
 bot.command('atc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoCopy = getTgMessage(ctx0, 'atc') == '1';
+    let session = read();
+    if (_.isEmpty(session)) session = {}
+    session.autoCopy = ctx.autoCopy;
+    write(session);
     await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
 });
 
@@ -290,6 +318,10 @@ bot.command('add', async (ctx0) => {
     if (newSymbol && newSymbol != '') {
         if (_.includes(ctx.ignoreCoins, newSymbol)) {
             ctx.ignoreCoins = _.filter(ctx.ignoreCoins, (coin) => { if (coin != newSymbol) return coin })
+            let session = read();
+            if (_.isEmpty(session)) session = {}
+            session.ignoreCoins = ctx.ignoreCoins;
+            write(session);
             await sendMessage(`Coin ${newSymbol} đã xóa khỏi danh sách bỏ qua`);
         } else {
             await sendMessage(`Coin ${newSymbol} không nằm trong danh sách bỏ qua`);
@@ -305,6 +337,10 @@ bot.command('ig', async (ctx0) => {
             await sendMessage(`Coin ${newSymbol} đã có trong danh sách bỏ qua`);
         } else {
             ctx.ignoreCoins.push(newSymbol);
+            let session = read();
+            if (_.isEmpty(session)) session = {}
+            session.ignoreCoins = ctx.ignoreCoins;
+            write(session);
             await sendMessage(`Coin ${newSymbol} đã được thêm vào danh sách bỏ qua`);
         }
     } else await sendMessage(`Ký tự không hợp lệ`);
