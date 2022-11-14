@@ -17,7 +17,8 @@ class BotUI {
         //todo
     }
 
-    autoSyncExchanges() {
+    async autoSyncExchanges() {
+        this.filterSymbols = await lib.getSymbols();
         const ws0 = new WebSocket('ws://localhost:13457');
         let syncingExchanges = false;
         ws0.on('message', async (_event) => {
