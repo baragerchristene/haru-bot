@@ -51,6 +51,15 @@ async function sendMessage(message) {
     }
 }
 
+async function sendOriginMessage(message) {
+    try {
+        await bot.telegram.sendMessage(group_id, message);
+    } catch (error) {
+        console.log('send message error');
+        console.log(error);
+    }
+}
+
 function stringToChunks(string, chunkSize) {
     const chunks = [];
     while (string.length > 0) {
@@ -584,6 +593,11 @@ bot.command('lp', async (ctx0) => {
     lastPnl = _.toNumber(lastPnl);
     ctx.profit+= lastPnl;
     await sendMessage(`Đã cập nhật chính xác TP: ${ctx.profit}`);
+});
+
+bot.command('cfg', async (_ctx) => {
+    let previousSession = read();
+    await sendOriginMessage(previousSession);
 });
 
 // ctx.profit

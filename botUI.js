@@ -28,6 +28,11 @@ class BotUI {
             if (previousSession.copyID) {
                 ctx.copyID = previousSession.copyID;
             }
+            if (!previousSession.rsCount) {
+                previousSession.rsCount = 1;
+            } else {
+                previousSession.rsCount++;
+            }
         }
     }
 
