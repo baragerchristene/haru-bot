@@ -135,6 +135,9 @@ class BotUI {
                                 if (!_.isEmpty(myPosition)) {
                                     let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
                                     await lib.closePositionByType(side, myPosition, Math.abs(myPosition.positionAmt), true)
+                                } else {
+                                    let message = `Lead Close ${newSide} #${leadPositionOld.symbol} ${leadPositionOld.leverage}X with uPnl: ${leadPositionOld.pnl}`;
+                                    await lib.sendMessage(message);
                                 }
                             }
                         })
