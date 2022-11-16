@@ -9,6 +9,8 @@ const fetch = require("node-fetch");
 const {fetchPositions, binance, fetchPositionBySymbol, getMarkPrice, getBalance} = require('./resources/binance/utils');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const group_id = process.env.GROUP_ID;
+const FuturesHeroesApi = require("./resources/trader-wagon/futures-heroes-api");
+const fthApi = new FuturesHeroesApi();
 
 bot.launch()
 
@@ -141,6 +143,27 @@ bot.command('dbi', async (ctx0) => {
             await sendMessage(message);
         } else {
             await sendMessage('Không có dữ liệu vị thế');
+        }
+    }
+});
+
+bot.command('dti', async (ctx0) => {
+    let leaderId = getTgMessage(ctx0, 'dti');
+    let response = await fthApi.getPositions(leaderId);
+    let positions = response.data;
+
+    if (_.isEmpty(positions)) {
+        await sendMessage('Không có dữ liệu');
+    } else {
+        let arr1 = _.filter(positions, (item) => {
+            return item.pnl > 0
+        })
+        let result = _.countBy(arr1, 'symbol');
+        console.log(result);
+        if (_.isEmpty(result)) {
+            await sendMessage('Không có lệnh thắng');
+        } else {
+            await sendOriginMessage(result);
         }
     }
 });
@@ -608,8 +631,6 @@ bot.command('cfg', async (_ctx) => {
     let previousSession = read();
     await sendOriginMessage(previousSession);
 });
-
-// ctx.profit
 
 bot.command('tpsl', async (ctx0) => {
     if (!isMe(ctx0)) return;
