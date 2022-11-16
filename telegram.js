@@ -16,6 +16,17 @@ bot.launch()
 
 const fs = require('fs');
 
+function roe(position) {
+    let uPnlUSDT = 0;
+    if (position.positionAmt > 0) {
+        uPnlUSDT = position.positionAmt*(position.markPrice - position.entryPrice);
+    } else if (position.positionAmt < 0) {
+        uPnlUSDT = position.positionAmt*(-1)*(position.markPrice - position.entryPrice);
+    }
+    let entryMargin = position.positionAmt*position.markPrice*(1/position.leverage);
+    return uPnlUSDT/entryMargin;
+}
+
 function read(file= 'config') {
     try {
         const data = fs.readFileSync(`./${file}.json`, 'utf8');
@@ -88,27 +99,28 @@ function getPositionsStr(coins) {
     let total = 0;
     coins = _.orderBy(coins, ['updateTimeStamp'], ['desc']);
     let message = _.reduce(coins, (msg, coin) => {
-        if (!coin.amount) coin.amount = coin.positionAmount
-        if (!coin.pnl) coin.pnl = coin.unrealizedProfit
+        if (!coin.amount) coin.amount = _.toNumber(coin.positionAmt)
+        if (!coin.pnl) coin.pnl = _.toNumber(coin.unRealizedProfit)
         let side = coin.amount > 0 ? 'LONG' : 'SHORT';
         let leverage = 0;
         !coin.leverage ? leverage = getLeverageLB(coin) : leverage = coin.leverage
         let amt = `${kFormatter(coin.markPrice*coin.amount/leverage)} USDT`;
         let roe = leadRoe(coin, leverage);
 
-        msg+= `${side} ${leverage}X #${coin.symbol} ${amt}\n` +
+        msg+= `${side} ${leverage}X #${coin.symbol}\nMargin: ${amt}\n` +
         `Entry: ${coin.entryPrice}\n` +
         `Mark: ${coin.markPrice}\n` +
         `${coin.pnl > 0 ? '🟢':'🔴'} uPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`
+        if (coin.updateTime && !_.isArray(coin.updateTime)) coin.updateTimeStamp = coin.updateTime;
         if (coin.updateTimeStamp) {
-            msg+= `Updated on: ${moment(coin.updateTimeStamp).format('DD/MM/yyyy HH:mm:ss')}\n`
+            msg+= `Last update ${moment(coin.updateTimeStamp).format('DD/MM/yyyy HH:mm:ss')}\n`
         }
 
         msg+= '___________________________________\n'
         total+=coin.pnl;
         return msg;
     }, '');
-    message+= `Total PNL: ${total.toFixed(2)} USDT`
+    message+= `Total PNL: ${total.toFixed(2)} USDT / ${coins.length} positions`
     return message;
 }
 
@@ -262,24 +274,7 @@ bot.command('ps', async (ctx) => {
     if (!isMe(ctx)) return;
     let positions = await fetchPositions();
     if (!_.isEmpty(positions)) {
-        let message = _.reduce(positions, (msg, coin) => {
-            let side = '';
-            let direction;
-            if (coin.positionAmt > 0) {
-                side = 'LONG';
-                direction = 1;
-            } else {
-                side = 'SHORT';
-                direction = -1;
-            }
-            let amt = kFormatter((coin.markPrice*coin.positionAmt)/coin.leverage);
-            let uPnlUSDT = coin.positionAmt*direction*(coin.markPrice - coin.entryPrice);
-            let entryMargin = coin.positionAmt*coin.markPrice*(1/coin.leverage)
-            let roe = ((uPnlUSDT/entryMargin)*100).toFixed(2);
-            msg+= `${side} ${coin.leverage}X #${coin.symbol} ${amt} USDT; E: ${coin.entryPrice}; M: ${coin.markPrice}; ${coin.unRealizedProfit > 0 ? '🟢':'🔴'} uPNL(ROE): ${Number(coin.unRealizedProfit).toFixed(2)}(${roe}%)\n`;
-            return msg;
-        }, '')
-        await sendMessage(message);
+        await sendMessage(getPositionsStr(positions));
     } else {
         await sendMessage('Không có vị thế nào!');
     }
@@ -288,10 +283,7 @@ bot.command('ps', async (ctx) => {
 bot.command('as', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let balance = await getBalance();
-    let diff = balance - _.toNumber(ctx.lastBalance);
-    let change = diff > 0 ? '📉' : '📈';
-    ctx.lastBalance = balance;
-    await log(`Current #balance is $${balance}\n${change} ${diff}`);
+    await log(`Current #balance is $${balance}`);
 });
 
 bot.command('ss', async () => {
@@ -603,7 +595,9 @@ bot.command('xa', async (ctx0) => {
     }
     let rawPosition = await fetchPositionBySymbol(symbol);
     let position = {};
-    if (_.isEmpty(rawPosition)) {
+    let result = {};
+    let direction = 0;
+    if (_.isEmpty(_.find(rawPosition, {symbol}))) {
         await sendMessage(`Vị thế không tồn tại`);
         return;
     } else {
@@ -611,11 +605,25 @@ bot.command('xa', async (ctx0) => {
         let type = position.positionAmt > 0 ? 'LONG' : 'SHORT';
         let amount = Math.abs(position.positionAmt);
         if (type == 'LONG') {
-            await binance.futuresMarketSell(symbol, amount);
+            result = await binance.futuresMarketSell(symbol, amount, { newOrderRespType: 'RESULT' });
+            direction = 1;
         } else {
-            await binance.futuresMarketBuy(symbol, amount);
+            result = await binance.futuresMarketBuy(symbol, amount, { newOrderRespType: 'RESULT' });
+            direction = -1;
         }
-        await sendMessage(`Vị thế ${type} đã đóng, last Pnl: ${position.unRealizedProfit}` );
+        if (!_.isEmpty(result) && result.status == 'FILLED') {
+            let uPnl = direction*amount*(result.avgPrice - position.entryPrice);
+            let fee = amount*result.avgPrice*0.0006;
+            let pnl = uPnl - fee;
+            ctx.profit+= pnl;
+            let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol} Close ${type}\n` +
+                `Last uPnl: ${pnl.toFixed(2)} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'}\n` +
+                `Total PNL: ${ctx.profit.toFixed(2)}\n`;
+            await log(msg);
+        } else {
+            await log(`Đóng vị thế không thành công! ${symbol} ${amount}\nVào app tự đóng thủ công`).then();
+            console.log(result);
+        }
     }
 });
 

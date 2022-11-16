@@ -161,9 +161,12 @@ async function closePositionByType(type, position, quantity, close = false) {
         let fee = quantity*result.avgPrice*0.0006;
         let pnl = uPnl - fee;
         ctx.profit+= pnl;
-        await log(`${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : `Close ${closeRate}`} ${type}\nLast uPnl: ${pnl} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
+        let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : `Close ${closeRate}`} ${type}\n` +
+            `Last uPnl: ${pnl.toFixed(2)} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'}\n` +
+            `Total PNL: ${ctx.profit.toFixed(2)}\n`;
+        log(msg);
     } else {
-        log(`Đóng vị thế không thành công! ${symbol} ${quantity}\n Nhập /xa ${symbol} để đóng lệnh hoặc tự đóng thủ công`).then();
+        log(`Đóng vị thế không thành công! ${symbol} ${quantity}\nNhập /xa ${symbol} để đóng lệnh hoặc tự đóng thủ công`).then();
         console.log(result);
     }
     if (result.code) {
