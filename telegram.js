@@ -110,7 +110,7 @@ function getPositionsStr(coins) {
         msg+= `${side} ${leverage}X #${coin.symbol}\nMargin: ${amt}\n` +
         `Entry: ${coin.entryPrice}\n` +
         `Mark: ${coin.markPrice}\n` +
-        `${coin.pnl > 0 ? '🟢':'🔴'} uPNL (ROE%): ${Number(coin.pnl).toFixed(2)}(${roe}%)\n`
+        `${coin.pnl > 0 ? '🟢':'🔴'} uPNL (ROE%): ${Number(coin.pnl).toFixed(2)} (${roe}%)\n`
         if (coin.updateTime && !_.isArray(coin.updateTime)) coin.updateTimeStamp = coin.updateTime;
         if (coin.updateTimeStamp) {
             msg+= `Last update ${moment(coin.updateTimeStamp).format('DD/MM/yyyy HH:mm:ss')}\n`
