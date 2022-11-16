@@ -145,15 +145,32 @@ async function getSide(symbol) {
 
 async function closePositionByType(type, position, quantity, close = false) {
     let symbol = position.symbol;
+    let result = {};
+    let direction = 0;
     if (type == 'LONG') {
-        await binance.futuresMarketSell(symbol, quantity);
+        result = await binance.futuresMarketSell(symbol, quantity, { newOrderRespType: 'RESULT' });
+        direction = 1;
     } else {
-        await binance.futuresMarketBuy(symbol, quantity);
+        result = await binance.futuresMarketBuy(symbol, quantity, { newOrderRespType: 'RESULT' });
+        direction = -1;
     }
-
-    position.unRealizedProfit = Number(position.unRealizedProfit) - Math.abs(position.positionAmt)*Number(position.entryPrice)*0.0006;
-    ctx.profit+= position.unRealizedProfit;
-    await log(`${position.unRealizedProfit > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : 'Close apart'} ${type}\nLast uPnl: ${position.unRealizedProfit} | ${(roe(position)*100).toFixed(2)}% | ${position.unRealizedProfit > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
+    if (!_.isEmpty(result) && result.status == 'FILLED') {
+        let amount = Math.abs(position.positionAmt);
+        let closeRate = `${((quantity/amount)*100).toFixed(0)}%`;
+        let uPnl = direction*quantity*(result.avgPrice - position.entryPrice);
+        let fee = quantity*result.avgPrice*0.0006;
+        let pnl = uPnl - fee;
+        ctx.profit+= pnl;
+        await log(`${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : `Close ${closeRate}`} ${type}\nLast uPnl: ${pnl} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'} | Total: ${ctx.profit}`);
+    } else {
+        log(`Đóng vị thế không thành công! ${symbol} ${quantity}\n Nhập /xa ${symbol} để đóng lệnh hoặc tự đóng thủ công`).then();
+        console.log(result);
+    }
+    if (result.code) {
+        let errMsg = `Code: ${result.code} - ${result.msg}`;
+        log(errMsg).then(); // send error response
+        console.log(result);
+    }
 }
 
 async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntryPrice, newEntryPrice) {
@@ -193,7 +210,8 @@ async function openPositionByType(type, position, quantity, leverage, isInvertTr
         console.log(result);
     }
     if (result.code) {
-        sendMessage(result).then(); // send error response
+        let errMsg = `Code: ${result.code} - ${result.msg}`;
+        log(errMsg).then(); // send error response
         console.log(result);
     }
 }
@@ -345,10 +363,11 @@ async function getAllOpenOrders() {
     return openOrders;
 }
 
-function welcome() {
+async function welcome() {
     const now = moment().format("HH:mm:ss DD/MM/YYYY");
-    let msg = `||| Bot started: ${now} ///`;
+    let msg = `||| BOT #STARTED: ${now} ///`;
     console.log(msg);
+    sendMessage(msg);
 }
 
 
