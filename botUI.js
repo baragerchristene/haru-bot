@@ -109,7 +109,7 @@ class BotUI {
                                         } else { // DCA
                                             if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
                                                 let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
-                                                await lib.openPositionByType(newSide, leadPosition, amountChange, 0, true); // DCA
+                                                await lib.openPositionByType(newSide, leadPosition, amountChange, leadPosition.leverage, true); // DCA
                                             } else { // chưa có thì gửi message
                                                 let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
                                                 await lib.sendMessage(message);
