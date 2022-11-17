@@ -109,7 +109,7 @@ class BotUI {
                                         } else { // DCA
                                             if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
                                                 let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
-                                                await lib.dcaPositionByType(newSide, leadPosition.symbol, amountChange, oldAmt, newAmt, leadPositionOld.entryPrice, leadPosition.entryPrice);
+                                                await lib.openPositionByType(newSide, leadPosition, amountChange, 0, true); // DCA
                                             } else { // chưa có thì gửi message
                                                 let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
                                                 await lib.sendMessage(message);
@@ -136,7 +136,7 @@ class BotUI {
                                     let side = myPosition.positionAmt > 0 ? 'LONG' : 'SHORT';
                                     await lib.closePositionByType(side, myPosition, Math.abs(myPosition.positionAmt), true)
                                 } else {
-                                    let message = `Lead Closed ${leadPositionOld.amount > 0 ? 'LONG': 'SHORT'} #${leadPositionOld.symbol} ${leadPositionOld.leverage}X with uPnl: ${leadPositionOld.pnl}`;
+                                    let message = `Lead closed ${leadPositionOld.amount > 0 ? 'LONG': 'SHORT'} #${leadPositionOld.symbol} ${leadPositionOld.leverage}X with uPnl: ${leadPositionOld.pnl}`;
                                     await lib.sendMessage(message);
                                 }
                             }

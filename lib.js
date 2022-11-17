@@ -161,8 +161,8 @@ async function closePositionByType(type, position, quantity, close = false) {
         let fee = quantity*result.avgPrice*0.0006;
         let pnl = uPnl - fee;
         ctx.profit+= pnl;
-        let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'Close' : `Close ${closeRate}`} ${type}\n` +
-            `Last uPnl: ${pnl.toFixed(2)} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'}\n` +
+        let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'closed' : `closed ${closeRate}`} ${type}\n` +
+            `Final PNL: ${pnl.toFixed(2)} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'}\n` +
             `Total PNL: ${ctx.profit.toFixed(2)}\n`;
         log(msg);
     } else {
@@ -185,9 +185,11 @@ async function dcaPositionByType(type, symbol, quantity, oldAmt, newAmt, oldEntr
     log(`#${symbol}, DCA ${type}, Amount: ${quantity}\nChange: ${oldAmt} -> ${newAmt}\nEntry: ${oldEntryPrice} -> ${newEntryPrice}`).then();
 }
 
-async function openPositionByType(type, position, quantity, leverage, isInvertTrading) {
+async function openPositionByType(type, position, quantity, leverage, isDCA, isInvertTrading) {
     const symbol = position.symbol;
-    await binance.futuresLeverage(symbol, leverage);
+    if (!isDCA) {
+        await binance.futuresLeverage(symbol, leverage);
+    }
     let result = {}
     if (isInvertTrading) { // chức năng trade ngược
         type == 'LONG' ? type = 'SHORT' : type = 'LONG';
@@ -203,13 +205,13 @@ async function openPositionByType(type, position, quantity, leverage, isInvertTr
         const margin = ((quantity*avgPrice)/leverage).toFixed(2);
 
         let symbolQ = symbol.replace('USDT', '');
-        let message = `#${symbol}, Open ${type} | ${leverage}X\n`
+        let message = `#${symbol}, ${isDCA ? 'DCA':'Open'} ${type} | ${leverage}X\n`
             + `Size: ${quantity} ${symbolQ}, Margin: ${margin} USDT\n`
-            + `Entry: ${avgPrice}\n`
+            + `Entry: ${isDCA ? `${position.entryPrice} -> ${avgPrice}` : avgPrice}\n`
         log(message).then();
         setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage).then();
     } else {
-        log(`Mở vị thế không thành công! ${symbol} ${quantity}`).then();
+        log(`${isDCA ? 'DCA': 'Mở vị thế'} không thành công! ${symbol} ${quantity}`).then();
         console.log(result);
     }
     if (result.code) {
