@@ -111,7 +111,8 @@ class BotUI {
                                                 let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
                                                 await lib.openPositionByType(newSide, leadPosition, amountChange, leadPosition.leverage, true); // DCA
                                             } else { // chưa có thì gửi message
-                                                let message = `DCA ${newSide} ${leadPosition.symbol} ${leadPosition.leverage}X; vol: ${leadPosition.amount}; E: ${leadPosition.entryPrice}`;
+                                                let message = `Lead DCA ${newSide} #${leadPosition.symbol} ${leadPosition.leverage}X\n`
+                                                + `Amount by ${((newAmt/oldAmt)*100).toFixed(2)}%`;
                                                 await lib.sendMessage(message);
                                             }
                                         }

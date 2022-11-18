@@ -156,6 +156,7 @@ async function closePositionByType(type, position, quantity, close = false) {
     }
     if (!_.isEmpty(result) && result.status == 'FILLED') {
         let amount = Math.abs(position.positionAmt);
+        position.markPrice = _.toNumber(result.avgPrice);
         let closeRate = `${((quantity/amount)*100).toFixed(0)}%`;
         let uPnl = direction*quantity*(result.avgPrice - position.entryPrice);
         let fee = quantity*result.avgPrice*0.0006;
@@ -201,13 +202,17 @@ async function openPositionByType(type, position, quantity, leverage, isDCA, isI
     }
 
     if (!_.isEmpty(result) && result.status == 'FILLED') {
+        let oldAmount = Math.abs(position.positionAmt);
+
         let avgPrice = Number(result.avgPrice);
+        let newEntry = (oldAmount*position.entryPrice + quantity*avgPrice)/(oldAmount + quantity)
+
         const margin = ((quantity*avgPrice)/leverage).toFixed(2);
 
         let symbolQ = symbol.replace('USDT', '');
         let message = `#${symbol}, ${isDCA ? 'DCA':'Open'} ${type} | ${leverage}X\n`
             + `Size: ${quantity} ${symbolQ}, Margin: ${margin} USDT\n`
-            + `Entry: ${isDCA ? `${position.entryPrice} -> ${avgPrice}` : avgPrice}\n`
+            + `Entry: ${isDCA ? `${position.entryPrice} -> ${newEntry}` : avgPrice}\n`
         log(message).then();
         setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage).then();
     } else {
