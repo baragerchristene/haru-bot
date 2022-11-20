@@ -1,11 +1,20 @@
 const Binance = require("node-binance-api");
 const _ = require("lodash");
 
-const binance = new Binance().options({
-    APIKEY: process.env.APIKEY,
-    APISECRET: process.env.APISECRET,
-    test: process.env.PROD
-});
+var binance;
+if (process.env.PROD == "true") {
+    binance = new Binance().options({
+        APIKEY: process.env.APIKEY,
+        APISECRET: process.env.APISECRET,
+    });
+}
+else {
+    binance = new Binance().options({
+        APIKEY: process.env.APIKEY,
+        APISECRET: process.env.APISECRET,
+        test: true
+    });
+}
 
 async function fetchPositions() {
     const risk = await binance.futuresPositionRisk();
