@@ -291,7 +291,7 @@ bot.command('ss', async () => {
         `Copy XY: ${ctx.autoInvertCopy ? '🟢':'🔴'} Fixed Vol ~ ${ctx.minX}USDT\n` +
         `ID: ${ctx.copyID}\n` +
         `IID: ${ctx.copyIID}\n` +
-        `MinTP Copy: ${ctx.tp}%\n` +
+        `MinTP Copy(${ctx.autoTP ? '🟢':'🔴'}): ${ctx.tp}%\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
         `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
