@@ -4,7 +4,7 @@ const _ = require("lodash");
 const binance = new Binance().options({
     APIKEY: process.env.APIKEY,
     APISECRET: process.env.APISECRET,
-    // test: true
+    test: process.env.PROD
 });
 
 async function fetchPositions() {

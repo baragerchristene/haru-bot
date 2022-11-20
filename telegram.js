@@ -120,7 +120,7 @@ function getPositionsStr(coins) {
         total+=coin.pnl;
         return msg;
     }, '');
-    message+= `Total PNL: ${total.toFixed(2)} USDT / ${coins.length} positions`
+    message+= `Total uPNL: ${total.toFixed(2)} USDT / ${coins.length} ${coins.length > 1 ? 'positions' : 'position'}`
     return message;
 }
 
@@ -290,7 +290,8 @@ bot.command('ss', async () => {
     let msg = `Copy XX: ${ctx.autoCopy ? '🟢':'🔴'} Fixed Vol ~ ${ctx.minX}USDT\n` +
         `Copy XY: ${ctx.autoInvertCopy ? '🟢':'🔴'} Fixed Vol ~ ${ctx.minX}USDT\n` +
         `ID: ${ctx.copyID}\n` +
-        `IID: ${ctx.copyIID}\n(ITP: ${(ctx.itp*100).toFixed(2)})%\n` +
+        `IID: ${ctx.copyIID}\n` +
+        `MinTP Copy: ${ctx.tp}%\n` +
         `Danh sách coin không copy: ${ctx.ignoreCoins.join(', ')}\n` +
         `Total PNL: ${ctx.profit.toFixed(2)} USDT`
     await sendMessage(msg);
@@ -305,16 +306,14 @@ bot.command('ltr', async (ctx0) => {
 bot.command('atp', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoTP = getTgMessage(ctx0, 'atp') == '1';
-    await sendMessage(`Tự động chốt lãi: ${ctx.autoTP ? 'bật' : 'tắt'}`);
+    updateCtx('autoTP')
+    await sendMessage(`Tự động đặt lệnh chốt lãi: ${ctx.autoTP ? 'bật' : 'tắt'}`);
 });
 
 bot.command('atc', async (ctx0) => {
     if (!isMe(ctx0)) return;
     ctx.autoCopy = getTgMessage(ctx0, 'atc') == '1';
-    let session = read();
-    if (_.isEmpty(session)) session = {}
-    session.autoCopy = ctx.autoCopy;
-    write(session);
+    updateCtx('autoCopy')
     await sendMessage(`Bot copy trade: ${ctx.autoCopy ? 'bật' : 'tắt'}`);
 });
 
@@ -351,10 +350,7 @@ bot.command('add', async (ctx0) => {
     if (newSymbol && newSymbol != '') {
         if (_.includes(ctx.ignoreCoins, newSymbol)) {
             ctx.ignoreCoins = _.filter(ctx.ignoreCoins, (coin) => { if (coin != newSymbol) return coin })
-            let session = read();
-            if (_.isEmpty(session)) session = {}
-            session.ignoreCoins = ctx.ignoreCoins;
-            write(session);
+            updateCtx('ignoreCoins')
             await sendMessage(`Coin ${newSymbol} đã xóa khỏi danh sách bỏ qua`);
         } else {
             await sendMessage(`Coin ${newSymbol} không nằm trong danh sách bỏ qua`);
@@ -370,10 +366,7 @@ bot.command('ig', async (ctx0) => {
             await sendMessage(`Coin ${newSymbol} đã có trong danh sách bỏ qua`);
         } else {
             ctx.ignoreCoins.push(newSymbol);
-            let session = read();
-            if (_.isEmpty(session)) session = {}
-            session.ignoreCoins = ctx.ignoreCoins;
-            write(session);
+            updateCtx('ignoreCoins')
             await sendMessage(`Coin ${newSymbol} đã được thêm vào danh sách bỏ qua`);
         }
     } else await sendMessage(`Ký tự không hợp lệ`);
@@ -390,6 +383,13 @@ bot.command('mintp', async (ctx0) => {
     await sendMessage(`Khoảng cách giá để TP: ${ctx.minTP}`);
 });
 
+function updateCtx(varName) {
+    let session = read();
+    if (_.isEmpty(session)) session = {}
+    session[varName] = ctx[varName];
+    write(session);
+}
+
 bot.command('cid', async (ctx0) => {
     if (!isMe(ctx0)) return;
     let copyID = getTgMessage(ctx0, 'cid');
@@ -401,10 +401,8 @@ bot.command('cid', async (ctx0) => {
         // chờ 1s
         await delay(1000)
         ctx.autoCopy = true
-        let session = read();
-        if (_.isEmpty(session)) session = {}
-        session.copyID = ctx.copyID;
-        write(session);
+        updateCtx('autoCopy')
+        updateCtx('copyID')
         await sendMessage(`Copy ID mới là ${ctx.copyID}`);
     } else {
         await sendMessage(`Copy ID không hợp lệ!`);
@@ -433,10 +431,7 @@ bot.command('vol', async (ctx0) => {
     let minX = _.toNumber(Number(getTgMessage(ctx0, 'vol')).toFixed(0));
     if (minX > 0) {
         ctx.minX = minX;
-        let session = read();
-        if (_.isEmpty(session)) session = {}
-        session.minX = ctx.minX;
-        write(session);
+        updateCtx('minX')
         await sendMessage(`Min copy vol từng lệnh mới là ${ctx.minX}USDT`);
     } else {
         await sendMessage(`Min copy vol không hợp lệ!`);
@@ -449,6 +444,18 @@ bot.command('itp', async (ctx0) => {
     if (itp > 0) {
         ctx.itp = itp;
         await sendMessage(`Min TP từng lệnh mới là ${ctx.itp}%`);
+    } else {
+        await sendMessage(`Min TP không hợp lệ!`);
+    }
+});
+
+bot.command('tp', async (ctx0) => {
+    if (!isMe(ctx0)) return;
+    let tp = _.toNumber(getTgMessage(ctx0, 'tp'));
+    if (tp > 0) {
+        ctx.tp = tp;
+        updateCtx('tp')
+        await sendMessage(`Min TP từng lệnh mới là ${ctx.tp}%`);
     } else {
         await sendMessage(`Min TP không hợp lệ!`);
     }
@@ -621,7 +628,12 @@ bot.command('xa', async (ctx0) => {
                 `Total PNL: ${ctx.profit.toFixed(2)}\n`;
             await log(msg);
         } else {
-            await log(`Đóng vị thế không thành công! ${symbol} ${amount}\nVào app tự đóng thủ công`).then();
+            let msg = `⚠ Đóng vị thế không thành công!\nTự đóng thủ công bằng app`;
+            msg+= `\nSymbol: ${symbol}\nSize: ${amount}`;
+            if (result.code) {
+                msg+= `\nCode: ${result.code}\nMessage: ${result.msg}`;
+            }
+            await log(msg).then();
             console.log(result);
         }
     }

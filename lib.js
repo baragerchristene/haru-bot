@@ -162,17 +162,18 @@ async function closePositionByType(type, position, quantity, close = false) {
         let fee = quantity*result.avgPrice*0.0006;
         let pnl = uPnl - fee;
         ctx.profit+= pnl;
-        let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol} ${close ? 'closed' : `closed ${closeRate}`} ${type}\n` +
+        let msg = `${pnl > 0 ?'🟢':'🔴'} #${symbol}, ${close ? 'closed' : `closed ${closeRate}`} ${type}\n` +
+            `Closing Price: ${result.avgPrice}\n` +
             `Final PNL: ${pnl.toFixed(2)} | ${(roe(position)*100).toFixed(2)}% | ${pnl > 0 ? '#TP' : '#SL'}\n` +
             `Total PNL: ${ctx.profit.toFixed(2)}\n`;
         log(msg);
     } else {
-        log(`Đóng vị thế không thành công! ${symbol} ${quantity}\nNhập /xa ${symbol} để đóng lệnh hoặc tự đóng thủ công`).then();
-        console.log(result);
-    }
-    if (result.code) {
-        let errMsg = `Code: ${result.code} - ${result.msg}`;
-        log(errMsg).then(); // send error response
+        let msg = `⚠ Đóng vị thế không thành công!\nNhập /xa ${symbol} để đóng lệnh hoặc tự đóng thủ công bằng app`;
+        msg+= `\nSymbol: ${symbol}\nSize: ${quantity}`;
+        if (result.code) {
+            msg+= `\nCode: ${result.code}\nMessage: ${result.msg}`;
+        }
+        log(msg).then();
         console.log(result);
     }
 }
@@ -202,28 +203,66 @@ async function openPositionByType(type, position, quantity, leverage, isDCA, isI
     }
 
     if (!_.isEmpty(result) && result.status == 'FILLED') {
-        let oldAmount = Math.abs(position.positionAmt);
-
         let avgPrice = Number(result.avgPrice);
-        let newEntry = (oldAmount*position.entryPrice + quantity*avgPrice)/(oldAmount + quantity)
-
         const margin = ((quantity*avgPrice)/leverage).toFixed(2);
-
         let symbolQ = symbol.replace('USDT', '');
-        let message = `#${symbol}, ${isDCA ? 'DCA':'Open'} ${type} | ${leverage}X\n`
-            + `Size: ${quantity} ${symbolQ}, Margin: ${margin} USDT\n`
-            + `Entry: ${isDCA ? `${position.entryPrice} -> ${newEntry}` : avgPrice}\n`
+        let message = ''
+
+        if (isDCA) {
+            let oldAmount = Math.abs(position.positionAmt);
+            let newEntry = (oldAmount*position.entryPrice + quantity*avgPrice)/(oldAmount + quantity)
+            message = `#${symbol}, DCA ${type} | ${leverage}X\n`
+                + `Size: ${quantity} ${symbolQ}(${((quantity/oldAmount)*100).toFixed(2)}%)\n`
+                + `Margin: ${margin} USDT\n`
+                + `Entry: ${isDCA ? `${newEntry}` : avgPrice}\n`
+        } else {
+            message = `#${symbol}, Open ${type} | ${leverage}X\n`
+                + `Size: ${quantity} ${symbolQ}\n`
+                + `Margin: ${margin} USDT\n`
+                + `Entry: ${avgPrice}\n`;
+        }
         log(message).then();
+        autoSetTpByRoe(symbol).then();
         setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage).then();
     } else {
-        log(`${isDCA ? 'DCA': 'Mở vị thế'} không thành công! ${symbol} ${quantity}`).then();
+        let msg = `⚠ ${isDCA ? 'DCA': 'Mở vị thế'} không thành công!`;
+        msg+= `\nSymbol: ${symbol}\nSize: ${quantity}`;
+        if (result.code) {
+            msg+= `\nCode: ${result.code}\nMessage: ${result.msg}`;
+        }
+        log(msg).then();
         console.log(result);
     }
-    if (result.code) {
-        let errMsg = `Code: ${result.code} - ${result.msg}`;
-        log(errMsg).then(); // send error response
-        console.log(result);
+}
+
+async function autoSetTpByRoe(symbol) {
+    if (!ctx.autoTP) return;
+    let rawPosition = await fetchPositionBySymbol(symbol);
+    let position = {};
+    if (_.isEmpty(rawPosition)) {
+        return; // Vị thế không tồn tại để TP/SL
     }
+    position = rawPosition[0];
+    let side = position.positionAmt > 0 ? 'LONG': 'SHORT';
+    let leverage = position.leverage;
+    let quantity = Math.abs(position.positionAmt);
+    let entryPrice = _.toNumber(position.entryPrice);
+    let openOrders = await binance.futuresOpenOrders(symbol);
+    let orderType = 'TAKE_PROFIT_MARKET';
+    _.filter(openOrders, async (order) => {
+        if (order.type == orderType) {
+            await binance.futuresCancel(symbol, {orderId: order.orderId});
+        }
+    })
+    let tpResult = {}
+    let stopPrice = getPriceByRoe(entryPrice, quantity, leverage, ctx.tp, side);
+    if (side == 'LONG') {
+        tpResult = await binance.futuresMarketSell(symbol, quantity, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+    } else {
+        tpResult = await binance.futuresMarketBuy(symbol, quantity, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
+    }
+    console.log(tpResult);
+    log(`#${symbol}, Updated TP at ${stopPrice}`).then();
 }
 
 async function setInverterTP(isInvertTrading, type, symbol, avgPrice, quantity, leverage) {
@@ -375,7 +414,7 @@ async function getAllOpenOrders() {
 
 async function welcome() {
     const now = moment().format("HH:mm:ss DD/MM/YYYY");
-    let msg = `||| BOT #STARTED: ${now} ///`;
+    let msg = `♻️BOT #STARTED: ${now}\n♻️Production: ${process.env.PROD}`;
     console.log(msg);
     sendMessage(msg);
 }

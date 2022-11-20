@@ -26,6 +26,7 @@ var ignoreCoins = ['BTCUSDT'];
 var lastBalance = 0;
 var profit = 0;
 var itp = 0.236;
+var tp = 100;
 var filterSymbols = [];
 module.exports = {
     positions: positions,
@@ -50,5 +51,6 @@ module.exports = {
     occO: occO,
     profit: profit,
     itp: itp,
+    tp: tp,
     filterSymbols: filterSymbols
 }

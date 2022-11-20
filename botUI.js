@@ -28,6 +28,12 @@ class BotUI {
             if (previousSession.copyID) {
                 ctx.copyID = previousSession.copyID;
             }
+            if (previousSession.autoTP) {
+                ctx.autoTP = previousSession.autoTP;
+            }
+            if (previousSession.tp) {
+                ctx.tp = previousSession.tp;
+            }
             if (!previousSession.rsCount) {
                 previousSession.rsCount = 1;
             } else {
@@ -109,10 +115,10 @@ class BotUI {
                                         } else { // DCA
                                             if (!_.isEmpty(myPosition)) { // có vị thế rồi thì DCA thêm
                                                 let amountChange = lib.getAmountChange(this.filterSymbols, myPosition, amountChangeRate);
-                                                await lib.openPositionByType(newSide, leadPosition, amountChange, leadPosition.leverage, true); // DCA
+                                                await lib.openPositionByType(newSide, myPosition, amountChange, leadPosition.leverage, true); // DCA
                                             } else { // chưa có thì gửi message
                                                 let message = `Lead DCA ${newSide} #${leadPosition.symbol} ${leadPosition.leverage}X\n`
-                                                + `Amount by ${((newAmt/oldAmt)*100).toFixed(2)}%`;
+                                                + `Amount by ${(((newAmt-oldAmt)/oldAmt)*100).toFixed(2)}%`;
                                                 await lib.sendMessage(message);
                                             }
                                         }
