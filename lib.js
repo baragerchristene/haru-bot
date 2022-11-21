@@ -255,7 +255,7 @@ async function autoSetTpByRoe(symbol) {
         }
     })
     let tpResult = {}
-    let stopPrice = getPriceByRoe(entryPrice, quantity, leverage, ctx.tp, side);
+    let stopPrice = getPriceByRoe(entryPrice, quantity, leverage, ctx.tp/100, side);
     if (side == 'LONG') {
         tpResult = await binance.futuresMarketSell(symbol, quantity, {stopPrice: stopPrice, reduceOnly: true, type: orderType, timeInForce: 'GTE_GTC', workingType: 'MARK_PRICE'});
     } else {
